@@ -84,6 +84,10 @@ import ViewExpenseType from './pages/settings/expenseType/View';
 import PurchaseCouponList from './pages/settings/Purchasecoupon/List';
 import CreatePurchaseCoupon from './pages/settings/Purchasecoupon/Create';
 import EditPurchasecoupon from './pages/settings/Purchasecoupon/Edit';
+//user
+import StaffList from './pages/Staff/List';
+import StaffView from './pages/Staff/View';
+import StaffEdit from './pages/Staff/Edit';
 
 
 
@@ -174,7 +178,12 @@ function App() {
           {/* Purchase Coupon */}
           <Route path="settings/purchase-coupon-list" element={<PurchaseCouponList />} />
           <Route path="settings/create-purchasecoupon" element={<CreatePurchaseCoupon />} />
-          <Route path="settings/edit-purchasecoupon/:purchaseCouponId" element={<EditPurchasecoupon />} />        
+          <Route path="settings/edit-purchasecoupon/:purchaseCouponId" element={<EditPurchasecoupon />} />       
+
+           {/* Staff */}
+          <Route path="staff/staff-list" element={<StaffList />} />
+          <Route path="staff/staff-view/:staffUserId" element={<StaffView />} />
+          <Route path="staff/staff-edit/:staffUserId" element={<StaffEdit />} /> 
           
 
         </Route>
