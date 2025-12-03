@@ -375,7 +375,7 @@ const StaffEdit = () => {
       }
       
       toast.success("Staff updated successfully!");
-      setTimeout(() => navigate("/staff-management/staff"), 1500);
+      setTimeout(() => navigate("/dashboard/staff/staff-list"), 1500);
       
     } catch (error) {
       console.error("Update failed:", error);
