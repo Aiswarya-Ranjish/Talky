@@ -12,6 +12,7 @@ import { KiduValidation } from "../../../components/KiduValidation";
 import KiduPrevious from "../../../components/KiduPrevious";
 import KiduLoader from "../../../components/KiduLoader";
 import KiduReset from "../../../components/ReuseButtons/KiduReset";
+import { Label } from "recharts";
 
 const UserEdit: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -31,6 +32,7 @@ const UserEdit: React.FC = () => {
     { name: "email", label: "Email", rules: { required: true, type: "email" } },
     { name: "walletBalance", label: "Wallet Amount", rules: { required: false, type: "number" } },
     { name: "registeredDate", label: "Date", rules: { required: true, type: "date" } },
+    {name:"mobileNumber", label:"Mobile Number", rules:{required:true, type:"text"}}
   ];
 
   const interestOptions = [
@@ -75,6 +77,9 @@ const UserEdit: React.FC = () => {
           interests: toArray(res.interests),
           prefferedlanguage: toArray(res.prefferedlanguage),
           registeredDate: res.registeredDate
+            ? new Date(res.registeredDate).toISOString().split("T")[0]
+            : "",   
+            
         };
 
         setFormData(userValues);
@@ -220,11 +225,13 @@ const UserEdit: React.FC = () => {
                       {field.label} {field.rules.required && <span className="text-danger">*</span>}
                     </Form.Label>
                     <Form.Control
-                      name={field.name}
-                      value={formData[field.name]}
-                      onChange={handleChange}
-                      onBlur={() => validateField(field.name, formData[field.name])}
-                    />
+  name={field.name}
+  value={formData[field.name]}
+  onChange={handleChange}
+  onBlur={() => validateField(field.name, formData[field.name])}
+  disabled={field.name === "mobileNumber"} // 👉 Mobile number is read-only now
+  style={field.name === "mobileNumber" ? { backgroundColor: "#f5f5f5", cursor: "not-allowed" } : {}}
+/>
                     {errors[field.name] && <small className="text-danger">{errors[field.name]}</small>}
                   </Col>
                 ))}
@@ -277,6 +284,24 @@ const UserEdit: React.FC = () => {
                     label="Staff"
                     checked={formData.isStaff}
                     name="isStaff"
+                    onChange={handleChange}
+                  />
+                </Col>
+                <Col md={4}>
+                  <Form.Check
+                    type="switch"
+                    label="KYCComplete"
+                    checked={formData.isKYCCompleted}
+                    name="isKYCCompleted"
+                    onChange={handleChange}
+                  />
+                </Col>
+                <Col md={4}>
+                  <Form.Check
+                    type="switch"
+                    label="AudultVerification"
+                    checked={formData.isAudultVerificationCompleted}
+                    name="isAudultVerificationCompleted"
                     onChange={handleChange}
                   />
                 </Col>
