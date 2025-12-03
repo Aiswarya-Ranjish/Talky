@@ -30,6 +30,7 @@ const UserEdit: React.FC = () => {
     { name: "name", label: "Name", rules: { required: true, type: "text" } },
     { name: "email", label: "Email", rules: { required: true, type: "email" } },
     { name: "walletBalance", label: "Wallet Amount", rules: { required: false, type: "number" } },
+    { name: "registeredDate", label: "Date", rules: { required: true, type: "date" } },
   ];
 
   const interestOptions = [
@@ -73,6 +74,7 @@ const UserEdit: React.FC = () => {
           profileImagePath: res.profileImagePath || "",
           interests: toArray(res.interests),
           prefferedlanguage: toArray(res.prefferedlanguage),
+          registeredDate: res.registeredDate
         };
 
         setFormData(userValues);
