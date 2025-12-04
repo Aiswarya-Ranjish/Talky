@@ -10,7 +10,7 @@ import { KiduValidation } from "../../../components/KiduValidation";
 
 
 const PurchaseCouponEdit: React.FC = () => {
-  const { id } = useParams();
+  const { purchaseCouponId  } = useParams();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -21,13 +21,14 @@ const PurchaseCouponEdit: React.FC = () => {
   const fields = [
     { name: "coins", rules: { required: true, type: "number", label: "Coins" } },
     { name: "amount", rules: { required: true, type: "number", label: "Amount" } },
+    { name: "pastAmount", rules: {  type: "number", label: "pastAmount" } },
     { name: "description", rules: { required: false, type: "text", label: "Description" } }
   ];
 
   useEffect(() => {
     const loadCoupon = async () => {
       // Check if id exists before making API call
-      if (!id) {
+      if (!purchaseCouponId ) {
         toast.error("Invalid coupon ID");
         navigate("/purchase-coupon");
         setLoading(false);
@@ -35,12 +36,13 @@ const PurchaseCouponEdit: React.FC = () => {
       }
 
       try {
-        const res = await PurchaseCouponService.getCouponsById(id);
+        const res = await PurchaseCouponService.getCouponsById(purchaseCouponId );
 
         if (res) {
           const loadedValues = {
             coins: String(res.coins ?? ""),
             amount: String(res.amount ?? ""),
+            pastAmount: String(res.pastAmount ?? ""),
             description: res.description ?? ""
           };
 
@@ -64,7 +66,7 @@ const PurchaseCouponEdit: React.FC = () => {
 
     loadCoupon();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, navigate]);
+  }, [purchaseCouponId , navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -94,26 +96,26 @@ const PurchaseCouponEdit: React.FC = () => {
     if (!validateForm()) return;
 
     // Validate id exists
-    if (!id) {
+    if (!purchaseCouponId ) {
       toast.error("Invalid coupon ID");
       return;
     }
 
     try {
       const payload = {
-        purchaseCouponId: Number(id),
+        purchaseCouponId: Number(purchaseCouponId ),
         coins: Number(formData.coins),
         amount: Number(formData.amount),
-        pastAmount: 0,
+        pastAmount: Number(formData.pastAmount) ,
         description: formData.description,
         isActive: true,
         createdAppUserId: 1,
         createdAt: new Date().toISOString(),
       };
 
-      await PurchaseCouponService.editCouponById(id, payload);
+      await PurchaseCouponService.editCouponById(purchaseCouponId , payload);
       toast.success("Coupon updated successfully!");
-      setTimeout(() => navigate("/purchase-coupon"), 1500);
+      setTimeout(() => navigate("/dashboard/settings/purchase-coupon-list"), 1500);
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
     }
@@ -171,16 +173,15 @@ const PurchaseCouponEdit: React.FC = () => {
               )}
             </Col>
 
-            <Col md={12} className="mb-3">
+            <Col md={6} className="mb-3">
               <Form.Label className="fw-semibold">
-                {fields[2].rules.label}
+                {fields[2].rules.label}{" "}
                 {fields[2].rules.required ? <span className="text-danger">*</span> : ""}
               </Form.Label>
               <Form.Control
-                as="textarea"
-                rows={3}
+                type="number"
                 name={fields[2].name}
-                placeholder="Enter description"
+                placeholder="Enter amount"
                 value={formData[fields[2].name]}
                 onChange={handleChange}
                 onBlur={() => validateField(fields[2].name, formData[fields[2].name])}
@@ -189,6 +190,35 @@ const PurchaseCouponEdit: React.FC = () => {
                 <small className="text-danger">{errors[fields[2].name]}</small>
               )}
             </Col>
+
+            <Col md={6} className="mb-3">
+              <Form.Label className="fw-semibold">
+                {fields[3].rules.label}
+                {fields[3].rules.required ? <span className="text-danger">*</span> : ""}
+              </Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                name={fields[3].name}
+                placeholder="Enter description"
+                value={formData[fields[3].name]}
+                onChange={handleChange}
+                onBlur={() => validateField(fields[3].name, formData[fields[3].name])}
+              />
+              {errors[fields[3].name] && (
+                <small className="text-danger">{errors[fields[3].name]}</small>
+              )}
+            </Col>
+            <Col md={4}>
+                              <Form.Check
+                                type="switch"
+                                label="isActive"
+                                checked={formData.isActive}
+                                name="isActive"
+                                onChange={handleChange}
+                              />
+                            </Col>
+           
           </Row>
 
           <div className="d-flex gap-2 justify-content-end mt-4">

@@ -6,9 +6,6 @@ import { FaArrowLeft } from "react-icons/fa";
 import KiduValidation from "../../../components/KiduValidation";
 import PurchaseCouponService from "../../../services/PurchaseCoupon.Services";
 import KiduReset from "../../../components/ReuseButtons/KiduReset";
-//import PurchaseCouponService from "services/PurchaseCouponService";
-//import KiduValidation from "components/KiduValidation";
-//import KiduReset from "components/ReuseButtons/KiduReset";
 
 const CreatePurchaseCoupon: React.FC = () => {
   const navigate = useNavigate();
@@ -34,11 +31,11 @@ const CreatePurchaseCoupon: React.FC = () => {
   const [formData, setFormData] = useState(initialValues);
   const [errors, setErrors] = useState(initialErrors);
 
-  // ---------- Field Validation Rules ----------
+  // ---------- Validation Rules ----------
   const fieldRules: any = {
     coins: { required: true, type: "number", label: "Coins" },
     amount: { required: true, type: "number", label: "Amount" },
-    pastAmount: {  type: "number", label: "Past Amount" },
+    pastAmount: { required: false, type: "number", label: "Past Amount" },
     description: {
       required: true,
       type: "text",
@@ -79,24 +76,30 @@ const CreatePurchaseCoupon: React.FC = () => {
   // ---------- Validate Entire Form ----------
   const validateForm = () => {
     let isValid = true;
-
     Object.keys(fieldRules).forEach((field) => {
-      if (!validateField(field, formData[field])) {
-        isValid = false;
-      }
+      if (!validateField(field, formData[field])) isValid = false;
     });
-
     return isValid;
   };
 
   // ---------- Submit Handler ----------
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
+    const payload = {
+      purchaseCouponId: 0,
+      coins: Number(formData.coins),
+      amount: Number(formData.amount),
+      pastAmount: formData.pastAmount === "" ? 0 : Number(formData.pastAmount),
+      description: formData.description,
+      isActive: formData.isActive,
+      createdAt: formData.createdAt,
+      createdAppUserId: formData.createdAppUserId,
+    };
+
     try {
-      const response = await PurchaseCouponService.addCoupon(formData);
+      await PurchaseCouponService.addCoupon(payload);
 
       toast.success("Purchase coupon created successfully!");
 
@@ -167,9 +170,7 @@ const CreatePurchaseCoupon: React.FC = () => {
 
             <Row className="mb-3">
               <Col md={6}>
-                <Form.Label>
-                  Past Amount <span className="text-danger">*</span>
-                </Form.Label>
+                <Form.Label>Past Amount</Form.Label>
                 <Form.Control
                   type="number"
                   name="pastAmount"
@@ -201,7 +202,6 @@ const CreatePurchaseCoupon: React.FC = () => {
               </Col>
             </Row>
 
-            {/* Checkbox */}
             <Row className="mb-3">
               <Col md={4}>
                 <Form.Check
@@ -214,7 +214,6 @@ const CreatePurchaseCoupon: React.FC = () => {
               </Col>
             </Row>
 
-            {/* Buttons */}
             <div className="d-flex justify-content-end gap-2 mt-4">
               <KiduReset initialValues={initialValues} setFormData={setFormData} />
               <Button type="submit" style={{ background: "#18575A", border: "none" }}>
