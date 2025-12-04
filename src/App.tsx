@@ -84,10 +84,16 @@ import ViewExpenseType from './pages/settings/expenseType/View';
 import PurchaseCouponList from './pages/settings/Purchasecoupon/List';
 import CreatePurchaseCoupon from './pages/settings/Purchasecoupon/Create';
 import EditPurchasecoupon from './pages/settings/Purchasecoupon/Edit';
+import ViewPurchasecoupon from './pages/settings/Purchasecoupon/view';
 //user
 import StaffList from './pages/Staff/List';
 import StaffView from './pages/Staff/View';
 import StaffEdit from './pages/Staff/Edit';
+
+//App Notication
+import AppNotiicationList from './pages/settings/AppNotification/List';
+import  AppNotificationCreate from './pages/settings/AppNotification/Create';
+import  AppNotificationEdit from './pages/settings/AppNotification/Edit';
 
 
 
@@ -179,12 +185,17 @@ function App() {
           <Route path="settings/purchase-coupon-list" element={<PurchaseCouponList />} />
           <Route path="settings/create-purchasecoupon" element={<CreatePurchaseCoupon />} />
           <Route path="settings/edit-purchasecoupon/:purchaseCouponId" element={<EditPurchasecoupon />} />       
-
+           <Route path="settings/view-purchasecoupon/:purchaseCouponId" element={<ViewPurchasecoupon />} />
            {/* Staff */}
           <Route path="staff/staff-list" element={<StaffList />} />
           <Route path="staff/staff-view/:staffUserId" element={<StaffView />} />
           <Route path="staff/staff-edit/:staffUserId" element={<StaffEdit />} /> 
-          
+
+          {/*App Notificatin*/}
+          <Route path="settings/appNotification-list" element={<AppNotiicationList />} /> 
+          <Route path="settings/create-appNotification" element={< AppNotificationCreate/>} />
+          <Route path="settings/edit-appNotification/:appNotificationId" element={< AppNotificationEdit/>} />
+
 
         </Route>
         {/* Catch-All Route for 404 */}

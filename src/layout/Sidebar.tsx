@@ -36,7 +36,7 @@ const Sidebar: React.FC = () => {
         { label: "System Config", path: "/dashboard/settings/system-config" },
         { label: "Purchase Coupon", path: "/dashboard/settings/purchase-coupon-list"},
         { label: "Financial Year", path: "/dashboard/settings/financial-year" },
-        { label: "App Notification", path: "/dashboard/settings/app-notification" },
+        { label: "App Notification", path: "/dashboard/settings/appNotification-list" },
     ];
 
     const navigate = useNavigate();

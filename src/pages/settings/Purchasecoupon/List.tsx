@@ -3,10 +3,6 @@ import { Purchascoupon } from "../../../types/settings/PurchaseCouponType";
 import PurchaseCouponService from "../../../services/PurchaseCoupon.Services";
 import KiduLoader from "../../../components/KiduLoader";
 import KiduTable from "../../../components/KiduTable";
-//import { Purchascoupon } from "types/PurchaseType";
-//import PurchaseCouponService from "services/PurchaseCouponService";
-///import KiduTable from "components/KiduTable";
-//import KiduLoader from "components/KiduLoader";
 
 // Table Columns
 const formatDate = (dateValue: string | Date | null | undefined): string => {
@@ -88,7 +84,7 @@ const PurchaseCouponPage: React.FC = () => {
       idKey="purchaseCouponId"
       addRoute="/dashboard/settings/create-purchasecoupon"
       editRoute="/dashboard/settings/edit-purchasecoupon"   // KiduTable will append /id
-      viewRoute="/Purchase-Coupon/PurchaseCouponView"   // KiduTable will append /id
+      viewRoute="/dashboard/settings/view-purchasecoupon"   // KiduTable will append /id
       error={error}
       onRetry={loadCoupons}
     />
