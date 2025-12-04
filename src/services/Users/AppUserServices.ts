@@ -1,11 +1,11 @@
 // src/services/UserService.ts
 //import HttpService from './HttpService';
-import HttpService from '../services/common/HttpService';
-import { User } from '../types/TalkyUser';
+import HttpService from '../common/HttpService';
+import { User } from '../../types/TalkyUser';
 //import { API_ENDPOINTS } from 'constants/API_ENDPOINTS';
-import { API_ENDPOINTS } from '../constants/API_ENDPOINTS';
+import { API_ENDPOINTS } from '../../constants/API_ENDPOINTS';
 import { Import } from 'lucide-react';
-import { CustomResponse } from '../types/common/ApiTypes';
+import { CustomResponse } from '../../types/common/ApiTypes';
 //import{CustomResponse} from 'types/ApiTypes';
 
 

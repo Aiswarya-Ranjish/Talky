@@ -6,7 +6,7 @@ import Select from "react-select";
 import toast, { Toaster } from "react-hot-toast";
 import { FaPen } from "react-icons/fa";
 
-import AppUserService from "../../../services/AppUserServices";
+import AppUserService from "../../../services/Users/AppUserServices";
 import { KiduValidation } from "../../../components/KiduValidation";
 import KiduPrevious from "../../../components/KiduPrevious";
 import KiduLoader from "../../../components/KiduLoader";

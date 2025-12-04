@@ -7,10 +7,11 @@ import toast, { Toaster } from "react-hot-toast";
 import KiduLoader from "../../../components/KiduLoader";
 import KiduPrevious from "../../../components/KiduPrevious";
 
-import AppUserService from "../../../services/AppUserServices";
+import AppUserService from "../../../services/Users/AppUserServices";
 import { User } from "../../../types/TalkyUser";
 import defaultProfile from "../../../assets/Images/profile.jpeg";
 import { getFullImageUrl } from "../../../constants/API_ENDPOINTS";
+import WalletAccordion from "./WalletAccordion";
 
 const UserPageView: React.FC = () => {
   const navigate = useNavigate();
@@ -125,6 +126,10 @@ const UserPageView: React.FC = () => {
             </tbody>
           </Table>
         </div>
+
+        {/* Wallet Transactions Accordion */}
+        {user.appUserId && <WalletAccordion userId={user.appUserId} />}
+        
       </Card>
 
       <Toaster position="top-right" />

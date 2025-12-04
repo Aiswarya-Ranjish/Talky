@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { User } from "../../../types/TalkyUser";
-import AppUserService from "../../../services/AppUserServices";
+import AppUserService from "../../../services/Users/AppUserServices";
 import KiduLoader from "../../../components/KiduLoader";
 import toast from "react-hot-toast";
 import KiduServerTable from "../../../components/Trip/KiduServerTable";
