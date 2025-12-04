@@ -36,22 +36,14 @@ const StaffList: React.FC = () => {
         return { data: [], total: 0 };
       }
 
-      // Transform data with profile images and star rating
+      // Transform data with profile images
       let transformedData = response.map((staff: StaffModel) => {
         const imageUrl = getFullImageUrl(staff.profileImagePath) || "/assets/Images/profile.jpeg";
-
-        // Format star rating
-        const rating = staff.starRating || 0;
-        const fullStars = Math.floor(rating);
-        const hasHalfStar = rating - fullStars >= 0.5;
-        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-        const starDisplay = '⭐'.repeat(fullStars) + (hasHalfStar ? '✨' : '') + '☆'.repeat(emptyStars);
 
         return {
           ...staff,
           profile: imageUrl,
-          starRating: starDisplay,
-          isBlocked: staff.isBlocked ? "✓" : "✗",
+          // starRating is already a number, keep it as is
         };
       });
 
@@ -60,10 +52,10 @@ const StaffList: React.FC = () => {
         const lowerSearch = searchTerm.toLowerCase();
         transformedData = transformedData.filter(
           (staff) =>
-            staff.name?.toLowerCase().includes(lowerSearch) ||
-            staff.email?.toLowerCase().includes(lowerSearch) ||
-            staff.mobileNumber?.includes(searchTerm) ||
-            staff.staffUserId?.toString().includes(searchTerm)
+            (staff.name?.toString() || '').toLowerCase().includes(lowerSearch) ||
+            (staff.email?.toString() || '').toLowerCase().includes(lowerSearch) ||
+            (staff.mobileNumber?.toString() || '').includes(searchTerm) ||
+            (staff.staffUserId?.toString() || '').includes(searchTerm)
         );
       }
 
@@ -77,6 +69,7 @@ const StaffList: React.FC = () => {
       console.log("✅ Staff data fetched:", {
         total,
         pageData: paginatedData.length,
+        sampleStarRating: paginatedData[0]?.starRating,
       });
 
       return {

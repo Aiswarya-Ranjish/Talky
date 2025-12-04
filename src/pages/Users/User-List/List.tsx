@@ -1,36 +1,19 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { User } from "../../../types/ApiTypes";
 import AppUserService from "../../../services/AppUserServices";
-import KiduTable from "../../../components/KiduTable";
 import KiduLoader from "../../../components/KiduLoader";
 import toast from "react-hot-toast";
+import KiduServerTable from "../../../components/Trip/KiduServerTable";
 
+// Remove the 'render' functions from columns since KiduServerTable handles them differently
 const columns = [
   { key: "appUserId", label: "ID" },
   { key: "name", label: "Name" },
   { key: "mobileNumber", label: "Mobile Number" },
-  {
-    key: "registeredDate",
-    label: "Joined On",
-    render: (row: User) => {
-      const date = new Date(row.registeredDate);
-      return `${String(date.getDate()).padStart(2, "0")}-${date.toLocaleString(
-        "en-US",
-        { month: "long" }
-      )}-${date.getFullYear()}`;
-    },
-  },
+  { key: "registeredDate", label: "Joined On" },
   { key: "status", label: "Status" },
-  {
-    key: "isBlocked",
-    label: "Is Blocked",
-    render: (row: User) => <input type="checkbox" checked={row.isBlocked} disabled />,
-  },
-  {
-    key: "walletBalance",
-    label: "Wallet Balance",
-    render: (row: User) => <span>{row.walletBalance?.toFixed(2)}</span>,
-  },
+  { key: "isBlocked", label: "Is Blocked" },
+  { key: "walletBalance", label: "Wallet Balance" },
 ];
 
 const UserPage: React.FC = () => {
@@ -63,21 +46,57 @@ const UserPage: React.FC = () => {
 
   if (loading) return <KiduLoader type="Loading Users..." />;
 
+  // Create a fetchData function that KiduServerTable expects
+  const fetchData = async (params: {
+    pageNumber: number;
+    pageSize: number;
+    searchTerm: string;
+  }) => {
+    try {
+      const response = await AppUserService.getAllUsers();
+      let filteredData = response || [];
+      
+      // Apply search filter locally (since you're fetching all data at once)
+      if (params.searchTerm) {
+        const searchLower = params.searchTerm.toLowerCase();
+        filteredData = filteredData.filter(user => 
+          (user.name?.toString() || '').toLowerCase().includes(searchLower) ||
+          (user.mobileNumber?.toString() || '').includes(searchLower) ||
+          (user.appUserId?.toString() || '').includes(searchLower) ||
+          (user.status?.toString() || '').toLowerCase().includes(searchLower)
+        );
+      }
+      
+      // Apply pagination
+      const startIndex = (params.pageNumber - 1) * params.pageSize;
+      const endIndex = startIndex + params.pageSize;
+      const paginatedData = filteredData.slice(startIndex, endIndex);
+      
+      return {
+        data: paginatedData,
+        total: filteredData.length
+      };
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      return { data: [], total: 0 };
+    }
+  };
+
   return (
-    <KiduTable
+    <KiduServerTable
       title="User Management"
       subtitle="List of all registered users with actions"
-      data={users}
       columns={columns}
       idKey="appUserId"
       addButtonLabel="Add New User"
       addRoute="/user-management/create-user"
-       editRoute="/dashboard/user/edit-user"
-
-      // KiduTable will append /id
-      viewRoute="/dashboard/user/view-user"   // KiduTable will append /id
-      error={error}
-      onRetry={loadUsers}
+      editRoute="/dashboard/user/edit-user"
+      viewRoute="/dashboard/user/view-user"
+      fetchData={fetchData}
+      showSearch={true}
+      showActions={true}
+      showExport={true}
+      rowsPerPage={10}
     />
   );
 };
