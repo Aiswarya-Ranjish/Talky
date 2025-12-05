@@ -153,7 +153,7 @@ const NavbarComponent: React.FC = () => {
         placement="end"
       >
         <Offcanvas.Header closeButton>
-          <h5 className="fw-semibold text-center" style={{ color: "#18575A" }}>
+          <h5 className="fw-semibold text-center" style={{ color: "#882626ff" }}>
             Account Settings
           </h5>
         </Offcanvas.Header>

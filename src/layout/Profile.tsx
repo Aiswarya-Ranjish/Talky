@@ -108,7 +108,7 @@ const Profile: React.FC = () => {
                   width: "80px",
                   height: "80px",
                   objectFit: "cover",
-                  borderColor: "#18575A",
+                  borderColor: "#882626ff",
                 }}
               />
               <label
@@ -116,7 +116,7 @@ const Profile: React.FC = () => {
                 className="position-absolute bottom-0 end-0 bg-white rounded-circle px-2 py-1 shadow"
                 style={{ cursor: "pointer" }}
               >
-                <BsUpload color="#18575A" />
+                <BsUpload color="#882626ff" />
               </label>
               <input
                 type="file"
@@ -206,7 +206,7 @@ const Profile: React.FC = () => {
                 onClick={handleSave}
                 className="fw-semibold px-4"
                 style={{
-                  backgroundColor: "#18575A",
+                  backgroundColor: "#882626ff",
                    color: "white",
                   border: "none",
                   borderRadius: "6px",

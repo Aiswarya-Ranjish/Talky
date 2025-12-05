@@ -6,7 +6,7 @@ import toast, { Toaster } from "react-hot-toast";
 
 import KiduLoader from "../../../components/KiduLoader";
 import KiduPrevious from "../../../components/KiduPrevious";
-
+import KiduAuditLogs from "../../../components/KiduAuditLogs";
 import AppUserService from "../../../services/Users/AppUserServices";
 import { User } from "../../../types/TalkyUser";
 import defaultProfile from "../../../assets/Images/profile.jpeg";
@@ -24,7 +24,6 @@ const UserPageView: React.FC = () => {
     const fetchUser = async () => {
       try {
         if (!userId) return;
-
         const data = await AppUserService.getUserById(userId);
         if (data) setUser(data);
         else toast.error("User not found.");
@@ -34,7 +33,6 @@ const UserPageView: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchUser();
   }, [userId]);
 
@@ -83,11 +81,12 @@ const UserPageView: React.FC = () => {
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div className="d-flex align-items-center">
             <KiduPrevious />
-            <h5 className="fw-bold m-0 ms-2" style={{ color: "#18575A" }}>User Details</h5>
+            <h5 className="fw-bold m-0 ms-2" style={{ color: "#882626ff" }}>User Details</h5>
           </div>
 
-          <Button className="d-flex align-items-center gap-2"
-            style={{ fontWeight: 500, backgroundColor: "#18575A", fontSize: "15px", border: "none" }}
+          <Button
+            className="d-flex align-items-center gap-2"
+            style={{ fontWeight: 500, backgroundColor: "#882626ff", fontSize: "15px", border: "none" }}
             onClick={handleEdit}>
             <FaEdit /> Edit
           </Button>
@@ -101,11 +100,11 @@ const UserPageView: React.FC = () => {
             width={100}
             height={100}
             className="mb-3"
-            style={{ border: "3px solid #18575A", objectFit: "cover" }}
+            style={{ border: "3px solid #882626ff", objectFit: "cover" }}
             onError={(e: any) => { e.target.src = defaultProfile; }}
           />
           <h5 className="fw-bold mb-1">{user.name}</h5>
-          <p className="small mb-0 fw-bold text-danger">ID: {user.appUserId}</p>
+          <p className="small mb-0 fw-bold" style={{ color: "#882626ff" }}>ID: {user.appUserId}</p>
         </div>
 
         <div className="table-responsive">
@@ -118,7 +117,7 @@ const UserPageView: React.FC = () => {
 
                 return (
                   <tr key={key}>
-                    <td style={{ width: "40%", fontWeight: 600, color: "#18575A" }}>{label}</td>
+                    <td style={{ width: "40%", fontWeight: 600, color: "#882626ff" }}>{label}</td>
                     <td>{String(value)}</td>
                   </tr>
                 );
@@ -127,9 +126,22 @@ const UserPageView: React.FC = () => {
           </Table>
         </div>
 
-        {/* Wallet Transactions Accordion */}
-        {user.appUserId && <WalletAccordion userId={user.appUserId} />}
-        
+        {/* SPACED WALLET + AUDIT (NOT ZERO GAP ANYMORE) */}
+        {user.appUserId && (
+          <div className="mt-4">
+            <WalletAccordion userId={user.appUserId} />
+          </div>
+        )}
+
+        {user.appUserId && (
+          <div className="mt-4">
+            <KiduAuditLogs
+              tableName="AppUser"
+              recordId={user.appUserId}
+            />
+          </div>
+        )}
+
       </Card>
 
       <Toaster position="top-right" />

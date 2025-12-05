@@ -61,6 +61,11 @@ export const API_ENDPOINTS = {
     GET_BY_ID: (id: string) => `${API_BASE_URL}/PurchaseOrder/GetById/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/PurchaseOrder/Delete/${id}`,
   },
+  AUDIT_LOG: {
+    GET_BY_TABLE_AND_ID: (tableName: string, recordId: number) =>
+      `${API_BASE_URL}/AuditLog/${tableName}/${recordId}`,
+    GET_BY_ID: (logID: string) => `${API_BASE_URL}/AuditLog/GetById/${logID}`,
+  },
 };
 
 // ✅ Helper function to get full image URL

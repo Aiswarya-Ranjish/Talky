@@ -366,7 +366,7 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
     return (
       <Container fluid className="py-3 mt-5">
         <div className="alert alert-danger">{error}</div>
-        <Button onClick={handleRetry} style={{ backgroundColor: "#882626ff882626ff", border: "none" }}>
+        <Button onClick={handleRetry} style={{ backgroundColor: "#882626ff", border: "none" }}>
           Retry
         </Button>
       </Container>
@@ -375,7 +375,8 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
 
   return (
     <Container fluid className="py-3 mt-4">
-      {showTitle !== false && total > 0 && (
+      {/* Title always shows regardless of data */}
+      {showTitle !== false && (
         <Row className="mb-2 align-items-center">
           <Col>
             <h4 className="mb-0 fw-bold" style={{ fontFamily: "Urbanist", color: "#882626ff" }}>
@@ -390,7 +391,8 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
         </Row>
       )}
 
-      {total > 0 && (
+      {/* Search and Add button always show regardless of data */}
+      {(showSearch || (showAddButton && addRoute)) && (
         <Row className="mb-3 align-items-center">
           {showSearch && (
             <Col>
@@ -437,7 +439,6 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
                         style={{ 
                           padding: "10px 8px", 
                           cursor: header.column.getCanSort() ? "pointer" : "default",
-                          // Removed backgroundColor and color
                           borderBottom: "2px solid #882626ff",
                           verticalAlign: "middle",
                           fontSize: "13px",
@@ -501,8 +502,7 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
                       style={{
                         cursor: onRowClick ? "pointer" : "default",
                         lineHeight: "1.2",
-                        // Applied light reddish background to alternating rows
-                        backgroundColor: index % 2 === 1 ? "#ffe8e8" : "" // Light reddish for odd rows (1-based index)
+                        backgroundColor: index % 2 === 1 ? "#ffe8e8" : ""
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = "#ffe6e6";

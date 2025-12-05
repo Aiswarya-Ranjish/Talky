@@ -185,7 +185,7 @@ function App() {
           <Route path="user/view-user/:userId" element={<ViewUser />} />
 
           {/* User Recharge */}
-          <Route path="recharge/list" element={<UserRechargeListPage />} />
+          <Route path="user/recharge/list" element={<UserRechargeListPage />} />
           <Route path="recharge/view/:purchaseOrderId" element={<ViewUserRecharge />} />
 
           {/* Company */}

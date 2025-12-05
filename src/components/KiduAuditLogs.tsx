@@ -80,7 +80,7 @@ const AuditTrailsComponent: React.FC<AuditTrailsProps> = ({ tableName, recordId 
             as={Accordion.Button}
             className="custom-audit-header"
             style={{
-              backgroundColor: "#18575A",
+              backgroundColor: "#882626ff",
               color: "white",
               width: "100%",
               padding: "0.5rem 1rem",
@@ -134,7 +134,7 @@ const AuditTrailsComponent: React.FC<AuditTrailsProps> = ({ tableName, recordId 
                           <div className="table-responsive">
                             <Table bordered hover size="sm" className="align-middle">
                               <thead
-                                style={{ backgroundColor: "#18575A", color: "white" }}
+                                style={{ backgroundColor: "#882626ff", color: "white" }}
                               >
                                 <tr className="head-font text-center">
                                   <th style={{ width: "5%" }}>SL No</th>
@@ -175,12 +175,12 @@ const AuditTrailsComponent: React.FC<AuditTrailsProps> = ({ tableName, recordId 
       </Accordion >
       <style>{`
   .custom-audit-header.accordion-button {
-    background-color: #18575A !important;
+    background-color: #882626ff !important;
     color: white !important;
     box-shadow: none !important;
   }
   .custom-audit-header.accordion-button:not(.collapsed) {
-    background-color: #18575A !important;
+    background-color: #882626ff !important;
     color: white !important;
   }
   .custom-audit-header.accordion-button::after {

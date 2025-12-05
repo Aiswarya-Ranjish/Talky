@@ -13,7 +13,7 @@ import { getFullImageUrl } from "../../constants/API_ENDPOINTS";
 
 const StaffView: React.FC = () => {
   const navigate = useNavigate();
-  const { staffUserId } = useParams();
+  const { staffUserId } = useParams<{ staffUserId: string }>();
 
   const [data, setData] = useState<StaffModel | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,18 +23,24 @@ const StaffView: React.FC = () => {
   useEffect(() => {
     const loadStaff = async () => {
       try {
-        const response = await StaffService.getStaffById(staffUserId!);
-        console.log("Staff loaded - profileImagePath:", response.profileImagePath);
+        if (!staffUserId) {
+          toast.error("No staff ID provided");
+          navigate("/dashboard/staff/staff-list");
+          return;
+        }
+
+        const response = await StaffService.getStaffById(staffUserId);
         setData(response);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error loading staff:", err);
         toast.error("Failed to load staff details.");
+        navigate("/dashboard/staff/staff-list");
       } finally {
         setLoading(false);
       }
     };
     loadStaff();
-  }, [staffUserId]);
+  }, [staffUserId, navigate]);
 
   if (loading) return <KiduLoader type="staff details..." />;
 
@@ -94,25 +100,42 @@ const StaffView: React.FC = () => {
     );
   };
 
-  const handleEdit = () => navigate(`/staff-management/StaffEdit/${data.staffUserId}`);
+  const handleEdit = () => navigate(`/dashboard/staff/staff-edit/${data.staffUserId}`);
 
   const handleDelete = async () => {
+    if (!data || !staffUserId) {
+      toast.error("Invalid staff data");
+      return;
+    }
+
     setLoadingDelete(true);
     try {
-      const updatedStaff = { ...data, isDeleted: true };
-      await StaffService.editStaffById((data.staffUserId ?? '').toString(), updatedStaff);
+      // Mark staff as deleted
+      const updatedStaff: StaffModel = { 
+        ...data, 
+        isDeleted: true 
+      };
+      
+      const response = await StaffService.editStaffById(staffUserId, updatedStaff);
+      
+      if (!response || response.isSucess === false) {
+        throw new Error(response?.customMessage || "Failed to delete staff");
+      }
+      
       toast.success("Staff deleted successfully");
-      setTimeout(() => navigate("/staff-management/staff"), 800);
-    } catch (err) {
+      setTimeout(() => navigate("/dashboard/staff/staff-list"), 800);
+    } catch (err: any) {
       console.error("Error deleting staff:", err);
-      toast.error("Failed to delete staff.");
+      toast.error(err.message || "Failed to delete staff.");
     } finally {
       setLoadingDelete(false);
       setShowConfirm(false);
     }
   };
 
-  const imageUrl = getFullImageUrl(data.profileImagePath) || defaultProfile;
+  const imageUrl = data.profileImagePath 
+    ? getFullImageUrl(data.profileImagePath) 
+    : defaultProfile;
 
   return (
     <div className="container d-flex justify-content-center align-items-center mt-5" style={{ fontFamily: "Urbanist" }}>
@@ -153,7 +176,6 @@ const StaffView: React.FC = () => {
             className="mb-3"
             style={{ border: "3px solid #18575A", objectFit: "cover" }}
             onError={(e: any) => { 
-              console.error("Image failed to load:", imageUrl);
               e.target.src = defaultProfile; 
             }}
           />
@@ -165,10 +187,10 @@ const StaffView: React.FC = () => {
           <p className="small text-danger fst-italic">
             Last Login: {formatDate(data.lastLogin)}
           </p>
-          <div className="mt-2">{renderStarRating(data.starRating)}</div>
+          <div className="mt-2">{renderStarRating(data.starRating || 0)}</div>
         </div>
 
-        {/* Table with reduced spacing */}
+        {/* Table */}
         <div className="table-responsive">
           <Table bordered hover responsive className="align-middle mb-0" style={{ fontSize: "14px" }}>
             <tbody>
@@ -211,7 +233,14 @@ const StaffView: React.FC = () => {
             Cancel
           </Button>
           <Button variant="danger" onClick={handleDelete} disabled={loadingDelete}>
-            {loadingDelete ? (<><Spinner animation="border" size="sm" className="me-2" />Deleting...</>) : "Delete"}
+            {loadingDelete ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Deleting...
+              </>
+            ) : (
+              "Delete"
+            )}
           </Button>
         </Modal.Footer>
       </Modal>

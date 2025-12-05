@@ -18,7 +18,7 @@
       referredBy: string;
       referralCode: string;
       kycDocument: string;
-      kycDocumentNumber: number;
+      kycDocumentNumber: string;
       isKYCCompleted: boolean;
       kycCompletedDate: string | Date;
       isAudioEnbaled: boolean;  

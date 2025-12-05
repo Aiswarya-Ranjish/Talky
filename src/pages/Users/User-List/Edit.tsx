@@ -469,7 +469,7 @@ const UserEdit: React.FC = () => {
           {/* BUTTONS */}
           <div className="d-flex gap-2 justify-content-end mt-4">
             <KiduReset initialValues={initialValues} setFormData={setFormData} />
-            <Button type="submit" style={{ backgroundColor: "#18575A", border: "none" }}>
+            <Button type="submit" style={{ backgroundColor: "#882626ff", border: "none" }}>
               Update
             </Button>
           </div>

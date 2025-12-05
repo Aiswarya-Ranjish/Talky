@@ -4,10 +4,9 @@ import { StaffModel } from "../../types/Staff/StaffType";
 import KiduServerTable from "../../components/Trip/KiduServerTable";
 import { getFullImageUrl } from "../../constants/API_ENDPOINTS";
 
-// ✅ Added type property to columns
 const columns = [
   { key: "staffUserId", label: "Staff ID", type: "text" as const },
-  { key: "profile", label: "Photo", type: "image" as const }, // ✅ Changed to image type
+  { key: "profile", label: "Photo", type: "image" as const },
   { key: "name", label: "Name", type: "text" as const },
   { key: "mobileNumber", label: "Mobile Number", type: "text" as const },
   { key: "email", label: "Email", type: "text" as const },
@@ -17,7 +16,6 @@ const columns = [
 ];
 
 const StaffList: React.FC = () => {
-  // Server-side pagination fetch function
   const fetchStaffData = async ({
     pageNumber,
     pageSize,
@@ -30,27 +28,27 @@ const StaffList: React.FC = () => {
     try {
       console.log("📡 Fetching staff data:", { pageNumber, pageSize, searchTerm });
 
-      // Get all staff from API
       const response = await StaffService.getAllStaff();
 
       if (!response || response.length === 0) {
         return { data: [], total: 0 };
       }
 
-      // ✅ Transform data - keep raw values, let KiduServerTable handle formatting
-      let transformedData = response.map((staff: StaffModel) => {
-        // Get full image URL
-        const imageUrl = staff.profileImagePath 
-          ? getFullImageUrl(staff.profileImagePath) 
-          : null;
+      // ✅ FILTER OUT DELETED STAFF - This is the key change
+      let transformedData = response
+        .filter((staff: StaffModel) => !staff.isDeleted) // Filter deleted staff
+        .map((staff: StaffModel) => {
+          const imageUrl = staff.profileImagePath 
+            ? getFullImageUrl(staff.profileImagePath) 
+            : null;
 
-        return {
-          ...staff,
-          profile: imageUrl, // ✅ Pass the URL, not formatted string
-          starRating: staff.starRating || 0, // ✅ Pass raw number for rating type
-          isBlocked: staff.isBlocked, // ✅ Pass boolean for checkbox type
-        };
-      });
+          return {
+            ...staff,
+            profile: imageUrl,
+            starRating: staff.starRating || 0,
+            isBlocked: staff.isBlocked,
+          };
+        });
 
       // Client-side search filtering
       if (searchTerm) {
@@ -74,7 +72,7 @@ const StaffList: React.FC = () => {
       console.log("✅ Staff data fetched:", {
         total,
         pageData: paginatedData.length,
-        firstItem: paginatedData[0]
+        deletedFiltered: response.length - transformedData.length
       });
 
       return {
@@ -90,12 +88,12 @@ const StaffList: React.FC = () => {
   return (
     <KiduServerTable
       title="Staff Management"
-      subtitle="List of all staff members with quick edit & view actions"
+      subtitle="List of all active staff members with quick edit & view actions"
       columns={columns}
       idKey="staffUserId"
       addButtonLabel="Add New Staff"
       addRoute="/staff-management/staff-create"
-      editRoute="/dashboard/staff/staff-Edit"
+      editRoute="/dashboard/staff/staff-edit"
       viewRoute="/dashboard/staff/staff-view"
       
       fetchData={fetchStaffData}

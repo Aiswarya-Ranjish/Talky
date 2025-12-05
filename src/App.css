@@ -12,6 +12,7 @@
   border-color: #A6A6A6;
 }
 
+/* Sidebar */
 .admin-sidebar {
   background-color: #e278c2;
   color: white;
@@ -43,16 +44,17 @@
   z-index: 1000;
 }
 
+/* Input placeholder */
 .custom-placeholder::placeholder {
   color: rgb(247, 247, 247);
-  font-style: 'Plus Jakarata', sans-serif;
+  font-family: 'Plus Jakarata', sans-serif;
   font-size: 12px;
   opacity: 0.8;
 }
 
+/* Input + search */
 .custom-input {
   border: 1px solid #ccc;
-  /* default border */
   box-shadow: none !important;
 }
 
@@ -60,31 +62,25 @@
 .custom-input:hover {
   border-color: #882626ff !important;
   box-shadow: none !important;
-  /* remove blue glow */
 }
 
 .custom-search-input {
   flex: 1;
   max-width: 600px;
-  height: 30px;
+  min-width: 250px;
+  height: 45px;
   padding: 8px 12px;
-  /* extra padding */
   border: 1px solid #ccc;
-  /* default border */
   border-radius: 4px;
   transition: border-color 0.2s ease;
+  font-size: 1rem;
+  color: #000 !important;
 }
 
 .custom-search-input:hover,
 .custom-search-input:focus {
   border-color: #b1c1c1 !important;
-  /* green border on hover/focus */
   box-shadow: none !important;
-  /* remove default bootstrap shadow */
-}
-
-.custom-search-input {
-  color: #000 !important;
 }
 
 .custom-search-input::placeholder {
@@ -92,7 +88,7 @@
   opacity: 0.6;
 }
 
-/* DashBoard.css */
+/* Dashboard Cards */
 .overview-card {
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
@@ -102,6 +98,7 @@
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
+/* Outline Button */
 .custom-outline-btn {
   border-color: #882626ff !important;
   color: #882626ff !important;
@@ -113,66 +110,47 @@
   color: white !important;
 }
 
-.custom-search-input {
-  min-width: 250px;
-  height: 45px;
-  font-size: 1rem;
-}
-
+/* Fonts */
 .head-font {
-  font-family: "urbanist", sans-serif;
+  font-family: "Urbanist", sans-serif;
 }
 
 .sub-font {
-  font-family: "inter", sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
-/* Base toast styling */
+/* Toast Styling */
 .custom-toast {
   position: relative;
   padding-bottom: 6px;
-  /* space for progress line */
 }
 
-/* Bottom progress line */
 .custom-toast .react-hot-toast-bar {
   bottom: 0 !important;
-  /* move to bottom */
   top: auto !important;
-  /* disable top */
   height: 4px;
-  /* thickness of line */
   border-radius: 0 0 6px 6px;
   background: linear-gradient(90deg, #7c3aed, #9333ea);
-  /* violet gradient */
 }
 
-/* customAccordion.css */
-
+/* Accordion */
 .custom-accordion .accordion-button {
   background-color: #ffffff !important;
-  /* white background */
   color: #333333 !important;
-  /* text color */
   box-shadow: none !important;
-  /* remove default shadow */
 }
 
 .custom-accordion .accordion-button:not(.collapsed) {
   background-color: #f8f9fa !important;
-  /* background when expanded */
   color: #882626ff !important;
-  /* text color when expanded */
 }
 
 .custom-accordion .accordion-body {
   background-color: #ffffff !important;
-  /* body background */
   color: #333333 !important;
-  /* body text color */
 }
 
-/* Pagination Theme Override */
+/* Pagination Theme */
 .page-item .page-link {
   color: #882626ff !important;
   border-color: #882626ff !important;
@@ -180,12 +158,12 @@
 
 .page-item .page-link:hover {
   background-color: #882626ff !important;
-  color: #ffffff !important;
+  color: white !important;
   border-color: #882626ff !important;
 }
 
 .page-item.active .page-link {
   background-color: #882626ff !important;
   border-color: #882626ff !important;
-  color: #ffffff !important;
+  color: white !important;
 }
