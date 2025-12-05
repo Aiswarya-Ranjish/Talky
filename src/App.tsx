@@ -90,6 +90,9 @@ import StaffList from './pages/Staff/List';
 import StaffView from './pages/Staff/View';
 import StaffEdit from './pages/Staff/Edit';
 
+//user Recharge
+import UserRechargeListPage from './pages/Users/UserRecharge/List';
+
 //App Notication
 import AppNotiicationList from './pages/settings/AppNotification/List';
 import  AppNotificationCreate from './pages/settings/AppNotification/Create';
@@ -171,16 +174,16 @@ function App() {
           {/* User */}
           <Route path="user/user-list" element={<UserList />} />
           <Route path="user/edit-user/:userId" element={<UserEdit />} />
+          <Route path="user/view-user/:userId" element={<ViewUser />} />
 
+          {/* User Recharge */}
+          <Route path="user/userrechrg-list" element={<UserRechargeListPage />} />
           <Route path="user/view-user/:userId" element={<ViewUser />} />
 
           {/* Company */}
           <Route path="settings/company-list" element={<CompanyList />} />
           <Route path="settings/create-company" element={<CreateCompany />} />
           <Route path="settings/edit-company/:companyId" element={<CompanydetailsEdit />} />
-
-
-
           <Route path="settings/view-company/:companyId" element={<ViewCompany />} />
 
           {/* Expense Type */}

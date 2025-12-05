@@ -96,7 +96,7 @@ const UserPage: React.FC = () => {
       showSearch={true}
       showActions={true}
       showExport={true}
-      showAddButton={false} // ✅ Set to false to hide add button
+      showAddButton={false} 
       rowsPerPage={10}
     />
   );

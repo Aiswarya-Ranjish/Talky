@@ -39,8 +39,8 @@ const KiduLoader: React.FC<LoaderProps> = ({ type }) => {
                     </div>
 
                     <div className="d-flex justify-content-center align-items-center gap-2 mb-3">
-                        <Spinner animation="border" variant="success" />
-                        <Spinner animation="grow" variant="success" />
+                        <Spinner animation="border" variant="danger" />
+                        <Spinner animation="grow" variant="danger" />
                     </div>
 
                     <p
