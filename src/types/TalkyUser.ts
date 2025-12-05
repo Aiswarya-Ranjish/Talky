@@ -1,13 +1,6 @@
 // src/types/ApiTypes.ts
 
 
-  
-  /*export interface User {
-    id: string;
-    name: string;
-    email: string;
-    // Add other user fields as needed
-  }*/
   export interface User{
     profilePic?: string | null; 
     appUserId?:number;

@@ -10,10 +10,11 @@ import defaultProfile from "../../assets/Images/profile.jpeg";
 import { StaffModel } from "../../types/Staff/StaffType";
 import StaffService from "../../services/Staff/Staff.Services";
 import { getFullImageUrl } from "../../constants/API_ENDPOINTS";
+import KiduAuditLogs from "../../components/KiduAuditLogs";
 
 const StaffView: React.FC = () => {
   const navigate = useNavigate();
-  const { staffUserId } = useParams<{ staffUserId: string }>();
+  const { staffUserId } = useParams();
 
   const [data, setData] = useState<StaffModel | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,16 +24,9 @@ const StaffView: React.FC = () => {
   useEffect(() => {
     const loadStaff = async () => {
       try {
-        if (!staffUserId) {
-          toast.error("No staff ID provided");
-          navigate("/dashboard/staff/staff-list");
-          return;
-        }
-
-        const response = await StaffService.getStaffById(staffUserId);
-        setData(response);
-      } catch (err: any) {
-        console.error("Error loading staff:", err);
+        const res = await StaffService.getStaffById(staffUserId!);
+        setData(res);
+      } catch {
         toast.error("Failed to load staff details.");
         navigate("/dashboard/staff/staff-list");
       } finally {
@@ -40,7 +34,7 @@ const StaffView: React.FC = () => {
       }
     };
     loadStaff();
-  }, [staffUserId, navigate]);
+  }, [staffUserId]);
 
   if (loading) return <KiduLoader type="staff details..." />;
 
@@ -48,7 +42,7 @@ const StaffView: React.FC = () => {
     return (
       <div className="text-center mt-5">
         <h5>No staff details found.</h5>
-        <Button className="mt-3" onClick={() => navigate(-1)}>Go Back</Button>
+        <Button className="mt-3" onClick={() => navigate(-1)}>Back</Button>
       </div>
     );
 
@@ -70,72 +64,28 @@ const StaffView: React.FC = () => {
     { key: "isVideoEnabled", label: "Video Enabled", icon: "bi-camera-video-fill", isBoolean: true },
     { key: "isBlocked", label: "Is Blocked", icon: "bi-slash-circle", isBoolean: true },
     { key: "isKYCCompleted", label: "KYC Completed", icon: "bi-check-circle", isBoolean: true },
-    { key: "isOnline", label: "Online Status", icon: "bi-circle-fill", isBoolean: true },
+    { key: "isOnline", label: "Online Status", icon: "bi-circle-fill", isBoolean: true }
   ];
 
-  const formatDate = (isoString: string | Date | null) => {
-    if (!isoString) return "N/A";
-    const date = new Date(isoString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = date.toLocaleString("en-US", { month: "long" });
-    const year = date.getFullYear();
-    const time = date.toLocaleString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true
-    });
-    return `${day}-${month}-${year}  ${time}`;
-  };
-
-  const renderStarRating = (rating: number) => {
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating - fullStars >= 0.5;
-    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-    return (
-      <span style={{ color: "#ffc107", fontSize: "20px" }}>
-        {"★".repeat(fullStars)}
-        {hasHalfStar && "½"}
-        {"☆".repeat(emptyStars)}
-      </span>
-    );
-  };
+  const imageUrl = data.profileImagePath
+    ? getFullImageUrl(data.profileImagePath)
+    : defaultProfile;
 
   const handleEdit = () => navigate(`/dashboard/staff/staff-edit/${data.staffUserId}`);
 
   const handleDelete = async () => {
-    if (!data || !staffUserId) {
-      toast.error("Invalid staff data");
-      return;
-    }
-
     setLoadingDelete(true);
     try {
-      // Mark staff as deleted
-      const updatedStaff: StaffModel = { 
-        ...data, 
-        isDeleted: true 
-      };
-      
-      const response = await StaffService.editStaffById(staffUserId, updatedStaff);
-      
-      if (!response || response.isSucess === false) {
-        throw new Error(response?.customMessage || "Failed to delete staff");
-      }
-      
+     await StaffService.editStaffById(String(data.staffUserId ?? ""), { ...data, isDeleted: true });
       toast.success("Staff deleted successfully");
-      setTimeout(() => navigate("/dashboard/staff/staff-list"), 800);
-    } catch (err: any) {
-      console.error("Error deleting staff:", err);
-      toast.error(err.message || "Failed to delete staff.");
+      setTimeout(() => navigate("/dashboard/staff/staff-list"), 600);
+    } catch {
+      toast.error("Failed to delete staff.");
     } finally {
       setLoadingDelete(false);
       setShowConfirm(false);
     }
   };
-
-  const imageUrl = data.profileImagePath 
-    ? getFullImageUrl(data.profileImagePath) 
-    : defaultProfile;
 
   return (
     <div className="container d-flex justify-content-center align-items-center mt-5" style={{ fontFamily: "Urbanist" }}>
@@ -145,73 +95,82 @@ const StaffView: React.FC = () => {
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div className="d-flex align-items-center">
             <KiduPrevious />
-            <h5 className="fw-bold m-0 ms-2" style={{ color: "#18575A" }}>Staff Details</h5>
+            <h5 className="fw-bold m-0 ms-2" style={{ color: "#882626ff" }}>Staff Details</h5>
           </div>
 
           <div className="d-flex">
             <Button
               className="d-flex align-items-center gap-2 me-1"
-              style={{ fontWeight: 500, backgroundColor: "#18575A", fontSize: "15px", border: "none" }}
-              onClick={handleEdit}
-            >
+              style={{ backgroundColor: "#882626ff", border: "none", fontWeight: 500 }}
+              onClick={handleEdit}>
               <FaEdit /> Edit
             </Button>
 
             <Button variant="danger" className="d-flex align-items-center gap-2"
-              style={{ fontWeight: 500, fontSize: "15px" }}
+              style={{ fontWeight: 500 }}
               onClick={() => setShowConfirm(true)}>
               <FaTrash size={12} /> Delete
             </Button>
           </div>
         </div>
 
-        {/* Staff Details Header with Image */}
+        {/* Profile Image */}
         <div className="text-center mb-4">
           <Image
             src={imageUrl}
             alt={data.name}
             roundedCircle
-            width={130}
-            height={130}
+            width={120}
+            height={120}
             className="mb-3"
-            style={{ border: "3px solid #18575A", objectFit: "cover" }}
-            onError={(e: any) => { 
-              e.target.src = defaultProfile; 
-            }}
+            style={{ border: "3px solid #882626ff", objectFit: "cover" }}
           />
-
           <h5 className="fw-bold mb-1">{data.name}</h5>
-          <p className="small mb-0 fw-bold" style={{ color: "#18575A" }}>
+          <p className="small mb-0 fw-bold" style={{ color: "#882626ff" }}>
             Staff ID: {data.staffUserId}
           </p>
-          <p className="small text-danger fst-italic">
-            Last Login: {formatDate(data.lastLogin)}
-          </p>
-          <div className="mt-2">{renderStarRating(data.starRating || 0)}</div>
         </div>
 
-        {/* Table */}
+        {/* DETAILS TABLE (MATCHES USERVIEW STYLE) */}
         <div className="table-responsive">
-          <Table bordered hover responsive className="align-middle mb-0" style={{ fontSize: "14px" }}>
+          <Table
+            bordered
+            hover
+            responsive
+            className="align-middle mb-0"
+            style={{ fontFamily: "Urbanist", fontSize: "13px" }}
+          >
             <tbody>
-              {fields.map(({ key, label, icon, isBoolean }) => {
-                let value: any = (data as any)[key];
-
-                if (isBoolean) {
-                  value = value ? (
-                    <span className="badge bg-success">Yes</span>
-                  ) : (
-                    <span className="badge bg-secondary">No</span>
-                  );
-                }
+              {fields.map(({ key, label, icon, isBoolean }, index) => {
+                let value = (data as any)[key];
+                if (isBoolean) value = value ? "Yes" : "No";
 
                 return (
-                  <tr key={key} style={{ lineHeight: "1.2" }}>
-                    <td style={{ width: "40%", fontWeight: 600, color: "#18575A", padding: "8px 12px" }}>
+                  <tr
+                    key={key}
+                    style={{
+                      lineHeight: "1.2",
+                      backgroundColor: index % 2 === 1 ? "#ffe8e8" : ""
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#ffe6e6";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = index % 2 === 1 ? "#ffe8e8" : "";
+                    }}
+                  >
+                    <td
+                      style={{
+                        width: "40%",
+                        padding: "8px 6px",
+                        color: "#882626ff",
+                        fontWeight: 600
+                      }}
+                    >
                       <i className={`bi ${icon} me-2`}></i>
                       {label}
                     </td>
-                    <td style={{ padding: "8px 12px" }}>
+                    <td style={{ padding: "8px 6px" }}>
                       {value !== null && value !== undefined ? value : "N/A"}
                     </td>
                   </tr>
@@ -221,26 +180,25 @@ const StaffView: React.FC = () => {
           </Table>
         </div>
 
+        {/* AUDIT LOGS ADDED HERE */}
+        <KiduAuditLogs tableName="Staff" recordId={data.staffUserId ?? ""} />
+
       </Card>
 
-      {/* Delete Modal */}
+      {/* DELETE MODAL */}
       <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered>
         <Modal.Header closeButton><Modal.Title>Confirm Delete</Modal.Title></Modal.Header>
-        <Modal.Body>Are you sure you want to mark this staff as deleted?</Modal.Body>
-
+        <Modal.Body>Are you sure you want to delete this staff?</Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowConfirm(false)} disabled={loadingDelete}>
+          <Button variant="secondary" onClick={() => setShowConfirm(false)}>
             Cancel
           </Button>
           <Button variant="danger" onClick={handleDelete} disabled={loadingDelete}>
             {loadingDelete ? (
               <>
-                <Spinner animation="border" size="sm" className="me-2" />
-                Deleting...
+                <Spinner animation="border" size="sm" /> Deleting...
               </>
-            ) : (
-              "Delete"
-            )}
+            ) : "Delete"}
           </Button>
         </Modal.Footer>
       </Modal>

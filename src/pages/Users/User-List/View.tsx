@@ -71,8 +71,7 @@ const UserPageView: React.FC = () => {
 
   const handleEdit = () => navigate(`/dashboard/user/edit-user/${user.appUserId}`);
 
-  const imageUrl =
-    user.profileImagePath ? getFullImageUrl(user.profileImagePath) : defaultProfile;
+  const imageUrl = user.profileImagePath ? getFullImageUrl(user.profileImagePath) : defaultProfile;
 
   return (
     <div className="container d-flex justify-content-center align-items-center mt-5" style={{ fontFamily: "Urbanist" }}>
@@ -108,39 +107,56 @@ const UserPageView: React.FC = () => {
         </div>
 
         <div className="table-responsive">
-          <Table bordered hover responsive className="align-middle mb-0">
-            <tbody>
-              {fields.map(({ key, label }) => {
-                let value = (user as any)[key];
-                if (key === "registeredDate") value = formatDate(value);
-                if (typeof value === "boolean") value = value ? "Yes" : "No";
+  <Table bordered hover responsive className="align-middle mb-0" style={{ fontFamily: "Urbanist", fontSize: "13px" }}>
+    <tbody>
+      {fields.map(({ key, label }, index) => {
+        let value = (user as any)[key];
+        if (key === "registeredDate") value = formatDate(value);
+        if (typeof value === "boolean") value = value ? "Yes" : "No";
 
-                return (
-                  <tr key={key}>
-                    <td style={{ width: "40%", fontWeight: 600, color: "#882626ff" }}>{label}</td>
-                    <td>{String(value)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </Table>
-        </div>
+        return (
+          <tr
+            key={key}
+            style={{
+              lineHeight: "1.2",
+              backgroundColor: index % 2 === 1 ? "#ffe8e8" : "",
+              cursor: "default"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#ffe6e6";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = index % 2 === 1 ? "#ffe8e8" : "";
+            }}
+          >
+            <td
+              style={{
+                width: "40%",
+                fontWeight: 600,
+                color: "#882626ff",
+                padding: "8px 6px",
+                verticalAlign: "middle"
+              }}
+            >
+              {label}
+            </td>
 
-        {/* SPACED WALLET + AUDIT (NOT ZERO GAP ANYMORE) */}
-        {user.appUserId && (
-          <div className="mt-4">
-            <WalletAccordion userId={user.appUserId} />
-          </div>
-        )}
+            <td style={{ padding: "8px 6px", verticalAlign: "middle" }}>
+              {String(value)}
+            </td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </Table>
+</div>
 
-        {user.appUserId && (
-          <div className="mt-4">
-            <KiduAuditLogs
-              tableName="AppUser"
-              recordId={user.appUserId}
-            />
-          </div>
-        )}
+
+        {/* Wallet Accordion with mt-4 spacing */}
+        {user.appUserId && <WalletAccordion userId={user.appUserId} />}
+
+        {/* Audit Logs with mt-4 spacing (no mb-4) */}
+        {user.appUserId && <KiduAuditLogs tableName="AppUser" recordId={user.appUserId} />}
 
       </Card>
 

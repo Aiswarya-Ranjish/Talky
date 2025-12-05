@@ -57,41 +57,39 @@ const UserEdit: React.FC = () => {
     { value: "english", label: "English" },
   ];
 
+  const formatDate = (isoString: string | null) => {
+    if (!isoString) return "N/A";
+    const date = new Date(isoString);
+    const d = String(date.getDate()).padStart(2, "0");
+    const m = date.toLocaleString("en-US", { month: "long" });
+    const y = date.getFullYear();
+    const t = date.toLocaleString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+    return `${d}-${m}-${y} ${t}`;
+  };
+
   // ✅ IMPROVED toArray function - handles all formats and normalizes to lowercase
   const toArray = (value: string | string[] | undefined | null): string[] => {
-    // Handle null/undefined/empty string
     if (!value || value === "") return [];
     
-    // If already an array, normalize to lowercase
     if (Array.isArray(value)) {
       return value.map(item => String(item).toLowerCase().trim()).filter(Boolean);
     }
     
-    // If it's a string, try to parse as JSON first
     if (typeof value === 'string') {
-      // Trim the value first
       const trimmedValue = value.trim();
-      
-      // Handle empty string after trim
       if (!trimmedValue) return [];
       
-      // Try parsing as JSON array
       try {
         const parsed = JSON.parse(trimmedValue);
         if (Array.isArray(parsed)) {
           return parsed.map(item => String(item).toLowerCase().trim()).filter(Boolean);
         }
-      } catch (e) {
-        // Not JSON, continue to comma-separated logic
-      }
+      } catch (e) {}
       
-      // Check if it contains commas (multiple values)
       if (trimmedValue.includes(',')) {
-        // Handle comma-separated string and normalize to lowercase
         return trimmedValue.split(",").map(item => item.trim().toLowerCase()).filter(Boolean);
       }
       
-      // ✅ Single value - just return it as an array with lowercase
       return [trimmedValue.toLowerCase()];
     }
     
@@ -106,16 +104,8 @@ const UserEdit: React.FC = () => {
       try {
         const res = await AppUserService.getUserById(userId);
 
-        // 🔍 Debug logging (you can remove these after confirming it works)
-        console.log("=== API Response Debug ===");
-        console.log("Raw prefferedlanguage:", res.prefferedlanguage);
-        console.log("Raw interests:", res.interests);
-
         const processedLanguages = toArray(res.prefferedlanguage);
         const processedInterests = toArray(res.interests);
-
-        console.log("Processed languages:", processedLanguages);
-        console.log("Processed interests:", processedInterests);
 
         const userValues = {
           appUserId: res.appUserId,
@@ -135,6 +125,7 @@ const UserEdit: React.FC = () => {
           registeredDate: res.registeredDate
             ? new Date(res.registeredDate).toISOString().split("T")[0]
             : "",
+          lastLogin: res.lastLogin || null,
         };
 
         setFormData(userValues);
@@ -144,9 +135,7 @@ const UserEdit: React.FC = () => {
         fields.forEach((field) => (errorObj[field.name] = ""));
         setErrors(errorObj);
 
-        // ✅ Load existing image using helper function
         const imageUrl = res.profileImagePath ? getFullImageUrl(res.profileImagePath) : defaultProfile;
-        console.log("Image URL:", imageUrl);
         setImagePreview(imageUrl);
 
       } catch (err) {
@@ -169,12 +158,10 @@ const UserEdit: React.FC = () => {
       const file = files[0];
       setNewImageFile(file);
 
-      // ✅ Only revoke blob URLs, not http URLs
       if (imagePreview && imagePreview.startsWith('blob:')) {
         URL.revokeObjectURL(imagePreview);
       }
       const blobUrl = URL.createObjectURL(file);
-      console.log("New image selected, blob URL created:", blobUrl);
       setImagePreview(blobUrl);
       return;
     }
@@ -231,22 +218,16 @@ const UserEdit: React.FC = () => {
         return;
       }
 
-      // Update user basic details
       await AppUserService.editApp(dataToSubmit as any);
 
-      // ✅ Upload new image only if a new file was selected
       if (newImageFile) {
-        console.log("Uploading new profile picture...");
         const imageFormData = new FormData();
         imageFormData.append("appUserId", userId.toString());
         imageFormData.append("ProfilePic", newImageFile);
 
         const uploadRes = await AppUserService.uploadprofilepic(imageFormData);
         if (!uploadRes) {
-          console.error("Image upload failed");
           toast.error("User updated but image upload failed");
-        } else {
-          console.log("Image uploaded successfully");
         }
       }
 
@@ -274,15 +255,15 @@ const UserEdit: React.FC = () => {
       <Container className="px-4 mt-5 shadow-sm rounded bg-white" style={{ fontFamily: "Urbanist" }}>
         <div className="d-flex align-items-center mb-3">
           <div className="me-2 mt-3"><KiduPrevious /></div>
-          <h4 className="fw-bold mb-0 mt-3" style={{ color: "#18575A" }}>Edit User</h4>
+          <h4 className="fw-bold mb-0 mt-3" style={{ color: "#882626ff" }}>Edit User</h4>
         </div>
 
         <hr />
 
         <Form onSubmit={handleSubmit} className="p-4">
           <Row>
-            {/* IMAGE SECTION */}
-            <Col xs={12} md={4} className="d-flex flex-column align-items-center mb-4">
+            {/* LEFT SIDE - IMAGE SECTION */}
+            <Col xs={12} md={3} className="d-flex flex-column align-items-start mb-4">
               <div style={{ position: "relative", width: "160px", height: "160px" }}>
                 <Image 
                   src={imagePreview || defaultProfile}
@@ -291,7 +272,6 @@ const UserEdit: React.FC = () => {
                   height={160}
                   style={{ objectFit: "cover", border: "1px solid #ccc" }}
                   onError={(e: any) => { 
-                    console.error("Image load error, using default");
                     e.target.src = defaultProfile; 
                   }}
                 />
@@ -302,7 +282,7 @@ const UserEdit: React.FC = () => {
                       position: "absolute", 
                       bottom: "5px", 
                       right: "5px", 
-                      background: "#18575A", 
+                      background: "#882626ff", 
                       borderRadius: "50%", 
                       padding: "8px 11px", 
                       cursor: "pointer" 
@@ -320,14 +300,23 @@ const UserEdit: React.FC = () => {
                   style={{ display: "none" }} 
                 />
               </div>
+
+              <div className="mt-3 text-start">
+                <h5 className="mb-1">{formData.name}</h5>
+                <p className="small mb-1 fw-bold text-muted">ID: {formData.appUserId}</p>
+                <p className="small text-danger fst-italic">
+                  Last Login: {formData?.lastLogin ? formatDate(formData.lastLogin) : 'N/A'}
+                </p>
+              </div>
             </Col>
 
-            {/* FORM FIELDS */}
-            <Col xs={12} md={8}>
+            {/* RIGHT SIDE - FORM FIELDS */}
+            <Col xs={12} md={9}>
               <Row>
                 {/* Name */}
                 <Col md={6} className="mb-3">
                   <Form.Label className="fw-semibold">
+                    <i className="bi bi-person-fill me-2"></i>
                     {fields[0].label} {fields[0].rules.required && <span className="text-danger">*</span>}
                   </Form.Label>
                   <Form.Control
@@ -337,29 +326,15 @@ const UserEdit: React.FC = () => {
                     placeholder="Enter name"
                     onChange={handleChange}
                     onBlur={() => validateField("name", formData.name)}
+                    className="input-shadow"
                   />
                   {errors.name && <small className="text-danger">{errors.name}</small>}
                 </Col>
 
-                {/* Email */}
-                <Col md={6} className="mb-3">
-                  <Form.Label className="fw-semibold">
-                    {fields[1].label} {fields[1].rules.required && <span className="text-danger">*</span>}
-                  </Form.Label>
-                  <Form.Control
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    placeholder="Enter email"
-                    onChange={handleChange}
-                    onBlur={() => validateField("email", formData.email)}
-                  />
-                  {errors.email && <small className="text-danger">{errors.email}</small>}
-                </Col>
-
                 {/* Mobile Number (Read-only) */}
-                <Col md={6} className="mb-3">
+                <Col md={4} className="mb-3">
                   <Form.Label className="fw-semibold">
+                    <i className="bi bi-telephone-fill me-2"></i>
                     {fields[4].label} {fields[4].rules.required && <span className="text-danger">*</span>}
                   </Form.Label>
                   <Form.Control
@@ -370,43 +345,30 @@ const UserEdit: React.FC = () => {
                     disabled
                     style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed" }}
                   />
-                  {errors.mobileNumber && <small className="text-danger">{errors.mobileNumber}</small>}
                 </Col>
 
-                {/* Wallet Balance */}
+                {/* Email */}
                 <Col md={6} className="mb-3">
                   <Form.Label className="fw-semibold">
-                    {fields[2].label}
+                    <i className="bi bi-envelope-fill me-2"></i>
+                    {fields[1].label}
                   </Form.Label>
                   <Form.Control
-                    type="number"
-                    name="walletBalance"
-                    value={formData.walletBalance}
-                    placeholder="Wallet balance"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    placeholder="Enter email"
                     onChange={handleChange}
-                    onBlur={() => validateField("walletBalance", formData.walletBalance)}
+                    onBlur={() => validateField("email", formData.email)}
+                    className="input-shadow"
                   />
-                  {errors.walletBalance && <small className="text-danger">{errors.walletBalance}</small>}
-                </Col>
-
-                {/* Registered Date */}
-                <Col md={6} className="mb-3">
-                  <Form.Label className="fw-semibold">
-                    Registered Date <span className="text-danger">*</span>
-                  </Form.Label>
-                  <Form.Control
-                    type="date"
-                    name="registeredDate"
-                    value={formData.registeredDate}
-                    disabled
-                    readOnly
-                    style={{ backgroundColor: "#f0f0f0", cursor: "not-allowed" }}
-                  />
+                  {errors.email && <small className="text-danger">{errors.email}</small>}
                 </Col>
 
                 {/* Gender Radio Buttons */}
-                <Col md={6} className="mb-3">
+                <Col md={4} className="mb-3">
                   <Form.Label className="fw-semibold">
+                    <i className="bi bi-gender-ambiguous me-2"></i>
                     {fields[5].label} {fields[5].rules.required && <span className="text-danger">*</span>}
                   </Form.Label>
                   <div className="d-flex gap-3 mt-2">
@@ -417,7 +379,6 @@ const UserEdit: React.FC = () => {
                       value="Male"
                       checked={formData.gender === "Male"}
                       onChange={handleChange}
-                      onBlur={() => validateField("gender", formData.gender)}
                     />
                     <Form.Check
                       type="radio"
@@ -426,7 +387,6 @@ const UserEdit: React.FC = () => {
                       value="Female"
                       checked={formData.gender === "Female"}
                       onChange={handleChange}
-                      onBlur={() => validateField("gender", formData.gender)}
                     />
                     <Form.Check
                       type="radio"
@@ -435,82 +395,108 @@ const UserEdit: React.FC = () => {
                       value="Other"
                       checked={formData.gender === "Other"}
                       onChange={handleChange}
-                      onBlur={() => validateField("gender", formData.gender)}
                     />
                   </div>
                   {errors.gender && <small className="text-danger">{errors.gender}</small>}
                 </Col>
+
+                {/* Wallet Balance */}
+                <Col md={4} className="mb-3">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-wallet2 me-2"></i>
+                    {fields[2].label}
+                  </Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="walletBalance"
+                    value={formData.walletBalance}
+                    placeholder="Wallet balance"
+                    onChange={handleChange}
+                    onBlur={() => validateField("walletBalance", formData.walletBalance)}
+                    className="input-shadow"
+                  />
+                  {errors.walletBalance && <small className="text-danger">{errors.walletBalance}</small>}
+                </Col>
+
+                {/* Interests */}
+                <Col md={4} className="mb-3">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-collection-play me-2"></i>
+                    Interests
+                  </Form.Label>
+                  <Select
+                    isMulti
+                    options={interestOptions}
+                    value={interestOptions.filter((x) => formData.interests?.includes(x.value))}
+                    onChange={(e: any) =>
+                      setFormData((prev: any) => ({ ...prev, interests: e.map((x: any) => x.value) }))
+                    }
+                    className="basic-multi-select"
+                    classNamePrefix="select"
+                  />
+                </Col>
+
+                {/* Preferred Languages */}
+                <Col md={4} className="mb-3">
+                  <Form.Label className="fw-semibold">
+                    <i className="bi bi-translate me-2"></i>
+                    Languages
+                  </Form.Label>
+                  <Select
+                    isMulti
+                    options={languageOptions}
+                    value={languageOptions.filter((x) => formData.prefferedlanguage?.includes(x.value))}
+                    onChange={(e: any) =>
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        prefferedlanguage: e.map((x: any) => x.value),
+                      }))
+                    }
+                    className="basic-multi-select"
+                    classNamePrefix="select"
+                  />
+                </Col>
               </Row>
-            </Col>
-          </Row>
 
-          {/* Multi-select for Interests and Languages */}
-          <Row className="mb-3">
-            <Col md={6}>
-              <Form.Label className="fw-semibold">Interests</Form.Label>
-              <Select
-                isMulti
-                options={interestOptions}
-                value={interestOptions.filter((x) => formData.interests?.includes(x.value))}
-                onChange={(e: any) =>
-                  setFormData((prev: any) => ({ ...prev, interests: e.map((x: any) => x.value) }))
-                }
-              />
-            </Col>
-
-            <Col md={6}>
-              <Form.Label className="fw-semibold">Preferred Languages</Form.Label>
-              <Select
-                isMulti
-                options={languageOptions}
-                value={languageOptions.filter((x) => formData.prefferedlanguage?.includes(x.value))}
-                onChange={(e: any) =>
-                  setFormData((prev: any) => ({
-                    ...prev,
-                    prefferedlanguage: e.map((x: any) => x.value),
-                  }))
-                }
-              />
-            </Col>
-          </Row>
-
-          {/* Switches */}
-          <Row className="mb-4">
-            <Col md={3}>
-              <Form.Check
-                type="switch"
-                label="Blocked"
-                checked={formData.isBlocked}
-                name="isBlocked"
-                onChange={handleChange}
-              />
-            </Col>
-            <Col md={3}>
-              <Form.Check
-                type="switch"
-                label="Staff"
-                checked={formData.isStaff}
-                name="isStaff"
-                onChange={handleChange}
-              />
-            </Col>
-            <Col md={3}>
-              <Form.Check
-                type="switch"
-                label="KYC Complete"
-                checked={formData.isKYCCompleted}
-                name="isKYCCompleted"
-                onChange={handleChange}
-              />
-            </Col>
-            <Col md={3}>
-              <Form.Check
-                type="switch"
-                label="Adult Verification"
-                checked={formData.isAudultVerificationCompleted}
-                name="isAudultVerificationCompleted"
-                onChange={handleChange}
-              />
+              {/* Switches */}
+              <Row className="mt-4 mb-4">
+                <Col md={3}>
+                  <Form.Check
+                    type="switch"
+                    label="Blocked"
+                    checked={formData.isBlocked}
+                    name="isBlocked"
+                    onChange={handleChange}
+                  />
+                </Col>
+                <Col md={3}>
+                  <Form.Check
+                    type="switch"
+                    label="KYC Complete"
+                    checked={formData.isKYCCompleted}
+                    name="isKYCCompleted"
+                    onChange={handleChange}
+                  />
+                </Col>
+                <Col md={3}>
+                  <Form.Check
+                    type="switch"
+                    label="Adult Verification"
+                    checked={formData.isAudultVerificationCompleted}
+                    name="isAudultVerificationCompleted"
+                    onChange={handleChange}
+                  />
+                </Col>
+                <Col md={3}>
+                  <Form.Check
+                    type="switch"
+                    label="Is Staff"
+                    checked={formData.isStaff}
+                    name="isStaff"
+                    onChange={handleChange}
+                  />
+                </Col>
+              </Row>
             </Col>
           </Row>
 
@@ -518,7 +504,7 @@ const UserEdit: React.FC = () => {
           <div className="d-flex gap-2 justify-content-end mt-4">
             <KiduReset initialValues={initialValues} setFormData={setFormData} />
             <Button type="submit" style={{ backgroundColor: "#882626ff", border: "none" }}>
-              Update
+              Edit
             </Button>
           </div>
         </Form>

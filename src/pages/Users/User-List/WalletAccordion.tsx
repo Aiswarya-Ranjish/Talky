@@ -1,5 +1,5 @@
 import React from "react";
-import { Accordion, Card, Badge } from "react-bootstrap";
+import { Accordion, Card } from "react-bootstrap";
 import WalletTransactionServices from "../../../services/Users/WalletTransactionService";
 import { Wallettransaction } from "../../../types/Users/WalletTransaction.types";
 import KiduServerTable from "../../../components/Trip/KiduServerTable";
@@ -9,7 +9,6 @@ interface WalletAccordionProps {
 }
 
 const WalletAccordion: React.FC<WalletAccordionProps> = ({ userId }) => {
-  // Fetch function for KiduServerTable
   const fetchWalletTransactions = async (params: {
     pageNumber: number;
     pageSize: number;
@@ -18,7 +17,6 @@ const WalletAccordion: React.FC<WalletAccordionProps> = ({ userId }) => {
     try {
       console.log("Fetching wallet transactions for userId:", userId);
       
-      // Fetch all transactions
       const allTransactions = await WalletTransactionServices.getUserById(String(userId));
       
       console.log("Fetched transactions:", allTransactions);
@@ -27,16 +25,12 @@ const WalletAccordion: React.FC<WalletAccordionProps> = ({ userId }) => {
         return { data: [], total: 0 };
       }
 
-      // Transform data to add formatted status for display
       const transformedData = allTransactions.map((tx: Wallettransaction) => ({
         ...tx,
-        // Create a display-friendly status that will be rendered
         status: tx.isSuccess ? "Success" : "Failed",
-        // Keep original for filtering
         isSuccessOriginal: tx.isSuccess
       }));
       
-      // Filter based on search term
       let filteredData = transformedData;
       if (params.searchTerm) {
         const searchLower = params.searchTerm.toLowerCase();
@@ -51,7 +45,6 @@ const WalletAccordion: React.FC<WalletAccordionProps> = ({ userId }) => {
         );
       }
 
-      // Calculate pagination
       const startIndex = (params.pageNumber - 1) * params.pageSize;
       const endIndex = startIndex + params.pageSize;
       const paginatedData = filteredData.slice(startIndex, endIndex);
@@ -66,7 +59,6 @@ const WalletAccordion: React.FC<WalletAccordionProps> = ({ userId }) => {
     }
   };
 
-  // Column definitions for KiduServerTable
   const columns = [
     { key: "id", label: "ID", enableSorting: true, enableFiltering: true, type: "text" as const },
     { key: "transactionType", label: "Type", enableSorting: true, enableFiltering: true, type: "text" as const },
@@ -80,9 +72,8 @@ const WalletAccordion: React.FC<WalletAccordionProps> = ({ userId }) => {
 
   return (
     <>
-      <Accordion
-        alwaysOpen
-        className="mt-4 mb-4 custom-accordion"
+      <Accordion 
+        className="mt-4 custom-accordion"
         style={{
           maxWidth: "100%",
           fontSize: "0.85rem",

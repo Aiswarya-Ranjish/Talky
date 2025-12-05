@@ -6,7 +6,6 @@ import toast, { Toaster } from "react-hot-toast";
 import PurchaseOrderService from "../../../services/Users/UserRecharge.services";
 import KiduLoader from "../../../components/KiduLoader";
 import KiduPrevious from "../../../components/KiduPrevious";
-import AuditTrailsComponent from "../../../components/KiduAuditLogs";
 import { purchaseorder } from "../../../types/Users/UserRecharge.types";
 
 const ViewUserRecharge: React.FC = () => {
@@ -135,7 +134,7 @@ const ViewUserRecharge: React.FC = () => {
 
                 {/* Order Title */}
                 <div className="text-center mb-4">
-                    <h5 className="fw-bold mb-1">Order #{data.purchaseOrderId}</h5>
+                    <h5 className="fw-bold mb-1">Order ID:{data.purchaseOrderId}</h5>
                     <p
                         className="small mb-0 fw-bold"
                         style={{ color: data.isSucsess ? "#28a745" : "#dc3545" }}
@@ -144,32 +143,53 @@ const ViewUserRecharge: React.FC = () => {
                     </p>
                 </div>
 
-                {/* Table */}
-                <div className="table-responsive">
-                    <Table bordered hover responsive className="align-middle mb-0">
-                        <tbody>
-                            {fields.map(({ key, label }) => (
-                                <tr key={key}>
-                                    <td
-                                        style={{
-                                            width: "40%",
-                                            fontWeight: 600,
-                                            color: "#882626ff",
-                                        }}
-                                    >
-                                        {label}
-                                    </td>
-                                    <td>{formatValue(key, data[key as keyof purchaseorder])}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Table>
-                </div>
+              {/* Table */}
+<div className="table-responsive">
+  <Table
+    bordered
+    hover
+    responsive
+    className="align-middle mb-0"
+    style={{ fontFamily: "Urbanist", fontSize: "13px" }}
+  >
+    <tbody>
+      {fields.map(({ key, label }, index) => (
+        <tr
+          key={key}
+          style={{
+            lineHeight: "1.2",
+            backgroundColor: index % 2 === 1 ? "#ffe8e8" : "",
+            cursor: "default"
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "#ffe6e6";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor =
+              index % 2 === 1 ? "#ffe8e8" : "";
+          }}
+        >
+          <td
+            style={{
+              width: "40%",
+              fontWeight: 600,
+              color: "#882626ff",
+              padding: "8px 6px",
+              verticalAlign: "middle"
+            }}
+          >
+            {label}
+          </td>
 
-                {/* Audit Logs */}
-                <AuditTrailsComponent tableName="PurchaseOrder" recordId={data.purchaseOrderId} />
+          <td style={{ padding: "8px 6px", verticalAlign: "middle" }}>
+            {formatValue(key, data[key as keyof purchaseorder])}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </Table>
+</div>
             </Card>
-
             {/* Delete Modal */}
             <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered>
                 <Modal.Header closeButton>
