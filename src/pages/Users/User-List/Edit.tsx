@@ -28,7 +28,7 @@ const UserEdit: React.FC = () => {
   // ---------------------- FIELD RULES ----------------------
   const fields = [
     { name: "name", label: "Name", rules: { required: true, type: "text" as const } },
-    { name: "email", label: "Email", rules: { required: true, type: "email" as const } },
+    { name: "email", label: "Email", rules: { required: false, type: "email" as const } },
     { name: "walletBalance", label: "Wallet Amount", rules: { required: false, type: "number" as const } },
     { name: "registeredDate", label: "Registered Date", rules: { required: true, type: "date" as const } },
     { name: "mobileNumber", label: "Mobile Number", rules: { required: true, type: "tel" as const, minLength: 10, maxLength: 10 } },
@@ -57,9 +57,45 @@ const UserEdit: React.FC = () => {
     { value: "english", label: "English" },
   ];
 
-  const toArray = (value: string | string[] | undefined) => {
-    if (!value) return [];
-    return Array.isArray(value) ? value : value.split(",");
+  // ✅ IMPROVED toArray function - handles all formats and normalizes to lowercase
+  const toArray = (value: string | string[] | undefined | null): string[] => {
+    // Handle null/undefined/empty string
+    if (!value || value === "") return [];
+    
+    // If already an array, normalize to lowercase
+    if (Array.isArray(value)) {
+      return value.map(item => String(item).toLowerCase().trim()).filter(Boolean);
+    }
+    
+    // If it's a string, try to parse as JSON first
+    if (typeof value === 'string') {
+      // Trim the value first
+      const trimmedValue = value.trim();
+      
+      // Handle empty string after trim
+      if (!trimmedValue) return [];
+      
+      // Try parsing as JSON array
+      try {
+        const parsed = JSON.parse(trimmedValue);
+        if (Array.isArray(parsed)) {
+          return parsed.map(item => String(item).toLowerCase().trim()).filter(Boolean);
+        }
+      } catch (e) {
+        // Not JSON, continue to comma-separated logic
+      }
+      
+      // Check if it contains commas (multiple values)
+      if (trimmedValue.includes(',')) {
+        // Handle comma-separated string and normalize to lowercase
+        return trimmedValue.split(",").map(item => item.trim().toLowerCase()).filter(Boolean);
+      }
+      
+      // ✅ Single value - just return it as an array with lowercase
+      return [trimmedValue.toLowerCase()];
+    }
+    
+    return [];
   };
 
   // ------------------------------- FETCH USER --------------------------------
@@ -69,6 +105,17 @@ const UserEdit: React.FC = () => {
     const loadUser = async () => {
       try {
         const res = await AppUserService.getUserById(userId);
+
+        // 🔍 Debug logging (you can remove these after confirming it works)
+        console.log("=== API Response Debug ===");
+        console.log("Raw prefferedlanguage:", res.prefferedlanguage);
+        console.log("Raw interests:", res.interests);
+
+        const processedLanguages = toArray(res.prefferedlanguage);
+        const processedInterests = toArray(res.interests);
+
+        console.log("Processed languages:", processedLanguages);
+        console.log("Processed interests:", processedInterests);
 
         const userValues = {
           appUserId: res.appUserId,
@@ -83,8 +130,8 @@ const UserEdit: React.FC = () => {
           isKYCCompleted: res.isKYCCompleted || false,
           isAudultVerificationCompleted: res.isAudultVerificationCompleted || false,
           profileImagePath: res.profileImagePath || "",
-          interests: toArray(res.interests),
-          prefferedlanguage: toArray(res.prefferedlanguage),
+          interests: processedInterests,
+          prefferedlanguage: processedLanguages,
           registeredDate: res.registeredDate
             ? new Date(res.registeredDate).toISOString().split("T")[0]
             : "",
@@ -99,10 +146,11 @@ const UserEdit: React.FC = () => {
 
         // ✅ Load existing image using helper function
         const imageUrl = res.profileImagePath ? getFullImageUrl(res.profileImagePath) : defaultProfile;
-        console.log("User loaded - Original path:", res.profileImagePath, "→ Full URL:", imageUrl);
+        console.log("Image URL:", imageUrl);
         setImagePreview(imageUrl);
 
       } catch (err) {
+        console.error("Load user error:", err);
         toast.error("Failed to load user");
         navigate("/dashboard/user/user-list");
       } finally {
@@ -210,7 +258,7 @@ const UserEdit: React.FC = () => {
     }
   };
 
-  // ✅ Cleanup blob URLs on unmount
+  // Cleanup blob URLs on unmount
   useEffect(() => {
     return () => {
       if (imagePreview && imagePreview.startsWith('blob:')) {
@@ -344,16 +392,16 @@ const UserEdit: React.FC = () => {
                 {/* Registered Date */}
                 <Col md={6} className="mb-3">
                   <Form.Label className="fw-semibold">
-                    {fields[3].label} {fields[3].rules.required && <span className="text-danger">*</span>}
+                    Registered Date <span className="text-danger">*</span>
                   </Form.Label>
                   <Form.Control
                     type="date"
                     name="registeredDate"
                     value={formData.registeredDate}
-                    onChange={handleChange}
-                    onBlur={() => validateField("registeredDate", formData.registeredDate)}
+                    disabled
+                    readOnly
+                    style={{ backgroundColor: "#f0f0f0", cursor: "not-allowed" }}
                   />
-                  {errors.registeredDate && <small className="text-danger">{errors.registeredDate}</small>}
                 </Col>
 
                 {/* Gender Radio Buttons */}
@@ -403,7 +451,7 @@ const UserEdit: React.FC = () => {
               <Select
                 isMulti
                 options={interestOptions}
-                value={interestOptions.filter((x) => formData.interests.includes(x.value))}
+                value={interestOptions.filter((x) => formData.interests?.includes(x.value))}
                 onChange={(e: any) =>
                   setFormData((prev: any) => ({ ...prev, interests: e.map((x: any) => x.value) }))
                 }
@@ -415,7 +463,7 @@ const UserEdit: React.FC = () => {
               <Select
                 isMulti
                 options={languageOptions}
-                value={languageOptions.filter((x) => formData.prefferedlanguage.includes(x.value))}
+                value={languageOptions.filter((x) => formData.prefferedlanguage?.includes(x.value))}
                 onChange={(e: any) =>
                   setFormData((prev: any) => ({
                     ...prev,
