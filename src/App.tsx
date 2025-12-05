@@ -106,6 +106,13 @@ import FinancialYearCreate from './pages/settings/FinancialYear/Create';
 import FinancialYearEdit from './pages/settings/FinancialYear/Edit';
 import FinancialYearView from './pages/settings/FinancialYear/View';
 
+//Category
+
+import Category from './pages/settings/Category/List';
+import CategoryCreate from './pages/settings/Category/Create';
+import CategoryEdit from './pages/settings/Category/Edit';
+import CategoryView from './pages/settings/Category/View';
+
 
 
 function App() {
@@ -213,9 +220,18 @@ function App() {
           <Route path="settings/create-financialYear" element={< FinancialYearCreate />} />
           <Route path="settings/edit-financialYear/:financialYearId" element={< FinancialYearEdit />} />
           <Route path="settings/view-financialYear/:financialYearId" element={< FinancialYearView />} />
+
+          {/*Category  */}
+          <Route path="settings/Category" element={<Category />} />
+          <Route path="settings/create-Category" element={< CategoryCreate />} />
+          <Route path="settings/edit-Category/:categoryId" element={< CategoryEdit />} />
+         
+          <Route path="settings/view-Category/:categoryId" element={< CategoryView />} />
+
         </Route>
         {/* Catch-All Route for 404 */}
         <Route path='*' element={<PageNotFound />} />
+
 
       </Routes>
     </>
