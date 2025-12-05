@@ -73,7 +73,7 @@ const AppNotificationList: React.FC = () => {
       addButtonLabel="Add New Notification"
       addRoute="/dashboard/settings/create-appNotification"
       editRoute="/dashboard/settings/edit-appNotification/"
-      viewRoute="/AppNotification/AppNotificationView"
+      viewRoute="/dashboard/settings/view-appNotification"
       fetchData={fetchAppNotificationData}
       rowsPerPage={15}
       showSearch={true}

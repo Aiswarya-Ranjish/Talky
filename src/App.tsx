@@ -94,6 +94,11 @@ import StaffEdit from './pages/Staff/Edit';
 import AppNotiicationList from './pages/settings/AppNotification/List';
 import  AppNotificationCreate from './pages/settings/AppNotification/Create';
 import  AppNotificationEdit from './pages/settings/AppNotification/Edit';
+import  AppNotificationView from './pages/settings/AppNotification/View';
+
+//Finacial Year
+import FinancialYear from './pages/settings/FinancialYear/List';
+import  FinancialYearCreate from './pages/settings/FinancialYear/Create';
 
 
 
@@ -195,7 +200,11 @@ function App() {
           <Route path="settings/appNotification-list" element={<AppNotiicationList />} /> 
           <Route path="settings/create-appNotification" element={< AppNotificationCreate/>} />
           <Route path="settings/edit-appNotification/:appNotificationId" element={< AppNotificationEdit/>} />
+          <Route path="settings/view-appNotification/:appNotificationId" element={< AppNotificationView/>} />
 
+          {/*Financial Year */}
+          <Route path="settings/financial-year" element={<FinancialYear />} /> 
+          <Route path="settings/create-financialYear" element={< FinancialYearCreate/>} />
 
         </Route>
         {/* Catch-All Route for 404 */}
