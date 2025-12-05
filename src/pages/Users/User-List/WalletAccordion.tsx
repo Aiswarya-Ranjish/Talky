@@ -94,7 +94,7 @@ const WalletAccordion: React.FC<WalletAccordionProps> = ({ userId }) => {
             as={Accordion.Button}
             className="custom-wallet-header"
             style={{
-              backgroundColor: "#18575A",
+              backgroundColor: "#882626ff",
               color: "white",
               width: "100%",
               padding: "0.5rem 1rem",
@@ -141,12 +141,12 @@ const WalletAccordion: React.FC<WalletAccordionProps> = ({ userId }) => {
 
       <style>{`
         .custom-wallet-header.accordion-button {
-          background-color: #18575A !important;
+          background-color: #882626ff !important;
           color: white !important;
           box-shadow: none !important;
         }
         .custom-wallet-header.accordion-button:not(.collapsed) {
-          background-color: #18575A !important;
+          background-color: #882626ff !important;
           color: white !important;
         }
         .custom-wallet-header.accordion-button::after {

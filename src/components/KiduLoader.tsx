@@ -1,6 +1,6 @@
 import React from "react";
 import { Col, Container, Row, Spinner } from "react-bootstrap";
-import carGif from "../assets/Gifs/car.gif";
+import Call from "../assets/Gifs/phone-call.webp";
 
 interface LoaderProps {
     type?: string; // to show what is being loaded ,e.g., "customers", "drivers", "trips"
@@ -27,7 +27,7 @@ const KiduLoader: React.FC<LoaderProps> = ({ type }) => {
                 <Col>
                     <div className="mb-3">
                         <img
-                            src={carGif}
+                            src={Call}
                             alt="Loading..."
                             className="img-fluid"
                             style={{

@@ -2,7 +2,7 @@
 import React from "react";
 import { Col, Container, Row } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import notFoundGif from "../../assets/Gifs/not-found.gif"; // You can also use the external URL instead
+import PF from "../../assets/Images/pf.png"; // You can also use the external URL instead
 
 const PageNotFound: React.FC = () => {
   const navigate = useNavigate();
@@ -23,26 +23,19 @@ const PageNotFound: React.FC = () => {
             <div className="mb-3 rounded-3">
               <img
                 src={
-                  notFoundGif
+                  PF
                 }
                 alt="Page Not Found"
                 className="img-fluid"
                 style={{
-                  width: "550px",
+                  width: "800px",
                   height: "350px",
                   borderRadius: "20px",
                   objectFit: "contain",
                 }}
               />
             </div>
-
-            {/* Message Section */}
-            <h4
-              className="fw-semibold mt-3"
-              style={{ color: "#18575A", fontWeight: 700 }}
-            >
-              Oops! Page Not Found
-            </h4>
+            
 
             <p
               style={{
@@ -61,7 +54,7 @@ const PageNotFound: React.FC = () => {
               onClick={() => navigate("/dashboard")}
               className="rounded-3 p-2 border-0"
               style={{
-                backgroundColor: "#18575A",
+                backgroundColor: "#882626ff",
                 fontFamily: "Urbanist",
                 fontSize: "15px",
                 color: "#FFFFFF",

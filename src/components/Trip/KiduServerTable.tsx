@@ -24,7 +24,7 @@ interface Column {
   label: string;
   enableSorting?: boolean;
   enableFiltering?: boolean;
-  type?: 'text' | 'checkbox' | 'image' | 'rating' | 'date'; // Add type field
+  type?: 'text' | 'checkbox' | 'image' | 'rating' | 'date';
 }
 
 interface KiduServerTableProps {
@@ -61,7 +61,7 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
   addRoute,
   viewRoute,
   editRoute,
-  showAddButton = false, // ✅ Changed default to false
+  showAddButton = false,
   showKiduPopupButton = false,
   showExport = true,
   onRowClick,
@@ -138,15 +138,12 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
       cell: ({ getValue, row }) => {
         const rawValue = getValue();
         
-        // Early return for null/undefined
         if (rawValue === null || rawValue === undefined || rawValue === '') {
           return '-';
         }
 
-        // Handle based on column type
         switch (col.type) {
           case 'checkbox':
-            // Only for checkbox type columns (like isBlocked)
             let boolValue = false;
             if (typeof rawValue === 'boolean') {
               boolValue = rawValue;
@@ -165,13 +162,12 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
                   width: '18px',
                   height: '18px',
                   cursor: 'not-allowed',
-                  accentColor: '#18575A'
+                  accentColor: '#882626ff'
                 }}
               />
             );
 
           case 'image':
-            // Handle profile images
             const imageSrc = typeof rawValue === 'string' ? rawValue : "/assets/Images/profile.jpeg";
             return (
               <img
@@ -181,13 +177,13 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
                   width: 40, 
                   height: 40, 
                   borderRadius: "50%",
-                  objectFit: "cover" 
+                  objectFit: "cover",
+                  border: "2px solid #882626ff"
                 }}
               />
             );
 
           case 'rating':
-            // Handle star ratings
             let rating: number = 0;
             
             if (typeof rawValue === 'number') {
@@ -229,7 +225,6 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
             );
 
           case 'date':
-            // Handle date formatting
             try {
               const valueStr = String(rawValue);
               const date = new Date(valueStr);
@@ -248,11 +243,9 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
 
           case 'text':
           default:
-            // Default text rendering
             return String(rawValue);
         }
         
-        // Fallback: return as string
         return String(rawValue);
       },
     }));
@@ -283,11 +276,19 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
                 size="sm"
                 style={{
                   backgroundColor: "transparent",
-                  border: "1px solid #18575A",
-                  color: "#18575A",
+                  border: "1px solid #882626ff",
+                  color: "#882626ff",
                   fontSize: "12px",
                   padding: "4px 10px",
                   fontWeight: 500,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#882626ff";
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#882626ff";
                 }}
                 onClick={() => navigate(`${editRoute}/${row.original[idKey]}`)}
               >
@@ -299,12 +300,18 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
               <Button
                 size="sm"
                 style={{
-                  backgroundColor: "#18575A",
+                  backgroundColor: "#882626ff",
                   border: "none",
                   color: "white",
                   fontSize: "12px",
                   padding: "4px 10px",
                   fontWeight: 500,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#882626ff";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#882626ff";
                 }}
                 onClick={() => navigate(`${viewRoute}/${row.original[idKey]}`)}
               >
@@ -359,7 +366,7 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
     return (
       <Container fluid className="py-3 mt-5">
         <div className="alert alert-danger">{error}</div>
-        <Button onClick={handleRetry} style={{ backgroundColor: "#18575A", border: "none" }}>
+        <Button onClick={handleRetry} style={{ backgroundColor: "#882626ff882626ff", border: "none" }}>
           Retry
         </Button>
       </Container>
@@ -371,7 +378,7 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
       {showTitle !== false && total > 0 && (
         <Row className="mb-2 align-items-center">
           <Col>
-            <h4 className="mb-0 fw-bold" style={{ fontFamily: "Urbanist" }}>
+            <h4 className="mb-0 fw-bold" style={{ fontFamily: "Urbanist", color: "#882626ff" }}>
               {title}
             </h4>
             {subtitle && (
@@ -402,7 +409,7 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
                 to={addRoute}
                 className="fw-bold d-flex align-items-center text-white"
                 style={{
-                  backgroundColor: "#18575A",
+                  backgroundColor: "#882626ff",
                   border: "none",
                   height: 42,
                   width: 180,
@@ -421,17 +428,17 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
               className="table table-striped table-bordered table-hover align-middle mb-0"
               style={{ fontSize: "13px" }}
             >
-              <thead className="table-light text-center" style={{ fontFamily: "Urbanist" }}>
+              <thead className="text-center" style={{ fontFamily: "Urbanist" }}>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <th
                         key={header.id}
                         style={{ 
-                          padding: "6px 8px", 
+                          padding: "10px 8px", 
                           cursor: header.column.getCanSort() ? "pointer" : "default",
-                          backgroundColor: "#f8f9fa",
-                          borderBottom: "2px solid #dee2e6",
+                          // Removed backgroundColor and color
+                          borderBottom: "2px solid #882626ff",
                           verticalAlign: "middle",
                           fontSize: "13px",
                           fontWeight: 600
@@ -447,7 +454,7 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
                               ) : header.column.getIsSorted() === "desc" ? (
                                 <FaSortDown />
                               ) : (
-                                <FaSort style={{ opacity: 0.3 }} />
+                                <FaSort style={{ opacity: 0.5 }} />
                               )}
                             </span>
                           )}
@@ -487,20 +494,28 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
                     </td>
                   </tr>
                 ) : (
-                  table.getRowModel().rows.map((row) => (
+                  table.getRowModel().rows.map((row, index) => (
                     <tr
                       key={row.id}
                       onClick={() => onRowClick?.(row.original)}
                       style={{
                         cursor: onRowClick ? "pointer" : "default",
                         lineHeight: "1.2",
+                        // Applied light reddish background to alternating rows
+                        backgroundColor: index % 2 === 1 ? "#ffe8e8" : "" // Light reddish for odd rows (1-based index)
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#ffe6e6";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = index % 2 === 1 ? "#ffe8e8" : "";
                       }}
                     >
                       {row.getVisibleCells().map((cell) => (
                         <td
                           key={cell.id}
                           style={{ 
-                            padding: "4px 6px",
+                            padding: "8px 6px",
                             verticalAlign: "middle"
                           }}
                         >
@@ -518,13 +533,25 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
 
       {totalPages > 1 && (
         <div className="d-flex justify-content-between align-items-center mt-3">
-          <span style={{ fontFamily: "Urbanist", color: "#18575A", fontWeight: 600, fontSize: "13px" }}>
+          <span style={{ fontFamily: "Urbanist", color: "#882626ff", fontWeight: 600, fontSize: "13px" }}>
             Page {currentPage} of {totalPages} (Total: {total} records)
           </span>
 
           <Pagination className="m-0" size="sm">
-            <Pagination.First disabled={currentPage === 1} onClick={() => handlePageChange(1)} />
-            <Pagination.Prev disabled={currentPage === 1} onClick={() => handlePageChange(currentPage - 1)} />
+            <Pagination.First 
+              disabled={currentPage === 1} 
+              onClick={() => handlePageChange(1)}
+              style={{
+                color: currentPage === 1 ? "#999" : "#882626ff"
+              }}
+            />
+            <Pagination.Prev 
+              disabled={currentPage === 1} 
+              onClick={() => handlePageChange(currentPage - 1)}
+              style={{
+                color: currentPage === 1 ? "#999" : "#882626ff"
+              }}
+            />
             {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
               let pageNum;
               if (totalPages <= 5) {
@@ -543,17 +570,29 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
                   active={pageNum === currentPage}
                   onClick={() => handlePageChange(pageNum)}
                   style={{
-                    backgroundColor: pageNum === currentPage ? "#18575A" : "transparent",
-                    borderColor: "#18575A",
-                    color: pageNum === currentPage ? "white" : "#18575A",
+                    backgroundColor: pageNum === currentPage ? "#882626ff" : "transparent",
+                    borderColor: "#882626ff",
+                    color: pageNum === currentPage ? "white" : "#882626ff",
                   }}
                 >
                   {pageNum}
                 </Pagination.Item>
               );
             })}
-            <Pagination.Next disabled={currentPage === totalPages} onClick={() => handlePageChange(currentPage + 1)} />
-            <Pagination.Last disabled={currentPage === totalPages} onClick={() => handlePageChange(totalPages)} />
+            <Pagination.Next 
+              disabled={currentPage === totalPages} 
+              onClick={() => handlePageChange(currentPage + 1)}
+              style={{
+                color: currentPage === totalPages ? "#999" : "#882626ff"
+              }}
+            />
+            <Pagination.Last 
+              disabled={currentPage === totalPages} 
+              onClick={() => handlePageChange(totalPages)}
+              style={{
+                color: currentPage === totalPages ? "#999" : "#882626ff"
+              }}
+            />
           </Pagination>
         </div>
       )}

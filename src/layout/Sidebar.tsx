@@ -1,42 +1,67 @@
 import React, { useState } from "react";
 import { Nav, Navbar, Container, Collapse } from "react-bootstrap";
 import { NavLink, useNavigate } from "react-router-dom";
-import { BsPeople, BsGear, BsChevronDown, BsCashStack, BsPersonBadge } from "react-icons/bs";
+import { BiCategory } from "react-icons/bi";import { 
+    BsPeople, 
+    BsGear, 
+    BsChevronDown, 
+    BsCashStack, 
+    BsPersonBadge,
+    BsListUl,
+    BsShieldExclamation,
+    BsPersonX,
+    BsPeopleFill,
+    BsFileText,
+    BsClipboardData,
+    BsWallet2,
+    BsReceipt,
+    BsCreditCard,
+    BsBuilding,
+    BsBuildingAdd,
+    BsGearFill,
+    BsTicketPerforated,
+    BsCalendar3,
+    BsBell,
+    BsSpeedometer2
+} from "react-icons/bs";
 import { BiLogOut } from "react-icons/bi";
 import AuthService from "../services/common/Authservices";
+import profileImage from "../assets/Images/profile.jpeg";
 
 const Sidebar: React.FC = () => {
     const [hovered, setHovered] = useState(false);
-    const [usersOpen, setUsersOpen] = useState(false);
-    const [staffsOpen, setStaffsOpen] = useState(false);
-    const [accountsOpen, setAccountsOpen] = useState(false);
-    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [openMenu, setOpenMenu] = useState<string | null>(null);
+
+    const handleMenuToggle = (menuName: string) => {
+        setOpenMenu(openMenu === menuName ? null : menuName);
+    };
 
     const usersSubMenu = [
-        { label: "User List", path: "user/user-list" },
-        { label: "User Reactor", path: "/dashboard/users/user-reactor" },
-        { label: "Blocked Users", path: "/dashboard/users/blocked-users" },
+        { label: "User List", path: "user/user-list", icon: <BsListUl /> },
+        { label: "User Recharge", path: "/dashboard/users/user-recharge", icon: <BsShieldExclamation /> },
+        { label: "Blocked Users", path: "/dashboard/users/blocked-users", icon: <BsPersonX /> },
     ];
 
     const staffsSubMenu = [
-        { label: "Staff List", path: "/dashboard/staff/staff-list" },
-        { label: "Staff TYC", path: "/dashboard/staffs/staff-tyc" },
-        { label: "Staff Reports", path: "/dashboard/staffs/staff-reports" },
+        { label: "Staff List", path: "/dashboard/staff/staff-list", icon: <BsPeopleFill /> },
+        { label: "Staff TYC", path: "/dashboard/staffs/staff-tyc", icon: <BsFileText /> },
+        { label: "Staff Reports", path: "/dashboard/staffs/staff-reports", icon: <BsClipboardData /> },
     ];
 
     const accountsSubMenu = [
-        { label: "Payout Request", path: "/dashboard/accounts/payout-request" },
-        { label: "Invoice", path: "/dashboard/accounts/invoice" },
-        { label: "Payment Permit", path: "/dashboard/accounts/payment-permit" },
+        { label: "Payout Request", path: "/dashboard/accounts/payout-request", icon: <BsWallet2 /> },
+        { label: "Invoice", path: "/dashboard/accounts/invoice", icon: <BsReceipt /> },
+        { label: "Payment Permit", path: "/dashboard/accounts/payment-permit", icon: <BsCreditCard /> },
     ];
 
     const settingsSubMenu = [
-        {label:"Company", path: "/dashboard/settings/company-list"},
-        { label: "Company Branch", path: "/dashboard/settings/company-branch" },
-        { label: "System Config", path: "/dashboard/settings/system-config" },
-        { label: "Purchase Coupon", path: "/dashboard/settings/purchase-coupon-list"},
-        { label: "Financial Year", path: "/dashboard/settings/financial-year" },
-        { label: "App Notification", path: "/dashboard/settings/appNotification-list" },
+        { label: "Company", path: "/dashboard/settings/company-list", icon: <BsBuilding /> },
+        { label: "Company Branch", path: "/dashboard/settings/company-branch", icon: <BsBuildingAdd /> },
+        { label: "System Config", path: "/dashboard/settings/system-config", icon: <BsGearFill /> },
+        { label: "Purchase Coupon", path: "/dashboard/settings/purchase-coupon-list", icon: <BsTicketPerforated /> },
+        { label:'Category',path:'/category/CategoryPage', icon:<BiCategory />},
+        { label: "Financial Year", path: "/dashboard/settings/financial-year", icon: <BsCalendar3 /> },
+        { label: "App Notification", path: "/dashboard/settings/appNotification-list", icon: <BsBell /> },
     ];
 
     const navigate = useNavigate();
@@ -51,9 +76,9 @@ const Sidebar: React.FC = () => {
             <div
                 className="d-none d-md-flex flex-column rounded-3 align-items-center py-3 position-fixed"
                 style={{
-                    width: hovered ? "200px" : "70px",
+                    width: hovered ? "220px" : "70px",
                     minHeight: "100vh",
-                    backgroundColor: "#a80606",
+                    backgroundColor: "#882626ff",
                     transition: "width 0.3s",
                     zIndex: 1000,
                 }}
@@ -64,15 +89,15 @@ const Sidebar: React.FC = () => {
                 <div className="profile-section text-center mb-4">
                     {hovered ? (
                         <p className="mt-2 text-white fw-bold" style={{ fontSize: "15px" }}>
-                            <span>MoveIQ</span>
+                            <span>Talky</span>
                         </p>
                     ) : (
                         <p className="fw-bolder fs-6 text-white head-font">
-                            <span style={{ fontSize: "8px" }}>MoveIQ</span>
+                            <span style={{ fontSize: "8px" }}>Talky</span>
                         </p>
                     )}
                     <img
-                        src="https://via.placeholder.com/80"
+                        src={profileImage}
                         alt="profile"
                         className="rounded-circle mb-2"
                         style={{
@@ -80,6 +105,7 @@ const Sidebar: React.FC = () => {
                             height: hovered ? "80px" : "45px",
                             border: "2px solid white",
                             transition: "all 0.3s",
+                            objectFit: "cover",
                         }}
                     />
                 </div>
@@ -96,175 +122,211 @@ const Sidebar: React.FC = () => {
                     className="admin-sidebar-scroll"
                 >
                     {/* Navigation items */}
-                    <Nav className="flex-column gap-2 w-100 text-center">
-                        {/* Users Menu */}
-                        <div
-                            className={`flex-column gap-2 w-100 text-center ${hovered ? "justify-content-start mt-2" : "justify-content-center"} rounded mt-1`}
-                            style={{ fontSize: "14px", textDecoration: "none", cursor: "pointer" }}
-                            onClick={() => setUsersOpen(!usersOpen)}
+                    <Nav className="flex-column gap-2 w-100">
+                        {/* Dashboard Menu */}
+                        <NavLink
+                            to="/dashboard"
+                            end
+                            className={({ isActive }) =>
+                                `d-flex align-items-center gap-2 w-100 ${hovered ? "ps-4 pe-3" : "justify-content-center"} rounded mt-1 ${isActive ? "bg-white" : ""}`
+                            }
+                            style={{ fontSize: "15px", textDecoration: "none", padding: "8px 0" }}
                         >
-                            <BsPeople className="text-white" />
-                            {hovered && (
+                            {({ isActive }) => (
                                 <>
-                                    <span className="ms-2 text-white">Users</span>
-                                    <BsChevronDown
-                                        className="ms-2 text-white"
-                                        style={{
-                                            transition: "transform 0.3s",
-                                            transform: usersOpen ? "rotate(180deg)" : "rotate(0deg)",
-                                        }}
+                                    <BsSpeedometer2 
+                                        className={isActive ? "text-danger" : "text-white"} 
+                                        style={{ fontSize: "20px", minWidth: "20px" }} 
                                     />
+                                    {hovered && (
+                                        <span className={`fw-bold flex-grow-1 ${isActive ? "text-danger" : "text-white"}`}>
+                                            Dashboard
+                                        </span>
+                                    )}
                                 </>
                             )}
-                        </div>
+                        </NavLink>
 
-                        <Collapse in={usersOpen && hovered}>
-                            <div className="flex-column text-light mt-2">
-                                {usersSubMenu.map((sub) => (
-                                    <NavLink
-                                        key={sub.path}
-                                        to={sub.path}
-                                        end
-                                        className={({ isActive }) =>
-                                            `d-block p-1 ${isActive ? "bg-white text-success rounded mx-3" : "text-white"}`
-                                        }
-                                        style={{ fontSize: "12px", textDecoration: "none" }}
-                                    >
-                                        {sub.label}
-                                    </NavLink>
-                                ))}
+                        {/* Users Menu */}
+                        <div>
+                            <div
+                                className={`d-flex align-items-center gap-2 w-100 ${hovered ? "ps-4 pe-3" : "justify-content-center"} rounded mt-1`}
+                                style={{ fontSize: "15px", textDecoration: "none", cursor: "pointer", padding: "8px 0" }}
+                                onClick={() => handleMenuToggle('users')}
+                            >
+                                <BsPeople className="text-white" style={{ fontSize: "20px", minWidth: "20px" }} />
+                                {hovered && (
+                                    <>
+                                        <span className="text-white fw-bold flex-grow-1">Users</span>
+                                        <BsChevronDown
+                                            className="text-white"
+                                            style={{
+                                                transition: "transform 0.3s",
+                                                transform: openMenu === 'users' ? "rotate(180deg)" : "rotate(0deg)",
+                                            }}
+                                        />
+                                    </>
+                                )}
                             </div>
-                        </Collapse>
+
+                            <Collapse in={openMenu === 'users' && hovered}>
+                                <div className="flex-column text-light mt-2">
+                                    {usersSubMenu.map((sub) => (
+                                        <NavLink
+                                            key={sub.path}
+                                            to={sub.path}
+                                            end
+                                            className={({ isActive }) =>
+                                                `d-flex align-items-center gap-2 p-2 ms-4 me-3 mb-1 ${isActive ? "bg-white text-danger rounded" : "text-white"}`
+                                            }
+                                            style={{ fontSize: "13px", textDecoration: "none" }}
+                                        >
+                                            {sub.icon}
+                                            <span className="fw-bold">{sub.label}</span>
+                                        </NavLink>
+                                    ))}
+                                </div>
+                            </Collapse>
+                        </div>
 
                         {/* Staffs Menu */}
-                        <div
-                            className={`flex-column gap-2 w-100 text-center ${hovered ? "justify-content-start mt-3" : "justify-content-center"} rounded mt-2`}
-                            style={{ fontSize: "14px", textDecoration: "none", cursor: "pointer" }}
-                            onClick={() => setStaffsOpen(!staffsOpen)}
-                        >
-                            <BsPersonBadge className="text-white" />
-                            {hovered && (
-                                <>
-                                    <span className="ms-2 text-white">Staffs</span>
-                                    <BsChevronDown
-                                        className="ms-2 text-white"
-                                        style={{
-                                            transition: "transform 0.3s",
-                                            transform: staffsOpen ? "rotate(180deg)" : "rotate(0deg)",
-                                        }}
-                                    />
-                                </>
-                            )}
-                        </div>
-
-                        <Collapse in={staffsOpen && hovered}>
-                            <div className="flex-column text-light mt-2">
-                                {staffsSubMenu.map((sub) => (
-                                    <NavLink
-                                        key={sub.path}
-                                        to={sub.path}
-                                        end
-                                        className={({ isActive }) =>
-                                            `d-block p-1 ${isActive ? "bg-white text-success rounded mx-3" : "text-white"}`
-                                        }
-                                        style={{ fontSize: "12px", textDecoration: "none" }}
-                                    >
-                                        {sub.label}
-                                    </NavLink>
-                                ))}
+                        <div>
+                            <div
+                                className={`d-flex align-items-center gap-2 w-100 ${hovered ? "ps-4 pe-3" : "justify-content-center"} rounded mt-2`}
+                                style={{ fontSize: "15px", textDecoration: "none", cursor: "pointer", padding: "8px 0" }}
+                                onClick={() => handleMenuToggle('staffs')}
+                            >
+                                <BsPersonBadge className="text-white" style={{ fontSize: "20px", minWidth: "20px" }} />
+                                {hovered && (
+                                    <>
+                                        <span className="text-white fw-bold flex-grow-1">Staffs</span>
+                                        <BsChevronDown
+                                            className="text-white"
+                                            style={{
+                                                transition: "transform 0.3s",
+                                                transform: openMenu === 'staffs' ? "rotate(180deg)" : "rotate(0deg)",
+                                            }}
+                                        />
+                                    </>
+                                )}
                             </div>
-                        </Collapse>
+
+                            <Collapse in={openMenu === 'staffs' && hovered}>
+                                <div className="flex-column text-light mt-2">
+                                    {staffsSubMenu.map((sub) => (
+                                        <NavLink
+                                            key={sub.path}
+                                            to={sub.path}
+                                            end
+                                            className={({ isActive }) =>
+                                                `d-flex align-items-center gap-2 p-2 ms-4 me-3 mb-1 ${isActive ? "bg-white text-danger rounded" : "text-white"}`
+                                            }
+                                            style={{ fontSize: "13px", textDecoration: "none" }}
+                                        >
+                                            {sub.icon}
+                                            <span className="fw-bold">{sub.label}</span>
+                                        </NavLink>
+                                    ))}
+                                </div>
+                            </Collapse>
+                        </div>
 
                         {/* Accounts Menu */}
-                        <div
-                            className={`flex-column gap-2 w-100 text-center ${hovered ? "justify-content-start mt-3" : "justify-content-center"} rounded mt-2`}
-                            style={{ fontSize: "14px", textDecoration: "none", cursor: "pointer" }}
-                            onClick={() => setAccountsOpen(!accountsOpen)}
-                        >
-                            <BsCashStack className="text-white" />
-                            {hovered && (
-                                <>
-                                    <span className="ms-2 text-white">Accounts</span>
-                                    <BsChevronDown
-                                        className="ms-2 text-white"
-                                        style={{
-                                            transition: "transform 0.3s",
-                                            transform: accountsOpen ? "rotate(180deg)" : "rotate(0deg)",
-                                        }}
-                                    />
-                                </>
-                            )}
-                        </div>
-
-                        <Collapse in={accountsOpen && hovered}>
-                            <div className="flex-column text-light mt-2">
-                                {accountsSubMenu.map((sub) => (
-                                    <NavLink
-                                        key={sub.path}
-                                        to={sub.path}
-                                        end
-                                        className={({ isActive }) =>
-                                            `d-block p-1 ${isActive ? "bg-white text-success rounded mx-3" : "text-white"}`
-                                        }
-                                        style={{ fontSize: "12px", textDecoration: "none" }}
-                                    >
-                                        {sub.label}
-                                    </NavLink>
-                                ))}
+                        <div>
+                            <div
+                                className={`d-flex align-items-center gap-2 w-100 ${hovered ? "ps-4 pe-3" : "justify-content-center"} rounded mt-2`}
+                                style={{ fontSize: "15px", textDecoration: "none", cursor: "pointer", padding: "8px 0" }}
+                                onClick={() => handleMenuToggle('accounts')}
+                            >
+                                <BsCashStack className="text-white" style={{ fontSize: "20px", minWidth: "20px" }} />
+                                {hovered && (
+                                    <>
+                                        <span className="text-white fw-bold flex-grow-1">Accounts</span>
+                                        <BsChevronDown
+                                            className="text-white"
+                                            style={{
+                                                transition: "transform 0.3s",
+                                                transform: openMenu === 'accounts' ? "rotate(180deg)" : "rotate(0deg)",
+                                            }}
+                                        />
+                                    </>
+                                )}
                             </div>
-                        </Collapse>
+
+                            <Collapse in={openMenu === 'accounts' && hovered}>
+                                <div className="flex-column text-light mt-2">
+                                    {accountsSubMenu.map((sub) => (
+                                        <NavLink
+                                            key={sub.path}
+                                            to={sub.path}
+                                            end
+                                            className={({ isActive }) =>
+                                                `d-flex align-items-center gap-2 p-2 ms-4 me-3 mb-1 ${isActive ? "bg-white text-danger rounded" : "text-white"}`
+                                            }
+                                            style={{ fontSize: "13px", textDecoration: "none" }}
+                                        >
+                                            {sub.icon}
+                                            <span className="fw-bold">{sub.label}</span>
+                                        </NavLink>
+                                    ))}
+                                </div>
+                            </Collapse>
+                        </div>
 
                         {/* Settings Menu */}
-                        <div
-                            className={`flex-column gap-2 w-100 text-center ${hovered ? "justify-content-start mt-3" : "justify-content-center"} rounded mt-2`}
-                            style={{ fontSize: "14px", textDecoration: "none", cursor: "pointer" }}
-                            onClick={() => setSettingsOpen(!settingsOpen)}
-                        >
-                            <BsGear className="text-white" />
-                            {hovered && (
-                                <>
-                                    <span className="ms-2 text-white">Settings</span>
-                                    <BsChevronDown
-                                        className="ms-2 text-white"
-                                        style={{
-                                            transition: "transform 0.3s",
-                                            transform: settingsOpen ? "rotate(180deg)" : "rotate(0deg)",
-                                        }}
-                                    />
-                                </>
-                            )}
-                        </div>
-
-                        <Collapse in={settingsOpen && hovered}>
-                            <div className="flex-column text-light mt-2">
-                                {settingsSubMenu.map((subItem) => (
-                                    <NavLink
-                                        key={subItem.path}
-                                        to={subItem.path}
-                                        end
-                                        className={({ isActive }) =>
-                                            `d-block p-1 ${isActive ? "bg-white text-success rounded mx-3" : "text-white"}`
-                                        }
-                                        style={{ fontSize: "12px", textDecoration: "none" }}
-                                    >
-                                        {subItem.label}
-                                    </NavLink>
-                                ))}
+                        <div>
+                            <div
+                                className={`d-flex align-items-center gap-2 w-100 ${hovered ? "ps-4 pe-3" : "justify-content-center"} rounded mt-2`}
+                                style={{ fontSize: "15px", textDecoration: "none", cursor: "pointer", padding: "8px 0" }}
+                                onClick={() => handleMenuToggle('settings')}
+                            >
+                                <BsGear className="text-white" style={{ fontSize: "20px", minWidth: "20px" }} />
+                                {hovered && (
+                                    <>
+                                        <span className="text-white fw-bold flex-grow-1">Settings</span>
+                                        <BsChevronDown
+                                            className="text-white"
+                                            style={{
+                                                transition: "transform 0.3s",
+                                                transform: openMenu === 'settings' ? "rotate(180deg)" : "rotate(0deg)",
+                                            }}
+                                        />
+                                    </>
+                                )}
                             </div>
-                        </Collapse>
+
+                            <Collapse in={openMenu === 'settings' && hovered}>
+                                <div className="flex-column text-light mt-2">
+                                    {settingsSubMenu.map((subItem) => (
+                                        <NavLink
+                                            key={subItem.path}
+                                            to={subItem.path}
+                                            end
+                                            className={({ isActive }) =>
+                                                `d-flex align-items-center gap-2 p-2 ms-4 me-3 mb-1 ${isActive ? "bg-white text-danger rounded" : "text-white"}`
+                                            }
+                                            style={{ fontSize: "13px", textDecoration: "none" }}
+                                        >
+                                            {subItem.icon}
+                                            <span className="fw-bold">{subItem.label}</span>
+                                        </NavLink>
+                                    ))}
+                                </div>
+                            </Collapse>
+                        </div>
 
                         {/* Logout */}
                         <p
                             onClick={handleLogout}
-                            className="d-flex align-items-center justify-content-center p-2 text-white mt-5 mx-3 rounded fw-semibold"
+                            className="d-flex align-items-center justify-content-center p-2 text-white mt-5 mx-3 rounded fw-bold"
                             style={{
-                                fontSize: "16px",
+                                fontSize: "15px",
                                 textDecoration: "none",
-                                backgroundColor: "#8B0000",
+                                backgroundColor: "#6a2b2bff",
                                 cursor: "pointer",
                             }}
                         >
-                            <BiLogOut />
+                            <BiLogOut style={{ fontSize: "20px" }} />
                             {hovered && <span className="ms-2">Logout</span>}
                         </p>
                     </Nav>
@@ -276,40 +338,54 @@ const Sidebar: React.FC = () => {
                 fixed="bottom"
                 expand="md"
                 className="d-md-none"
-                style={{ backgroundColor: "#a80606" }}
+                style={{ backgroundColor: "#642323ff" }}
             >
                 <Container fluid className="justify-content-around">
+                    <NavLink
+                        to="/dashboard"
+                        className="d-flex flex-column align-items-center text-decoration-none"
+                        style={{ fontSize: "10px" }}
+                    >
+                        {({ isActive }) => (
+                            <>
+                                <BsSpeedometer2 className={isActive ? "text-danger" : "text-white"} />
+                                <span className={`fw-bold ${isActive ? "text-danger" : "text-white"}`} style={{ fontSize: "10px" }}>
+                                    Dashboard
+                                </span>
+                            </>
+                        )}
+                    </NavLink>
                     <div
                         className="d-flex flex-column align-items-center text-white"
                         style={{ fontSize: "10px", cursor: "pointer" }}
-                        onClick={() => setUsersOpen(!usersOpen)}
+                        onClick={() => handleMenuToggle('users')}
                     >
                         <BsPeople />
-                        <span style={{ fontSize: "10px" }}>Users</span>
+                        <span className="fw-bold" style={{ fontSize: "10px" }}>Users</span>
                     </div>
                     <div
                         className="d-flex flex-column align-items-center text-white"
                         style={{ fontSize: "10px", cursor: "pointer" }}
-                        onClick={() => setStaffsOpen(!staffsOpen)}
+                        onClick={() => handleMenuToggle('staffs')}
                     >
                         <BsPersonBadge />
-                        <span style={{ fontSize: "10px" }}>Staffs</span>
+                        <span className="fw-bold" style={{ fontSize: "10px" }}>Staffs</span>
                     </div>
                     <div
                         className="d-flex flex-column align-items-center text-white"
                         style={{ fontSize: "10px", cursor: "pointer" }}
-                        onClick={() => setAccountsOpen(!accountsOpen)}
+                        onClick={() => handleMenuToggle('accounts')}
                     >
                         <BsCashStack />
-                        <span style={{ fontSize: "10px" }}>Accounts</span>
+                        <span className="fw-bold" style={{ fontSize: "10px" }}>Accounts</span>
                     </div>
                     <div
                         className="d-flex flex-column align-items-center text-white"
                         style={{ fontSize: "10px", cursor: "pointer" }}
-                        onClick={() => setSettingsOpen(!settingsOpen)}
+                        onClick={() => handleMenuToggle('settings')}
                     >
                         <BsGear />
-                        <span style={{ fontSize: "10px" }}>Settings</span>
+                        <span className="fw-bold" style={{ fontSize: "10px" }}>Settings</span>
                     </div>
                 </Container>
             </Navbar>

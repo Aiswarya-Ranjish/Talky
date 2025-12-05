@@ -5,7 +5,7 @@
 .background {
   min-height: 100vh;
   min-width: fit-content;
-  background: linear-gradient(to bottom, #a80606, #e2bb71);
+  background: linear-gradient(to bottom, #882626ff, #e2bb71);
 }
 
 .border {
@@ -58,7 +58,7 @@
 
 .custom-input:focus,
 .custom-input:hover {
-  border-color: #5a1846 !important;
+  border-color: #882626ff !important;
   box-shadow: none !important;
   /* remove blue glow */
 }
@@ -103,13 +103,13 @@
 }
 
 .custom-outline-btn {
-  border-color: #18575A !important;
-  color: #18575A !important;
+  border-color: #882626ff !important;
+  color: #882626ff !important;
   transition: all 0.3s ease;
 }
 
 .custom-outline-btn:hover {
-  background-color: #18575A !important;
+  background-color: #882626ff !important;
   color: white !important;
 }
 
@@ -161,7 +161,7 @@
 .custom-accordion .accordion-button:not(.collapsed) {
   background-color: #f8f9fa !important;
   /* background when expanded */
-  color: #18575A !important;
+  color: #882626ff !important;
   /* text color when expanded */
 }
 
@@ -174,18 +174,18 @@
 
 /* Pagination Theme Override */
 .page-item .page-link {
-  color: #18575A !important;
-  border-color: #18575A !important;
+  color: #882626ff !important;
+  border-color: #882626ff !important;
 }
 
 .page-item .page-link:hover {
-  background-color: #18575A !important;
+  background-color: #882626ff !important;
   color: #ffffff !important;
-  border-color: #18575A !important;
+  border-color: #882626ff !important;
 }
 
 .page-item.active .page-link {
-  background-color: #18575A !important;
-  border-color: #18575A !important;
+  background-color: #882626ff !important;
+  border-color: #882626ff !important;
   color: #ffffff !important;
 }
