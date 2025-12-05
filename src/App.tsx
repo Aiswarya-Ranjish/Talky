@@ -99,6 +99,8 @@ import  AppNotificationView from './pages/settings/AppNotification/View';
 //Finacial Year
 import FinancialYear from './pages/settings/FinancialYear/List';
 import  FinancialYearCreate from './pages/settings/FinancialYear/Create';
+import FinancialYearEdit from './pages/settings/FinancialYear/Edit';
+import  FinancialYearView from './pages/settings/FinancialYear/View';
 
 
 
@@ -205,7 +207,8 @@ function App() {
           {/*Financial Year */}
           <Route path="settings/financial-year" element={<FinancialYear />} /> 
           <Route path="settings/create-financialYear" element={< FinancialYearCreate/>} />
-
+          <Route path="settings/edit-financialYear/:financialYearId" element={< FinancialYearEdit/>} />
+          <Route path="settings/view-financialYear/:financialYearId" element={< FinancialYearView/>} />
         </Route>
         {/* Catch-All Route for 404 */}
         <Route path='*' element={<PageNotFound />} />

@@ -82,8 +82,8 @@ const FinancialYearList: React.FC = () => {
       idKey="financialYearId"
       addButtonLabel="Add New Financial Year"
       addRoute="/dashboard/settings/create-financialYear"
-      editRoute="/FinancialYear/FinancialYearEdit/"
-      viewRoute="/FinancialYear/FinancialYearView/"
+      editRoute="/dashboard/settings/edit-financialYear"
+      viewRoute="/dashboard/settings/view-financialYear"
       fetchData={fetchFinancialYearData}
       rowsPerPage={15}
       showSearch={true}
