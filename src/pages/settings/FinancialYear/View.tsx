@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Card, Table, Button, Modal, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
-import { FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash } from "react-icons/fa";
 import toast, { Toaster } from "react-hot-toast";
 import FinancialYearService from "../../../services/settings/financial.services";
-import KiduPrevious from "../../../components/KiduPrevious";
 import KiduLoader from "../../../components/KiduLoader";
-
-//import FinancialYearService from "services/FinancialYearService";
-//import KiduLoader from "components/KiduLoader";
-//import KiduPrevious from "components/KiduPrevious";
+import KiduPrevious from "../../../components/KiduPrevious";
+import KiduAuditLogs from "../../../components/KiduAuditLogs";
 
 const FinancialYearView: React.FC = () => {
   const navigate = useNavigate();
@@ -20,59 +17,62 @@ const FinancialYearView: React.FC = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loadingDelete, setLoadingDelete] = useState(false);
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric"
-    });
-  };
-
   useEffect(() => {
-    const fetchData = async () => {
+    const loadFinancialYear = async () => {
       try {
-        const res = await FinancialYearService.getFinancialYearById(String(financialYearId));
+        const res = await FinancialYearService.getFinancialYearById(financialYearId!);
         setData(res);
       } catch {
         toast.error("Failed to load financial year details.");
+        navigate("/dashboard/settings/financial-year");
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    loadFinancialYear();
   }, [financialYearId]);
 
-  if (loading) return <KiduLoader type="Financial year details..." />;
+  if (loading) return <KiduLoader type="financial year details..." />;
 
   if (!data)
     return (
       <div className="text-center mt-5">
         <h5>No financial year details found.</h5>
-        <Button className="mt-3" onClick={() => navigate(-1)}>
-          Go Back
-        </Button>
+        <Button className="mt-3" onClick={() => navigate(-1)}>Back</Button>
       </div>
     );
 
   const fields = [
-    { key: "financialYearId", label: "Financial Year ID" },
-    { key: "finacialYearCode", label: "Financial Year Code" },
-    { key: "startDate", label: "Start Date" },
-    { key: "endDate", label: "End Date" },
-    { key: "isCurrent", label: "Is Current" },
-    { key: "isClosed", label: "Is Closed" }
+    { key: "financialYearId", label: "Financial Year ID", icon: "bi-hash" },
+    { key: "finacialYearCode", label: "Financial Year Code", icon: "bi-code-square" },
+    { key: "startDate", label: "Start Date", icon: "bi-calendar-check" },
+    { key: "endDate", label: "End Date", icon: "bi-calendar-x" },
+    { key: "isCurrent", label: "Is Current", icon: "bi-circle-fill", isBoolean: true },
+    { key: "isClosed", label: "Is Closed", icon: "bi-lock", isBoolean: true }
   ];
 
-  // DELETE ACTION
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = date.toLocaleString("en-US", { month: "long" });
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  };
+
+  const handleEdit = () => navigate(`/dashboard/settings/edit-financial-year/${data.financialYearId}`);
+
   const handleDelete = async () => {
     setLoadingDelete(true);
     try {
-      await FinancialYearService.deleteFinanceById(String(data.financialYearId), data);
-
+      await FinancialYearService.deleteFinanceById(String(data.financialYearId ?? ""), data);
       toast.success("Financial Year deleted successfully");
-      setTimeout(() => navigate("/dashboard/settings/financial-year"), 800);
-
+      setTimeout(() => navigate("/dashboard/settings/financial-year"), 600);
     } catch {
       toast.error("Failed to delete financial year.");
     } finally {
@@ -82,90 +82,113 @@ const FinancialYearView: React.FC = () => {
   };
 
   return (
-    <div
-      className="container d-flex justify-content-center align-items-center mt-5"
-      style={{ fontFamily: "Urbanist" }}
-    >
-      <Card
-        className="shadow-lg p-4 w-100"
-        style={{ maxWidth: "1300px", borderRadius: "15px", border: "none" }}
-      >
+    <div className="container d-flex justify-content-center align-items-center mt-5" style={{ fontFamily: "Urbanist" }}>
+      <Card className="shadow-lg p-4 w-100" style={{ maxWidth: "1300px", borderRadius: "15px", border: "none" }}>
+
         {/* Header */}
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div className="d-flex align-items-center">
             <KiduPrevious />
-            <h5 className="fw-bold m-0 ms-2" style={{ color: "#18575A" }}>
-              Financial Year Details
-            </h5>
+            <h5 className="fw-bold m-0 ms-2" style={{ color: "#882626ff" }}>Financial Year Details</h5>
           </div>
 
           <div className="d-flex">
             <Button
-              variant="danger"
-              className="d-flex align-items-center gap-2"
-              style={{ fontWeight: 500, fontSize: "15px" }}
-              onClick={() => setShowConfirm(true)}
-            >
+              className="d-flex align-items-center gap-2 me-1"
+              style={{ backgroundColor: "#882626ff", border: "none", fontWeight: 500 }}
+              onClick={handleEdit}>
+              <FaEdit /> Edit
+            </Button>
+
+            <Button variant="danger" className="d-flex align-items-center gap-2"
+              style={{ fontWeight: 500 }}
+              onClick={() => setShowConfirm(true)}>
               <FaTrash size={12} /> Delete
             </Button>
           </div>
         </div>
 
-        {/* Title Section */}
+        {/* Financial Year Info */}
         <div className="text-center mb-4">
-          <h5 className="fw-bold mb-1">Financial Year #{data.financialYearId}</h5>
-          <p className="small mb-0 fw-bold text-danger">
+          <h5 className="fw-bold mb-1">Financial Year ID:{data.financialYearId || "Unknown"}</h5>
+          <p className="small mb-0 fw-bold" style={{ color: "#882626ff" }}>
             Code: {data.finacialYearCode}
           </p>
         </div>
 
-        {/* Details Table */}
+        {/* DETAILS TABLE (MATCHES COMPANYVIEW STYLE) */}
         <div className="table-responsive">
-          <Table bordered hover responsive className="align-middle mb-0">
+          <Table
+            bordered
+            hover
+            responsive
+            className="align-middle mb-0"
+            style={{ fontFamily: "Urbanist", fontSize: "13px" }}
+          >
             <tbody>
-              {fields.map(({ key, label }) => (
-                <tr key={key}>
-                  <td style={{ width: "40%", fontWeight: 600, color: "#18575A" }}>
-                    {label}
-                  </td>
-                  <td>
-                    {key === "startDate" || key === "endDate"
-                      ? formatDate(data[key])
-                      : key === "isCurrent" || key === "isClosed"
-                      ? data[key] ? "Yes" : "No"
-                      : data[key]}
-                  </td>
-                </tr>
-              ))}
+              {fields.map(({ key, label, icon, isBoolean }, index) => {
+                let value = (data as any)[key];
+                
+                if (isBoolean) {
+                  value = value ? "Yes" : "No";
+                } else if (key === "startDate" || key === "endDate") {
+                  value = formatDate(value);
+                }
+
+                return (
+                  <tr
+                    key={key}
+                    style={{
+                      lineHeight: "1.2",
+                      backgroundColor: index % 2 === 1 ? "#ffe8e8" : ""
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#ffe6e6";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = index % 2 === 1 ? "#ffe8e8" : "";
+                    }}
+                  >
+                    <td
+                      style={{
+                        width: "40%",
+                        padding: "8px 6px",
+                        color: "#882626ff",
+                        fontWeight: 600
+                      }}
+                    >
+                      <i className={`bi ${icon} me-2`}></i>
+                      {label}
+                    </td>
+                    <td style={{ padding: "8px 6px" }}>
+                      {value !== null && value !== undefined && value !== "" ? value : "N/A"}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </Table>
         </div>
+
+        {/* AUDIT LOGS */}
+        <KiduAuditLogs tableName="FinancialYear" recordId={data.financialYearId ?? ""} />
+
       </Card>
 
-      {/* Delete Confirmation Modal */}
+      {/* DELETE MODAL */}
       <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Delete</Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body>
-          Are you sure you want to delete this financial year?
-        </Modal.Body>
-
+        <Modal.Header closeButton><Modal.Title>Confirm Delete</Modal.Title></Modal.Header>
+        <Modal.Body>Are you sure you want to delete this financial year?</Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowConfirm(false)}>
             Cancel
           </Button>
-
           <Button variant="danger" onClick={handleDelete} disabled={loadingDelete}>
             {loadingDelete ? (
               <>
-                <Spinner animation="border" size="sm" className="me-2" />
-                Deleting...
+                <Spinner animation="border" size="sm" /> Deleting...
               </>
-            ) : (
-              "Delete"
-            )}
+            ) : "Delete"}
           </Button>
         </Modal.Footer>
       </Modal>

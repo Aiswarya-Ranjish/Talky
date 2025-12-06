@@ -1,4 +1,7 @@
 export interface FinancialYear{
+    isSucess: boolean;
+    error: any;
+    customMessage: any;
     financialYearId?:number;
     finacialYearCode:string;
     startDate?: string;

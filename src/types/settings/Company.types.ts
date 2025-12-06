@@ -1,11 +1,8 @@
-export interface CustomResponse<T> {
-    statusCode: number;
-    error: string | null;
-    customMessage: string;
-    isSucess: boolean;
-    value: T;
-  }
+
   export interface Company{
+   error: any;
+   customMessage: any;
+   isSucess: boolean;
    companyId:number;
    comapanyName:string;
    website:string;
@@ -13,7 +10,6 @@ export interface CustomResponse<T> {
    email:string;
    taxNumber:string;
    addressLine1:string;
-
    addressLine2:string;
    city:string;
    state:string;
@@ -24,3 +20,10 @@ export interface CustomResponse<T> {
    isActive:boolean;
    isDeleted:boolean;
   }
+export interface CompanyLookup {
+    id: number;
+    text: string;
+    code: string;
+    isSelected: boolean;
+    
+  }  

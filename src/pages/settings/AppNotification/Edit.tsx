@@ -1,12 +1,12 @@
-/* eslint-disable react-refresh/only-export-components */
 import React, { useEffect, useState } from "react";
 import { Card, Form, Button, Row, Col } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
-import toast from "react-hot-toast";
-import { FaArrowLeft } from "react-icons/fa";
+import toast, { Toaster } from "react-hot-toast";
 import KiduValidation from "../../../components/KiduValidation";
 import KiduLoader from "../../../components/KiduLoader";
+import KiduPrevious from "../../../components/KiduPrevious";
 import KiduReset from "../../../components/ReuseButtons/KiduReset";
+import KiduAuditLogs from "../../../components/KiduAuditLogs";
 import AppNotificationService from "../../../services/settings/AppNotification.services";
 
 interface NotificationFormData {
@@ -17,20 +17,13 @@ interface NotificationFormData {
   createdAt: string;
   category: string;
   isActive: boolean;
-
-  // Allow dynamic key indexing
   [key: string]: string | boolean;
-}
-
-interface FormErrors {
-  [key: string]: string;
 }
 
 const AppNotificationEdit: React.FC = () => {
   const navigate = useNavigate();
   const { appNotificationId } = useParams<{ appNotificationId: string }>();
 
-  // ---------- FIELD DEFINITIONS ----------
   const fields = [
     { name: "notificationType", rules: { required: true, type: "select" as const, label: "Notification Type" } },
     { name: "notificationTitle", rules: { required: true, type: "text" as const, label: "Notification Title" } },
@@ -42,7 +35,15 @@ const AppNotificationEdit: React.FC = () => {
 
   const notificationTypes = ["Offers", "Alerts", "One-time Alerts", "Repetitive"];
 
+  const initialValues: any = {};
+  const initialErrors: any = {};
+  fields.forEach(f => {
+    initialValues[f.name] = "";
+    initialErrors[f.name] = "";
+  });
+
   const [formData, setFormData] = useState<NotificationFormData>({
+    ...initialValues,
     notificationType: "",
     notificationTitle: "",
     notificationImage: "",
@@ -52,235 +53,277 @@ const AppNotificationEdit: React.FC = () => {
     isActive: false
   });
 
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState(initialErrors);
+  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [originalData, setOriginalData] = useState<NotificationFormData>(formData);
+  const [initialData, setInitialData] = useState<any>(null);
 
-  // ---------- LABEL HELPER ----------
   const getLabel = (name: string) => {
     const field = fields.find(f => f.name === name);
     if (!field) return "";
     return (
       <>
         {field.rules.label}
-        {field.rules.required && <span style={{ color: "red" }}> *</span>}
+        {field.rules.required && <span style={{ color: "red", marginLeft: "2px" }}>*</span>}
       </>
     );
   };
 
-  // ---------- VALIDATION ----------
-  const validateField = (name: string, value: string | boolean) => {
+  useEffect(() => {
+    const fetchNotification = async () => {
+      try {
+        setLoading(true);
+        if (!appNotificationId) { 
+          toast.error("No notification ID provided"); 
+          navigate("/dashboard/settings/appNotification-list"); 
+          return; 
+        }
+        const response = await AppNotificationService.getNotificationById(appNotificationId);
+        if (!response) throw new Error("No data received from server");
+
+        const formattedData = {
+          notificationType: response.notificationType || "",
+          notificationTitle: response.notificationTitle || "",
+          notificationImage: response.notificationImage || "",
+          notificationLink: response.notificationLink || "",
+          createdAt: response.createdAt?.split("T")[0] || "",
+          category: response.category || "",
+          isActive: response.isActive ?? false
+        };
+
+        setFormData(formattedData);
+        setInitialData(formattedData);
+      } catch (error: any) {
+        console.error("Failed to load notification:", error);
+        toast.error(`Error loading notification: ${error.message}`);
+        navigate("/dashboard/settings/appNotification-list");
+      } finally { 
+        setLoading(false); 
+      }
+    };
+    fetchNotification();
+  }, [appNotificationId, navigate]);
+
+  const handleChange = (e: any) => {
+    const { name, value, type } = e.target;
+    const target = e.target as HTMLInputElement;
+    let updatedValue: any = value;
+    
+    if (type === "checkbox") {
+      updatedValue = target.checked;
+    }
+    
+    setFormData((prev: any) => ({ ...prev, [name]: updatedValue }));
+    if (errors[name]) setErrors((prev: any) => ({ ...prev, [name]: "" }));
+  };
+
+  const overrideMessage = (name: string) => {
+    const field = fields.find(f => f.name === name);
+    const label = field?.rules.label || "This field";
+    return `${label} is required.`;
+  };
+
+  const validateField = (name: string, value: any) => {
     const field = fields.find(f => f.name === name);
     if (!field) return true;
-
-    const validation = KiduValidation.validate(value, field.rules);
-
-    if (!validation.isValid) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: validation.message || `${field.rules.label} is required.`
-      }));
+    const result = KiduValidation.validate(value, field.rules);
+    if (!result.isValid) {
+      const msg = overrideMessage(name);
+      setErrors((prev: any) => ({ ...prev, [name]: msg }));
       return false;
     }
-
-    setErrors(prev => ({ ...prev, [name]: "" }));
+    setErrors((prev: any) => ({ ...prev, [name]: "" }));
     return true;
   };
 
   const validateForm = () => {
     let ok = true;
-    for (const f of fields) {
+    fields.forEach(f => {
       if (!validateField(f.name, formData[f.name])) ok = false;
-    }
+    });
     return ok;
   };
 
-  // ---------- HANDLE CHANGE ----------
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value, type } = e.target;
-    const updatedValue =
-      type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
-
-    setFormData(prev => ({ ...prev, [name]: updatedValue }));
-
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
-  };
-
-  // ---------- LOAD EXISTING DATA ----------
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const res = await AppNotificationService.getNotificationById(appNotificationId!);
-
-        const data: NotificationFormData = {
-          notificationType: res.notificationType || "",
-          notificationTitle: res.notificationTitle || "",
-          notificationImage: res.notificationImage || "",
-          notificationLink: res.notificationLink || "",
-          createdAt: res.createdAt?.split("T")[0] || "",
-          category: res.category || "",
-          isActive: res.isActive
-        };
-
-        setFormData(data);
-        setOriginalData(data);
-      } catch {
-        toast.error("Failed to load notification");
-        navigate("/AppNotification/AppNotificationPage");
-      }
-      setIsLoading(false);
-    };
-
-    loadData();
-  }, [appNotificationId, navigate]);
-
-  // ---------- SUBMIT ----------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) return;
     setIsSubmitting(true);
 
     try {
-      const payload = {
+      if (!appNotificationId) throw new Error("No notification ID available");
+      
+      const dataToUpdate = {
         appNotificationId: Number(appNotificationId),
-        ...formData
+        notificationType: formData.notificationType || "",
+        notificationTitle: formData.notificationTitle || "",
+        notificationImage: formData.notificationImage || "",
+        notificationLink: formData.notificationLink || "",
+        createdAt: formData.createdAt || "",
+        category: formData.category || "",
+        isActive: Boolean(formData.isActive)
       };
 
-      await AppNotificationService.updateNotification(appNotificationId!, payload);
+      const updateResponse = await AppNotificationService.updateNotification(appNotificationId, dataToUpdate as any);
+      if (!updateResponse || updateResponse.isSucess === false) {
+        throw new Error(updateResponse?.customMessage || updateResponse?.error || "Failed to update notification");
+      }
 
-      toast.success("Notification Updated Successfully");
+      toast.success("Notification updated successfully!");
       setTimeout(() => navigate("/dashboard/settings/appNotification-list"), 1500);
-    } catch {
-      toast.error("Failed to update notification");
+    } catch (error: any) {
+      console.error("Update failed:", error);
+      toast.error(`Error updating notification: ${error.message}`);
     }
-
     setIsSubmitting(false);
   };
 
-  // ---------- LOADER ----------
-  if (isLoading) return <KiduLoader type="notification" />;
+  if (loading) return <KiduLoader type="Notification..." />;
 
-  // ---------- UI ----------
   return (
-    <Card className="mx-3 mt-4" style={{ backgroundColor: "#f7f7f7" }}>
-      <Card.Header
-        className="d-flex align-items-center"
-        style={{ backgroundColor: "#18575A", color: "white" }}
-      >
-        <Button
-          size="sm"
-          variant="light"
-          className="me-2"
-          onClick={() => navigate(-1)}
-        >
-          <FaArrowLeft />
-        </Button>
-        <h6 className="mb-0">Edit Notification</h6>
-      </Card.Header>
-
-      <Card.Body>
-        <Form onSubmit={handleSubmit}>
-          <Row className="mb-3">
-            <Col md={6}>
-              <Form.Label>{getLabel("notificationType")}</Form.Label>
-              <Form.Select
-                name="notificationType"
-                value={formData.notificationType}
-                onChange={handleChange}
-              >
-                <option value="">Select Type</option>
-                {notificationTypes.map(t => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </Form.Select>
-              {errors.notificationType && (
-                <small className="text-danger">{errors.notificationType}</small>
-              )}
-            </Col>
-
-            <Col md={6}>
-              <Form.Label>{getLabel("notificationTitle")}</Form.Label>
-              <Form.Control
-                type="text"
-                name="notificationTitle"
-                value={formData.notificationTitle}
-                onChange={handleChange}
-              />
-              {errors.notificationTitle && (
-                <small className="text-danger">{errors.notificationTitle}</small>
-              )}
-            </Col>
-          </Row>
-
-          <Row className="mb-3">
-            <Col md={6}>
-              <Form.Label>{getLabel("notificationImage")}</Form.Label>
-              <Form.Control
-                type="text"
-                name="notificationImage"
-                value={formData.notificationImage}
-                onChange={handleChange}
-              />
-              {errors.notificationImage && (
-                <small className="text-danger">{errors.notificationImage}</small>
-              )}
-            </Col>
-
-            <Col md={6}>
-              <Form.Label>{getLabel("notificationLink")}</Form.Label>
-              <Form.Control
-                type="text"
-                name="notificationLink"
-                value={formData.notificationLink}
-                onChange={handleChange}
-              />
-              {errors.notificationLink && (
-                <small className="text-danger">{errors.notificationLink}</small>
-              )}
-            </Col>
-          </Row>
-
-          <Row className="mb-3">
-            <Col md={6}>
-              <Form.Label>{getLabel("createdAt")}</Form.Label>
-              <Form.Control
-                type="date"
-                name="createdAt"
-                value={formData.createdAt}
-                onChange={handleChange}
-              />
-              {errors.createdAt && (
-                <small className="text-danger">{errors.createdAt}</small>
-              )}
-            </Col>
-
-            <Col md={6} className="d-flex align-items-center mt-4">
-              <Form.Check
-                type="switch"
-                label="Is Active"
-                name="isActive"
-                checked={formData.isActive}
-                onChange={handleChange}
-              />
-            </Col>
-          </Row>
-
-          <div className="d-flex justify-content-end mt-3 gap-2">
-            <KiduReset initialValues={originalData} setFormData={setFormData} />
-
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Updating..." : "Update"}
-            </Button>
+    <>
+      <div className="container d-flex justify-content-center align-items-center mt-5" style={{ fontFamily: "Urbanist" }}>
+        <Card className="shadow-lg p-4 w-100" style={{ maxWidth: "1300px", borderRadius: "15px", border: "none" }}>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <div className="d-flex align-items-center">
+              <KiduPrevious />
+              <h5 className="fw-bold m-0 ms-2" style={{ color: "#882626ff" }}>Edit Notification</h5>
+            </div>
           </div>
-        </Form>
-      </Card.Body>
-    </Card>
+
+          <Card.Body style={{ padding: "1.5rem" }}>
+            <Form onSubmit={handleSubmit}>
+              <Row className="mb-3">
+                <Col xs={12}>
+                  <Row className="g-2">
+                    {/* Notification Type */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("notificationType")}</Form.Label>
+                      <Form.Select
+                        size="sm"
+                        name="notificationType"
+                        value={formData.notificationType}
+                        onChange={handleChange}
+                        onBlur={() => validateField("notificationType", formData.notificationType)}
+                      >
+                        <option value="">Select Type</option>
+                        {notificationTypes.map(t => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </Form.Select>
+                      {errors.notificationType && <div className="text-danger small">{errors.notificationType}</div>}
+                    </Col>
+
+                    {/* Notification Title */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("notificationTitle")}</Form.Label>
+                      <Form.Control 
+                        size="sm" 
+                        type="text" 
+                        name="notificationTitle" 
+                        value={formData.notificationTitle}
+                        onChange={handleChange} 
+                        onBlur={() => validateField("notificationTitle", formData.notificationTitle)} 
+                        placeholder="Enter Notification Title"
+                      />
+                      {errors.notificationTitle && <div className="text-danger small">{errors.notificationTitle}</div>}
+                    </Col>
+
+                    {/* Notification Image */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("notificationImage")}</Form.Label>
+                      <Form.Control 
+                        size="sm" 
+                        type="text" 
+                        name="notificationImage" 
+                        value={formData.notificationImage}
+                        onChange={handleChange} 
+                        onBlur={() => validateField("notificationImage", formData.notificationImage)} 
+                        placeholder="Enter Image URL"
+                      />
+                      {errors.notificationImage && <div className="text-danger small">{errors.notificationImage}</div>}
+                    </Col>
+
+                    {/* Notification Link */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("notificationLink")}</Form.Label>
+                      <Form.Control 
+                        size="sm" 
+                        type="text" 
+                        name="notificationLink" 
+                        value={formData.notificationLink}
+                        onChange={handleChange} 
+                        onBlur={() => validateField("notificationLink", formData.notificationLink)} 
+                        placeholder="Enter Notification Link"
+                      />
+                      {errors.notificationLink && <div className="text-danger small">{errors.notificationLink}</div>}
+                    </Col>
+
+                    {/* Created Date */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("createdAt")}</Form.Label>
+                      <Form.Control 
+                        size="sm" 
+                        type="date" 
+                        name="createdAt" 
+                        value={formData.createdAt}
+                        onChange={handleChange} 
+                        onBlur={() => validateField("createdAt", formData.createdAt)} 
+                      />
+                      {errors.createdAt && <div className="text-danger small">{errors.createdAt}</div>}
+                    </Col>
+
+                    {/* Category */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("category")}</Form.Label>
+                      <Form.Control 
+                        size="sm" 
+                        type="text" 
+                        name="category" 
+                        value={formData.category}
+                        onChange={handleChange} 
+                        onBlur={() => validateField("category", formData.category)} 
+                        placeholder="Enter Category"
+                      />
+                      {errors.category && <div className="text-danger small">{errors.category}</div>}
+                    </Col>
+                  </Row>
+                </Col>
+              </Row>
+
+              {/* Switches Section */}
+              <Row className="mb-3 mx-1">
+                <Col xs={12}>
+                  <div className="d-flex flex-wrap gap-3">
+                    <Form.Check 
+                      type="switch" 
+                      id="isActive" 
+                      name="isActive" 
+                      label="Is Active"
+                      checked={formData.isActive || false} 
+                      onChange={handleChange} 
+                      className="fw-semibold" 
+                    />
+                  </div>
+                </Col>
+              </Row>
+
+              {/* Action Buttons */}
+              <div className="d-flex justify-content-end gap-2 mt-4 me-2">
+                <KiduReset initialValues={initialData} setFormData={setFormData} setErrors={setErrors} />
+                <Button type="submit" style={{ backgroundColor: "#882626ff", border: "none" }} disabled={isSubmitting}>
+                  {isSubmitting ? "Updating..." : "Update"}
+                </Button>
+              </div>
+            </Form>
+
+            {/* Audit Logs */}
+            {appNotificationId && <KiduAuditLogs tableName="AppNotification" recordId={appNotificationId.toString()} />}
+          </Card.Body>
+        </Card>
+
+        <Toaster position="top-right" />
+      </div>
+    </>
   );
 };
 

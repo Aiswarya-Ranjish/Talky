@@ -1,72 +1,42 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Purchascoupon } from "../../../types/settings/PurchaseCouponType";
+import type { Purchascoupon } from "../../../types/settings/PurchaseCouponType";
 import PurchaseCouponService from "../../../services/PurchaseCoupon.Services";
 import KiduLoader from "../../../components/KiduLoader";
-import KiduTable from "../../../components/KiduTable";
+import KiduServerTable from "../../../components/Trip/KiduServerTable";
 
-// Table Columns
 const formatDate = (dateValue: string | Date | null | undefined): string => {
-    if (!dateValue) return "-";
-  
-    const date = new Date(dateValue);
-  
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = date.toLocaleString("en-US", { month: "long" }); // Full month name
-    const year = date.getFullYear();
-  
-    return `${day}-${month}-${year}`;
-  };
-  
-  
-  
+  if (!dateValue) return "-";
+
+  const date = new Date(dateValue);
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = date.toLocaleString("en-US", { month: "long" });
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
+};
+
 const columns = [
-  { label: "ID", key: "purchaseCouponId" },
-  { label: "Coins", key: "coins" },
-  { label: "Amount", key: "amount" },
-  { label: "Past Amount", key: "pastAmount" },
-  { label: "Status", key: "isActive" },
-  {
-    label: "Created Date",
-    key: "createdAt",
-    render: (value: string) => formatDate(value),
-  },
-  
+  { key: "purchaseCouponId", label: "Coupon ID", type: "text" as const },
+  { key: "coins", label: "Coins", type: "text" as const },
+  { key: "amount", label: "Amount", type: "text" as const },
+  { key: "pastAmount", label: "Past Amount", type: "text" as const },
+  { key: "description", label: "Description", type: "text" as const },
+  { key: "isActive", label: "Status", type: "text" as const },
+  { key: "createdAt", label: "Created Date", type: "text" as const },
 ];
 
 const PurchaseCouponPage: React.FC = () => {
-  const [couponList, setCouponList] = useState<Purchascoupon[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
   const loadCoupons = useCallback(async () => {
     try {
       setLoading(true);
-  
-      const response = await PurchaseCouponService.getAllCoupons();
-  
-      if (response && Array.isArray(response)) {
-  
-        // Format dates here before passing to table
-        const formattedData = response.map(coupon => ({
-          ...coupon,
-          createdAt: formatDate(coupon.createdAt)
-        }));
-  
-        setCouponList(formattedData);
-        setError(null);
-  
-      } else {
-        setError("Failed to load purchase coupon data");
-      }
-    } catch (err: any) {
-      setError(err.message || "Unexpected error occurred");
+      await PurchaseCouponService.getAllCoupons();
     } finally {
       setLoading(false);
     }
   }, []);
-  
-  
-  
 
   useEffect(() => {
     loadCoupons();
@@ -74,19 +44,59 @@ const PurchaseCouponPage: React.FC = () => {
 
   if (loading) return <KiduLoader type="Loading Purchase Coupons..." />;
 
+  const fetchData = async (params: {
+    pageNumber: number;
+    pageSize: number;
+    searchTerm: string;
+  }) => {
+    try {
+      const response = await PurchaseCouponService.getAllCoupons();
+      let filteredData = response || [];
+
+      // Search filtering
+      if (params.searchTerm) {
+        const s = params.searchTerm.toLowerCase();
+        filteredData = filteredData.filter(coupon =>
+          (coupon.purchaseCouponId?.toString() || "").includes(s) ||
+          (coupon.coins?.toString() || "").includes(s) ||
+          (coupon.amount?.toString() || "").includes(s) ||
+          (coupon.description || "").toLowerCase().includes(s)
+        );
+      }
+
+      // Format dates for display
+      const formattedData = filteredData.map(coupon => ({
+        ...coupon,
+        createdAt: formatDate(coupon.createdAt),
+        isActive: coupon.isActive ? "Active" : "Inactive"
+      }));
+
+      // Pagination
+      const start = (params.pageNumber - 1) * params.pageSize;
+      const data = formattedData.slice(start, start + params.pageSize);
+
+      return { data, total: formattedData.length };
+    } catch {
+      return { data: [], total: 0 };
+    }
+  };
+
   return (
-    <KiduTable
+    <KiduServerTable
       title="Purchase Coupon List"
       subtitle="List of all purchase coupons with Edit & View options"
-      data={couponList}
-      addButtonLabel="Add New Coupon"
       columns={columns}
       idKey="purchaseCouponId"
+      addButtonLabel="Add New Coupon"
       addRoute="/dashboard/settings/create-purchasecoupon"
-      editRoute="/dashboard/settings/edit-purchasecoupon"   // KiduTable will append /id
-      viewRoute="/dashboard/settings/view-purchasecoupon"   // KiduTable will append /id
-      error={error}
-      onRetry={loadCoupons}
+      editRoute="/dashboard/settings/edit-purchasecoupon"
+      viewRoute="/dashboard/settings/view-purchasecoupon"
+      fetchData={fetchData}
+      showSearch={true}
+      showActions={true}
+      showExport={true}
+      showAddButton={true}
+      rowsPerPage={10}
     />
   );
 };

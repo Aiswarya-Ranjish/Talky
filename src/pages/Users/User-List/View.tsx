@@ -73,7 +73,7 @@ const UserPageView: React.FC = () => {
   const imageUrl = user.profileImagePath ? getFullImageUrl(user.profileImagePath) : defaultProfile;
 
   return (
-    <div className="container d-flex justify-content-center align-items-center mt-5" style={{ fontFamily: "Urbanist" }}>
+    <div className="container d-flex justify-content-center align-items-center mt-1" style={{ fontFamily: "Urbanist" }}>
       <Card className="shadow-lg p-4 w-100" style={{ maxWidth: "1300px", borderRadius: "15px", border: "none" }}>
         
         <div className="d-flex justify-content-between align-items-center mb-4">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Form, Button, Container, Row, Col } from "react-bootstrap";
+import { Card, Form, Button, Row, Col } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import FinancialYearService from "../../../services/settings/financial.services";
@@ -7,245 +7,271 @@ import KiduValidation from "../../../components/KiduValidation";
 import KiduLoader from "../../../components/KiduLoader";
 import KiduPrevious from "../../../components/KiduPrevious";
 import KiduReset from "../../../components/ReuseButtons/KiduReset";
-
+import KiduAuditLogs from "../../../components/KiduAuditLogs";
 
 const FinancialYearEdit: React.FC = () => {
-  const { financialYearId } = useParams();
   const navigate = useNavigate();
+  const { financialYearId } = useParams<{ financialYearId: string }>();
 
-  const [loading, setLoading] = useState(true);
-  const [initialValues, setInitialValues] = useState<any>({});
-  const [formData, setFormData] = useState<any>({});
-  const [errors, setErrors] = useState<any>({});
-
-  // ---------- FIELD DEFINITIONS ----------
   const fields = [
-    { name: "finacialYearCode", rules: { required: true, type: "text", label: "Financial Year Code" } },
-    { name: "startDate", rules: { required: true, type: "date", label: "Start Date" } },
-    { name: "endDate", rules: { required: true, type: "date", label: "End Date" } }
+    { name: "finacialYearCode", rules: { required: true, type: "text" as const, label: "Financial Year Code" } },
+    { name: "startDate", rules: { required: true, type: "date" as const, label: "Start Date" } },
+    { name: "endDate", rules: { required: true, type: "date" as const, label: "End Date" } }
   ];
 
-  // ---------- LOAD DATA ----------
+  const initialValues: any = {};
+  const initialErrors: any = {};
+  fields.forEach(f => {
+    initialValues[f.name] = "";
+    initialErrors[f.name] = "";
+  });
+
+  const [formData, setFormData] = useState({
+    ...initialValues,
+    financialYearId: 0,
+    startDate: "",
+    endDate: "",
+    isCurrent: false,
+    isClosed: false
+  });
+
+  const [errors, setErrors] = useState(initialErrors);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [initialData, setInitialData] = useState<any>(null);
+
+  const getLabel = (name: string) => {
+    const field = fields.find(f => f.name === name);
+    if (!field) return "";
+    return (
+      <>
+        {field.rules.label}
+        {field.rules.required && <span style={{ color: "red", marginLeft: "2px" }}>*</span>}
+      </>
+    );
+  };
+
   useEffect(() => {
-    const loadFinancialYear = async () => {
-      if (!financialYearId) {
-        toast.error("Invalid Financial Year ID");
-        navigate("/FinancialYear/FinancialYearPage");
-        return;
-      }
-
+    const fetchFinancialYear = async () => {
       try {
-        const res = await FinancialYearService.getFinancialYearById(financialYearId);
-
-        if (res) {
-          const loadedValues = {
-            financialYearId: res.financialYearId,
-            finacialYearCode: res.finacialYearCode ?? "",
-            startDate: res.startDate?.split("T")[0] ?? "",
-            endDate: res.endDate?.split("T")[0] ?? "",
-            isCurrent: res.isCurrent ?? false,
-            isClosed: res.isClosed ?? false
-          };
-
-          setFormData(loadedValues);
-          setInitialValues(loadedValues);
-
-          const err: any = {};
-          fields.forEach((f) => (err[f.name] = ""));
-          setErrors(err);
-
-        } else {
-          toast.error("Failed to load financial year");
-          navigate("/FinancialYear/FinancialYearPage");
+        setLoading(true);
+        if (!financialYearId) { 
+          toast.error("No financial year ID provided"); 
+          navigate("/dashboard/settings/financial-year"); 
+          return; 
         }
-      } catch (err: any) {
-        toast.error(err.message || "Failed to load financial year");
-        navigate("/FinancialYear/FinancialYearPage");
-      } finally {
-        setLoading(false);
+        const response = await FinancialYearService.getFinancialYearById(financialYearId);
+        if (!response) throw new Error("No data received from server");
+
+        const formattedData = {
+          financialYearId: response.financialYearId || 0,
+          finacialYearCode: response.finacialYearCode || "",
+          startDate: response.startDate?.split("T")[0] || "",
+          endDate: response.endDate?.split("T")[0] || "",
+          isCurrent: response.isCurrent ?? false,
+          isClosed: response.isClosed ?? false
+        };
+
+        setFormData(formattedData);
+        setInitialData(formattedData);
+      } catch (error: any) {
+        console.error("Failed to load financial year:", error);
+        toast.error(`Error loading financial year: ${error.message}`);
+        navigate("/dashboard/settings/financial-year");
+      } finally { 
+        setLoading(false); 
       }
     };
-
-    loadFinancialYear();
+    fetchFinancialYear();
   }, [financialYearId, navigate]);
 
-  // ---------- HANDLE CHANGE ----------
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: any) => {
     const { name, value, type } = e.target;
-  
+    const target = e.target as HTMLInputElement;
     let updatedValue: any = value;
-  
-    // Check if the element is actually a checkbox input
-    if (type === "checkbox" && e.target instanceof HTMLInputElement) {
-      updatedValue = e.target.checked;
+    
+    if (type === "checkbox") {
+      updatedValue = target.checked;
     }
-  
-    setFormData((prev: any) => ({
-      ...prev,
-      [name]: updatedValue,
-    }));
-  
-    if (errors[name]) {
-      setErrors((prev: any) => ({ ...prev, [name]: "" }));
-    }
+    
+    setFormData((prev: any) => ({ ...prev, [name]: updatedValue }));
+    if (errors[name]) setErrors((prev: any) => ({ ...prev, [name]: "" }));
   };
-  
 
-  // ---------- VALIDATION ----------
+  const overrideMessage = (name: string) => {
+    const field = fields.find(f => f.name === name);
+    const label = field?.rules.label || "This field";
+    return `${label} is required.`;
+  };
+
   const validateField = (name: string, value: any) => {
-    const rule = fields.find((f) => f.name === name)?.rules;
-    if (!rule) return true;
-
-    const result = KiduValidation.validate(value, rule as any);
-
-    setErrors((prev: any) => ({
-      ...prev,
-      [name]: result.isValid ? "" : result.message
-    }));
-
-    return result.isValid;
+    const field = fields.find(f => f.name === name);
+    if (!field) return true;
+    const result = KiduValidation.validate(value, field.rules);
+    if (!result.isValid) {
+      const msg = overrideMessage(name);
+      setErrors((prev: any) => ({ ...prev, [name]: msg }));
+      return false;
+    }
+    setErrors((prev: any) => ({ ...prev, [name]: "" }));
+    return true;
   };
 
   const validateForm = () => {
     let ok = true;
-    fields.forEach((f) => {
+    fields.forEach(f => {
       if (!validateField(f.name, formData[f.name])) ok = false;
     });
+
+    // Custom: startDate < endDate
+    if (formData.startDate && formData.endDate && new Date(formData.startDate) >= new Date(formData.endDate)) {
+      setErrors((prev: any) => ({
+        ...prev,
+        endDate: "End Date must be after Start Date",
+      }));
+      ok = false;
+    }
+
     return ok;
   };
 
-  // ---------- SUBMIT ----------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-
-    if (!financialYearId) {
-      toast.error("Invalid financial year ID");
-      return;
-    }
+    setIsSubmitting(true);
 
     try {
-      const payload = {
-        financialYearId: Number(financialYearId),
-        finacialYearCode: formData.finacialYearCode,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        isCurrent: formData.isCurrent,
-        isClosed: formData.isClosed
+      if (!financialYearId) throw new Error("No financial year ID available");
+      
+      const dataToUpdate = {
+        financialYearId: Number(formData.financialYearId),
+        finacialYearCode: formData.finacialYearCode || "",
+        startDate: formData.startDate || "",
+        endDate: formData.endDate || "",
+        isCurrent: Boolean(formData.isCurrent),
+        isClosed: Boolean(formData.isClosed)
       };
 
-      await FinancialYearService.editFinanceById(financialYearId, payload);
+      const updateResponse = await FinancialYearService.editFinanceById(financialYearId, dataToUpdate as any);
+      if (!updateResponse || updateResponse.isSucess === false) {
+        throw new Error(updateResponse?.customMessage || updateResponse?.error || "Failed to update financial year");
+      }
 
-      toast.success("Financial Year Updated Successfully!");
-
+      toast.success("Financial Year updated successfully!");
       setTimeout(() => navigate("/dashboard/settings/financial-year"), 1500);
-
-    } catch (err: any) {
-      toast.error(err.message || "Update failed");
+    } catch (error: any) {
+      console.error("Update failed:", error);
+      toast.error(`Error updating financial year: ${error.message}`);
     }
+    setIsSubmitting(false);
   };
 
-  // ---------- SHOW LOADER ----------
-  if (loading) return <KiduLoader type="Loading Financial Year..." />;
+  if (loading) return <KiduLoader type="Financial Year..." />;
 
   return (
     <>
-      <Container className="px-4 mt-5 shadow-sm rounded bg-white" style={{ fontFamily: "Urbanist" }}>
-        <div className="d-flex align-items-center mb-3">
-          <div className="me-2 mt-3"><KiduPrevious /></div>
-          <h4 className="fw-bold mt-3" style={{ color: "#18575A" }}>
-            Edit Financial Year
-          </h4>
-        </div>
-
-        <hr />
-
-        <Form onSubmit={handleSubmit} className="p-4">
-          <Row>
-            {/* FINANCIAL YEAR CODE */}
-            <Col md={6} className="mb-3">
-              <Form.Label className="fw-semibold">
-                {fields[0].rules.label} <span className="text-danger">*</span>
-              </Form.Label>
-              <Form.Control
-                type="text"
-                name="finacialYearCode"
-                placeholder="Enter Financial Year Code"
-                value={formData.finacialYearCode}
-                onChange={handleChange}
-                onBlur={() => validateField("finacialYearCode", formData.finacialYearCode)}
-              />
-              {errors.finacialYearCode && (
-                <small className="text-danger">{errors.finacialYearCode}</small>
-              )}
-            </Col>
-
-            {/* START DATE */}
-            <Col md={6} className="mb-3">
-              <Form.Label className="fw-semibold">
-                Start Date <span className="text-danger">*</span>
-              </Form.Label>
-              <Form.Control
-                type="date"
-                name="startDate"
-                value={formData.startDate}
-                onChange={handleChange}
-                onBlur={() => validateField("startDate", formData.startDate)}
-              />
-              {errors.startDate && (
-                <small className="text-danger">{errors.startDate}</small>
-              )}
-            </Col>
-
-            {/* END DATE */}
-            <Col md={6} className="mb-3">
-              <Form.Label className="fw-semibold">
-                End Date <span className="text-danger">*</span>
-              </Form.Label>
-              <Form.Control
-                type="date"
-                name="endDate"
-                value={formData.endDate}
-                onChange={handleChange}
-                onBlur={() => validateField("endDate", formData.endDate)}
-              />
-              {errors.endDate && (
-                <small className="text-danger">{errors.endDate}</small>
-              )}
-            </Col>
-
-            {/* SWITCHES */}
-            <Col md={6} className="mt-4">
-              <Form.Check
-                type="switch"
-                label="Is Current"
-                name="isCurrent"
-                checked={formData.isCurrent}
-                onChange={handleChange}
-              />
-
-              <Form.Check
-                type="switch"
-                label="Is Closed"
-                name="isClosed"
-                checked={formData.isClosed}
-                onChange={handleChange}
-                className="mt-2"
-              />
-            </Col>
-          </Row>
-
-          {/* BUTTONS */}
-          <div className="d-flex gap-2 justify-content-end mt-4">
-            <KiduReset initialValues={initialValues} setFormData={setFormData} />
-            <Button type="submit" style={{ backgroundColor: "#18575A", border: "none" }}>
-              Update
-            </Button>
+      <div className="container d-flex justify-content-center align-items-center mt-5" style={{ fontFamily: "Urbanist" }}>
+        <Card className="shadow-lg p-4 w-100" style={{ maxWidth: "1300px", borderRadius: "15px", border: "none" }}>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <div className="d-flex align-items-center">
+              <KiduPrevious />
+              <h5 className="fw-bold m-0 ms-2" style={{ color: "#882626ff" }}>Edit Financial Year</h5>
+            </div>
           </div>
-        </Form>
-      </Container>
 
-      <Toaster position="top-right" />
+          <Card.Body style={{ padding: "1.5rem" }}>
+            <Form onSubmit={handleSubmit}>
+              <Row className="mb-3">
+                <Col xs={12}>
+                  <Row className="g-2">
+                    {/* Financial Year Code */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("finacialYearCode")}</Form.Label>
+                      <Form.Control 
+                        size="sm" 
+                        type="text" 
+                        name="finacialYearCode" 
+                        value={formData.finacialYearCode}
+                        onChange={handleChange} 
+                        onBlur={() => validateField("finacialYearCode", formData.finacialYearCode)} 
+                        placeholder="Enter Financial Year Code"
+                      />
+                      {errors.finacialYearCode && <div className="text-danger small">{errors.finacialYearCode}</div>}
+                    </Col>
+
+                    {/* Start Date */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("startDate")}</Form.Label>
+                      <Form.Control 
+                        size="sm" 
+                        type="date" 
+                        name="startDate" 
+                        value={formData.startDate}
+                        onChange={handleChange} 
+                        onBlur={() => validateField("startDate", formData.startDate)} 
+                      />
+                      {errors.startDate && <div className="text-danger small">{errors.startDate}</div>}
+                    </Col>
+
+                    {/* End Date */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("endDate")}</Form.Label>
+                      <Form.Control 
+                        size="sm" 
+                        type="date" 
+                        name="endDate" 
+                        value={formData.endDate}
+                        onChange={handleChange} 
+                        onBlur={() => validateField("endDate", formData.endDate)} 
+                      />
+                      {errors.endDate && <div className="text-danger small">{errors.endDate}</div>}
+                    </Col>
+                  </Row>
+                </Col>
+              </Row>
+
+              {/* Switches Section */}
+              <Row className="mb-3 mx-1">
+                <Col xs={12}>
+                  <div className="d-flex flex-wrap gap-3">
+                    <Form.Check 
+                      type="switch" 
+                      id="isCurrent" 
+                      name="isCurrent" 
+                      label="Is Current"
+                      checked={formData.isCurrent || false} 
+                      onChange={handleChange} 
+                      className="fw-semibold" 
+                    />
+                    <Form.Check 
+                      type="switch" 
+                      id="isClosed" 
+                      name="isClosed" 
+                      label="Is Closed"
+                      checked={formData.isClosed || false} 
+                      onChange={handleChange} 
+                      className="fw-semibold" 
+                    />
+                  </div>
+                </Col>
+              </Row>
+
+              {/* Action Buttons */}
+              <div className="d-flex justify-content-end gap-2 mt-4 me-2">
+                <KiduReset initialValues={initialData} setFormData={setFormData} setErrors={setErrors} />
+                <Button type="submit" style={{ backgroundColor: "#882626ff", border: "none" }} disabled={isSubmitting}>
+                  {isSubmitting ? "Updating..." : "Update"}
+                </Button>
+              </div>
+            </Form>
+
+            {/* Audit Logs */}
+            {formData.financialYearId && <KiduAuditLogs tableName="FinancialYear" recordId={formData.financialYearId.toString()} />}
+          </Card.Body>
+        </Card>
+
+        <Toaster position="top-right" />
+      </div>
     </>
   );
 };

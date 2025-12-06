@@ -3,7 +3,6 @@ import { Card, Table, Image, Button, Modal, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import toast, { Toaster } from "react-hot-toast";
-
 import KiduLoader from "../../components/KiduLoader";
 import KiduPrevious from "../../components/KiduPrevious";
 import defaultProfile from "../../assets/Images/profile.jpeg";
@@ -88,7 +87,7 @@ const StaffView: React.FC = () => {
   };
 
   return (
-    <div className="container d-flex justify-content-center align-items-center mt-5" style={{ fontFamily: "Urbanist" }}>
+    <div className="container d-flex justify-content-center align-items-center mt-1" style={{ fontFamily: "Urbanist" }}>
       <Card className="shadow-lg p-4 w-100" style={{ maxWidth: "1300px", borderRadius: "15px", border: "none" }}>
 
         {/* Header */}

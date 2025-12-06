@@ -1,11 +1,11 @@
-/* eslint-disable react-refresh/only-export-components */
 import React, { useState } from "react";
-import { Card, Button, Form, Row, Col } from "react-bootstrap";
+import { Card, Form, Button, Row, Col } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
-import { FaArrowLeft } from "react-icons/fa";
+import toast, { Toaster } from "react-hot-toast";
 import KiduValidation from "../../../components/KiduValidation";
 import AppNotificationService from "../../../services/settings/AppNotification.services";
+import KiduPrevious from "../../../components/KiduPrevious";
+import KiduReset from "../../../components/ReuseButtons/KiduReset";
 
 interface NotificationFormData {
   notificationType: string;
@@ -15,13 +15,7 @@ interface NotificationFormData {
   createdAt: string;
   category: string;
   isActive: boolean;
-
-
   [key: string]: string | boolean;
-}
-
-interface FormErrors {
-  [key: string]: string;
 }
 
 const AppNotificationCreate: React.FC = () => {
@@ -36,14 +30,17 @@ const AppNotificationCreate: React.FC = () => {
     { name: "category", rules: { required: false, type: "text" as const, label: "Category" } },
   ];
 
-  const notificationTypes = [
-    "Offers",
-    "Alerts",
-    "One-time Alerts",
-    "Repetitive",
-  ];
+  const notificationTypes = ["Offers", "Alerts", "One-time Alerts", "Repetitive"];
+
+  const initialValues: any = {};
+  const initialErrors: any = {};
+  fields.forEach(f => {
+    initialValues[f.name] = "";
+    initialErrors[f.name] = "";
+  });
 
   const [formData, setFormData] = useState<NotificationFormData>({
+    ...initialValues,
     notificationType: "",
     notificationTitle: "",
     notificationImage: "",
@@ -53,8 +50,18 @@ const AppNotificationCreate: React.FC = () => {
     isActive: false,
   });
 
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState(initialErrors);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [initialData] = useState({
+    ...initialValues,
+    notificationType: "",
+    notificationTitle: "",
+    notificationImage: "",
+    notificationLink: "",
+    createdAt: "",
+    category: "",
+    isActive: false,
+  });
 
   const getLabel = (name: string) => {
     const field = fields.find(f => f.name === name);
@@ -62,137 +69,224 @@ const AppNotificationCreate: React.FC = () => {
     return (
       <>
         {field.rules.label}
-        {field.rules.required && <span style={{ color: "red" }}> *</span>}
+        {field.rules.required && <span style={{ color: "red", marginLeft: "2px" }}>*</span>}
       </>
     );
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
-    const updatedValue = type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
+    const target = e.target as HTMLInputElement;
+    
+    let updatedValue: any = value;
+    if (type === "checkbox") {
+      updatedValue = target.checked;
+    }
 
-    setFormData(prev => ({ ...prev, [name]: updatedValue }));
-
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+    setFormData((prev: any) => ({ ...prev, [name]: updatedValue }));
+    if (errors[name]) setErrors((prev: any) => ({ ...prev, [name]: "" }));
   };
 
-  const validateField = (name: string, value: string | boolean) => {
+  const overrideMessage = (name: string) => {
+    const field = fields.find(f => f.name === name);
+    const label = field?.rules.label || "This field";
+    return `${label} is required.`;
+  };
+
+  const validateField = (name: string, value: any) => {
     const field = fields.find(f => f.name === name);
     if (!field) return true;
-
-    const validation = KiduValidation.validate(value, field.rules);
-
-    if (!validation.isValid) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: validation.message || `${field.rules.label} is required.`,
-      }));
+    const result = KiduValidation.validate(value, field.rules);
+    if (!result.isValid) {
+      const msg = overrideMessage(name);
+      setErrors((prev: any) => ({ ...prev, [name]: msg }));
       return false;
     }
+    setErrors((prev: any) => ({ ...prev, [name]: "" }));
     return true;
   };
 
   const validateForm = () => {
-    let valid = true;
+    let ok = true;
     fields.forEach(f => {
-      if (!validateField(f.name, formData[f.name])) valid = false;
+      if (!validateField(f.name, formData[f.name])) ok = false;
     });
-    return valid;
+    return ok;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) return;
     setIsSubmitting(true);
 
     try {
-      const payload = {
+      const dataToCreate = {
         appNotificationId: 0,
-        ...formData,
+        notificationType: formData.notificationType || "",
+        notificationTitle: formData.notificationTitle || "",
+        notificationImage: formData.notificationImage || "",
+        notificationLink: formData.notificationLink || "",
+        createdAt: formData.createdAt || "",
+        category: formData.category || "",
+        isActive: Boolean(formData.isActive),
       };
 
-      await AppNotificationService.addNotification(payload);
+      const createResponse = await AppNotificationService.addNotification(dataToCreate as any);
+      if (!createResponse || createResponse.isSucess === false) {
+        throw new Error(createResponse?.customMessage || createResponse?.error || "Failed to create notification");
+      }
 
-      toast.success("Notification Created Successfully");
-      setTimeout(() => navigate("/dashboard/settings/appNotification-list"), 800);
-    } catch {
-      toast.error("Failed to create notification");
+      toast.success("Notification created successfully!");
+      setTimeout(() => navigate("/dashboard/settings/appNotification-list"), 1500);
+    } catch (error: any) {
+      console.error("Create failed:", error);
+      toast.error(`Error creating notification: ${error.message}`);
     }
-
     setIsSubmitting(false);
   };
 
   return (
-    <Card className="mx-3 mt-4" style={{ backgroundColor: "#f7f7f7" }}>
-      <Card.Header
-        className="d-flex align-items-center"
-        style={{ backgroundColor: "#18575A", color: "white" }}
-      >
-        <Button size="sm" variant="light" className="me-2" onClick={() => navigate(-1)}>
-          <FaArrowLeft />
-        </Button>
-        <h6 className="mb-0">Create Notification</h6>
-      </Card.Header>
-
-      <Card.Body>
-        <Form onSubmit={handleSubmit}>
-          <Row className="mb-3">
-            <Col md={6}>
-              <Form.Label>{getLabel("notificationType")}</Form.Label>
-              <Form.Select name="notificationType" value={formData.notificationType} onChange={handleChange}>
-                <option value="">Select Type</option>
-                {notificationTypes.map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </Form.Select>
-              {errors.notificationType && <small className="text-danger">{errors.notificationType}</small>}
-            </Col>
-
-            <Col md={6}>
-              <Form.Label>{getLabel("notificationTitle")}</Form.Label>
-              <Form.Control type="text" name="notificationTitle" value={formData.notificationTitle} onChange={handleChange} />
-              {errors.notificationTitle && <small className="text-danger">{errors.notificationTitle}</small>}
-            </Col>
-          </Row>
-
-          <Row className="mb-3">
-            <Col md={6}>
-              <Form.Label>{getLabel("notificationImage")}</Form.Label>
-              <Form.Control type="text" name="notificationImage" value={formData.notificationImage} onChange={handleChange} />
-              {errors.notificationImage && <small className="text-danger">{errors.notificationImage}</small>}
-            </Col>
-
-            <Col md={6}>
-              <Form.Label>{getLabel("notificationLink")}</Form.Label>
-              <Form.Control type="text" name="notificationLink" value={formData.notificationLink} onChange={handleChange} />
-              {errors.notificationLink && <small className="text-danger">{errors.notificationLink}</small>}
-            </Col>
-          </Row>
-
-          <Row className="mb-3">
-            <Col md={6}>
-              <Form.Label>{getLabel("createdAt")}</Form.Label>
-              <Form.Control type="date" name="createdAt" value={formData.createdAt} onChange={handleChange} />
-              {errors.createdAt && <small className="text-danger">{errors.createdAt}</small>}
-            </Col>
-
-            <Col md={6} className="d-flex align-items-center mt-4">
-              <Form.Check type="switch" label="Is Active" name="isActive" checked={formData.isActive} onChange={handleChange} />
-            </Col>
-          </Row>
-
-          <div className="d-flex justify-content-end mt-3">
-            <Button variant="secondary" className="me-2" onClick={() => navigate(-1)}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save"}
-            </Button>
+    <>
+      <div className="container d-flex justify-content-center align-items-center mt-5" style={{ fontFamily: "Urbanist" }}>
+        <Card className="shadow-lg p-4 w-100" style={{ maxWidth: "1300px", borderRadius: "15px", border: "none" }}>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <div className="d-flex align-items-center">
+              <KiduPrevious />
+              <h5 className="fw-bold m-0 ms-2" style={{ color: "#882626ff" }}>Create Notification</h5>
+            </div>
           </div>
-        </Form>
-      </Card.Body>
-    </Card>
+
+          <Card.Body style={{ padding: "1.5rem" }}>
+            <Form onSubmit={handleSubmit}>
+              <Row className="mb-3">
+                <Col xs={12}>
+                  <Row className="g-2">
+                    {/* Notification Type */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("notificationType")}</Form.Label>
+                      <Form.Select
+                        size="sm"
+                        name="notificationType"
+                        value={formData.notificationType}
+                        onChange={handleChange}
+                        onBlur={() => validateField("notificationType", formData.notificationType)}
+                      >
+                        <option value="">Select Type</option>
+                        {notificationTypes.map(t => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </Form.Select>
+                      {errors.notificationType && <div className="text-danger small">{errors.notificationType}</div>}
+                    </Col>
+
+                    {/* Notification Title */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("notificationTitle")}</Form.Label>
+                      <Form.Control 
+                        size="sm" 
+                        type="text" 
+                        name="notificationTitle" 
+                        value={formData.notificationTitle}
+                        onChange={handleChange} 
+                        onBlur={() => validateField("notificationTitle", formData.notificationTitle)} 
+                        placeholder="Enter Notification Title"
+                      />
+                      {errors.notificationTitle && <div className="text-danger small">{errors.notificationTitle}</div>}
+                    </Col>
+
+                    {/* Notification Image */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("notificationImage")}</Form.Label>
+                      <Form.Control 
+                        size="sm" 
+                        type="text" 
+                        name="notificationImage" 
+                        value={formData.notificationImage}
+                        onChange={handleChange} 
+                        onBlur={() => validateField("notificationImage", formData.notificationImage)} 
+                        placeholder="Enter Image URL"
+                      />
+                      {errors.notificationImage && <div className="text-danger small">{errors.notificationImage}</div>}
+                    </Col>
+
+                    {/* Notification Link */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("notificationLink")}</Form.Label>
+                      <Form.Control 
+                        size="sm" 
+                        type="text" 
+                        name="notificationLink" 
+                        value={formData.notificationLink}
+                        onChange={handleChange} 
+                        onBlur={() => validateField("notificationLink", formData.notificationLink)} 
+                        placeholder="Enter Notification Link"
+                      />
+                      {errors.notificationLink && <div className="text-danger small">{errors.notificationLink}</div>}
+                    </Col>
+
+                    {/* Created Date */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("createdAt")}</Form.Label>
+                      <Form.Control 
+                        size="sm" 
+                        type="date" 
+                        name="createdAt" 
+                        value={formData.createdAt}
+                        onChange={handleChange} 
+                        onBlur={() => validateField("createdAt", formData.createdAt)} 
+                      />
+                      {errors.createdAt && <div className="text-danger small">{errors.createdAt}</div>}
+                    </Col>
+
+                    {/* Category */}
+                    <Col md={4}>
+                      <Form.Label className="mb-1 fw-medium small">{getLabel("category")}</Form.Label>
+                      <Form.Control 
+                        size="sm" 
+                        type="text" 
+                        name="category" 
+                        value={formData.category}
+                        onChange={handleChange} 
+                        onBlur={() => validateField("category", formData.category)} 
+                        placeholder="Enter Category"
+                      />
+                      {errors.category && <div className="text-danger small">{errors.category}</div>}
+                    </Col>
+                  </Row>
+                </Col>
+              </Row>
+
+              {/* Switches Section */}
+              <Row className="mb-3 mx-1">
+                <Col xs={12}>
+                  <div className="d-flex flex-wrap gap-3">
+                    <Form.Check 
+                      type="switch" 
+                      id="isActive" 
+                      name="isActive" 
+                      label="Is Active"
+                      checked={formData.isActive || false} 
+                      onChange={handleChange} 
+                      className="fw-semibold" 
+                    />
+                  </div>
+                </Col>
+              </Row>
+
+              {/* Action Buttons */}
+              <div className="d-flex justify-content-end gap-2 mt-4 me-2">
+                <KiduReset initialValues={initialData} setFormData={setFormData} setErrors={setErrors} />
+                <Button type="submit" style={{ backgroundColor: "#882626ff", border: "none" }} disabled={isSubmitting}>
+                  {isSubmitting ? "Creating..." : "Create"}
+                </Button>
+              </div>
+            </Form>
+          </Card.Body>
+        </Card>
+
+        <Toaster position="top-right" />
+      </div>
+    </>
   );
 };
 

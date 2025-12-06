@@ -6,6 +6,9 @@ export interface CustomResponse<T> {
     value: T;
   }
 export interface AppNotification{
+    error: any;
+    customMessage: any;
+    isSucess: boolean;
     appNotificationId:number;
     notificationType:string;
     notificationTitle:string;
