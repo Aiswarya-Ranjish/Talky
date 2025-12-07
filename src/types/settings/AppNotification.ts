@@ -1,10 +1,6 @@
-export interface CustomResponse<T> {
-    statusCode: number;
-    error: string | null;
-    customMessage: string;
-    isSucess: boolean;
-    value: T;
-  }
+import { AuditTrails } from "../common/AuditLog.types";
+
+
 export interface AppNotification{
     error: any;
     customMessage: any;
@@ -17,4 +13,5 @@ export interface AppNotification{
     notificationLink:string;
     createdAt:string;
     category: string;
+    auditLogs?: AuditTrails[];
 }

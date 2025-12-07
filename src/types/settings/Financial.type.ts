@@ -1,3 +1,5 @@
+import { AuditTrails } from "../common/AuditLog.types";
+
 export interface FinancialYear{
     isSucess: boolean;
     error: any;
@@ -8,4 +10,5 @@ export interface FinancialYear{
     endDate?: string;
     isCurrent:boolean;
     isClosed:boolean;
+    auditLogs?: AuditTrails[];
   }

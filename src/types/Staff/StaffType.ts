@@ -1,3 +1,5 @@
+import { AuditTrails } from "../common/AuditLog.types";
+
 export interface StaffModel{
       error: any;
       isSucess: boolean;
@@ -32,5 +34,6 @@ export interface StaffModel{
       lastLogin: string | Date;
       walletBalance: number;
       priority:number;
+      auditLogs?: AuditTrails[];
     }
       

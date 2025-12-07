@@ -1,7 +1,8 @@
 import React from 'react';
-import { CustomResponse, Purchascoupon } from '../types/settings/PurchaseCouponType';
+import {  Purchascoupon } from '../types/settings/PurchaseCouponType';
 import HttpService from './common/HttpService';
 import { API_ENDPOINTS } from '../constants/API_ENDPOINTS';
+import { CustomResponse } from '../types/common/ApiTypes';
 
 
 

@@ -1,10 +1,5 @@
-export interface CustomResponse<T> {
-    statusCode: number;
-    error: string | null;
-    customMessage: string;
-    isSucess: boolean;
-    value: T;
-  }
+import { AuditTrails } from "../common/AuditLog.types";
+
   export interface Purchascoupon{
    purchaseCouponId?:number;
     coins:number;
@@ -14,6 +9,6 @@ export interface CustomResponse<T> {
     description: string;
     createdAt:string|Date;
     createdAppUserId?:number;
-
     [key: string]: any;
+     auditLogs?: AuditTrails[];
   }

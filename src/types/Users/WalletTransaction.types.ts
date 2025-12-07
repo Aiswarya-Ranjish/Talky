@@ -1,3 +1,5 @@
+import { AuditTrails } from "../common/AuditLog.types";
+
  
   export interface Wallettransaction  {
     id?: string;
@@ -8,5 +10,6 @@
     paymentGateWaySerialNumber:string;
     isSuccess:boolean;
     createdAt:Date|string;
+    auditLogs?: AuditTrails[];
   } 
   

@@ -1,3 +1,4 @@
+import { AuditTrails } from "../common/AuditLog.types";
 
 export interface purchaseorder {
     purchaseOrderId: number;
@@ -11,4 +12,5 @@ export interface purchaseorder {
     createdAppUserId:number;
     requestText:string;
     responseText:string;
+    auditLogs?: AuditTrails[];
   }

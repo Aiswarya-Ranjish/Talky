@@ -1,3 +1,5 @@
+import { AuditTrails } from "../common/AuditLog.types";
+
 export interface ExpenseType {
     expenseTypeId: number;
     expenseTypeName: string;
@@ -6,4 +8,5 @@ export interface ExpenseType {
     description: string;
     isActive: boolean;
     isDeleted: boolean;
+    auditLogs?: AuditTrails[];
 }

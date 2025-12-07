@@ -1,10 +1,6 @@
-//import HttpService from "./HttpService";
-//import { AppNotification } from "types/AppNotification";
-//import { API_ENDPOINTS } from "constants/API_ENDPOINTS";
-//import { CustomResponse } from "types/ApiTypes";
-
 import { API_ENDPOINTS } from "../../constants/API_ENDPOINTS";
-import { AppNotification, CustomResponse } from "../../types/settings/AppNotification";
+import { CustomResponse } from "../../types/common/ApiTypes";
+import { AppNotification } from "../../types/settings/AppNotification";
 import HttpService from "../common/HttpService";
 
 const AppNotificationService = {
