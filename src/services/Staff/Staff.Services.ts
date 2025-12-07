@@ -3,7 +3,7 @@ import { StaffModel } from '../../types/Staff/StaffType';
 import HttpService from '../common/HttpService';
 import { CustomResponse } from '../../types/common/ApiTypes';
 import { API_ENDPOINTS } from '../../constants/API_ENDPOINTS';
-import { User } from '../../types/Users/TalkyUser';
+import { User } from '../../types/Users/User.types';
 
 
 

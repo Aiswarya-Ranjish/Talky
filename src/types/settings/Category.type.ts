@@ -1,3 +1,6 @@
+
+import type { AuditTrails } from "../common/AuditLog.types";
+
 export interface Category{
     error: any;
     isSucess: boolean;
@@ -10,4 +13,5 @@ export interface Category{
     companyName:string;
     companyId:number;
     isDeleted:boolean;
+    auditLogs?: AuditTrails[];
   }

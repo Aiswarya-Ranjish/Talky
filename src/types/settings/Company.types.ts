@@ -1,8 +1,4 @@
-
   export interface Company{
-   error: any;
-   customMessage: any;
-   isSucess: boolean;
    companyId:number;
    comapanyName:string;
    website:string;
@@ -10,6 +6,7 @@
    email:string;
    taxNumber:string;
    addressLine1:string;
+
    addressLine2:string;
    city:string;
    state:string;

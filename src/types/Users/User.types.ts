@@ -1,4 +1,5 @@
 // src/types/ApiTypes.ts
+import type { AuditTrails } from "../common/AuditLog.types";
 
 
   export interface User{
@@ -30,6 +31,6 @@
     otpAttempts:number;
     walletBalance:number;
     isDeleted:boolean;
-    
+    auditLogs?: AuditTrails[];
   }
   

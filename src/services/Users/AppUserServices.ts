@@ -1,7 +1,7 @@
 // src/services/UserService.ts
 //import HttpService from './HttpService';
 import HttpService from '../common/HttpService';
-import { User } from '../../types/Users/TalkyUser';
+import { User } from '../../types/Users/User.types';
 //import { API_ENDPOINTS } from 'constants/API_ENDPOINTS';
 import { API_ENDPOINTS } from '../../constants/API_ENDPOINTS';
 import { Import } from 'lucide-react';

@@ -1,16 +1,15 @@
-// AuditTrails.tsx
+// KiduAuditLogs.tsx
 import React, { useEffect, useState } from "react";
 import { Accordion, Table, Card, Spinner, Alert } from "react-bootstrap";
 import AuditLogService from "../services/common/AuditLog.services";
 import type { AuditTrails } from "../types/common/AuditLog.types";
-
 
 interface AuditTrailsProps {
   tableName: string;
   recordId: string | number;
 }
 
-const AuditTrailsComponent: React.FC<AuditTrailsProps> = ({ tableName, recordId }) => {
+const KiduAuditLogs: React.FC<AuditTrailsProps> = ({ tableName, recordId }) => {
   const [history, setHistory] = useState<AuditTrails[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +18,7 @@ const AuditTrailsComponent: React.FC<AuditTrailsProps> = ({ tableName, recordId 
     if (tableName && recordId) {
       fetchHistory();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableName, recordId]);
 
   const fetchHistory = async () => {
@@ -29,7 +28,6 @@ const AuditTrailsComponent: React.FC<AuditTrailsProps> = ({ tableName, recordId 
       const data = await AuditLogService.getByTableAndId(tableName, recordId);
       console.log("Fetched audit logs:", data);
 
-
       if (data.isSucess && Array.isArray(data.value)) {
         setHistory(data.value);
         console.log("History updated:", data.value);
@@ -37,7 +35,6 @@ const AuditTrailsComponent: React.FC<AuditTrailsProps> = ({ tableName, recordId 
         console.warn("Unexpected data format:", data);
         setHistory([]);
       }
-
     } catch (err) {
       console.error("Failed to fetch edit history:", err);
       setError("Failed to load edit history. Please try again later.");
@@ -45,10 +42,10 @@ const AuditTrailsComponent: React.FC<AuditTrailsProps> = ({ tableName, recordId 
       setLoading(false);
     }
   };
+
   useEffect(() => {
     console.log("Updated history:", history);
   }, [history]);
-
 
   const formatDateSafe = (isoOrAny?: string) => {
     if (!isoOrAny) return "—";
@@ -67,7 +64,8 @@ const AuditTrailsComponent: React.FC<AuditTrailsProps> = ({ tableName, recordId 
 
   return (
     <>
-      <Accordion alwaysOpen
+      <Accordion
+        alwaysOpen
         className="mt-4 mb-4 custom-accordion"
         style={{
           maxWidth: "100%",
@@ -89,22 +87,24 @@ const AuditTrailsComponent: React.FC<AuditTrailsProps> = ({ tableName, recordId 
               alignItems: "center",
               justifyContent: "space-between",
               cursor: "pointer",
-              height:"50px"
+              height: "50px",
             }}
           >
             <h6 className="mb-0 fw-medium head-font">Audit Logs</h6>
           </Card.Header>
 
           <Accordion.Body>
-            <Card style={{
-              maxWidth: "100%",
-              fontSize: "0.85rem",
-              backgroundColor: "#f0f0f0ff",
-              border: "1px solid #ccc",
-              borderRadius: "0.5rem",
-            }}
-              className="shadow-sm">
-              <Card.Body style={{ padding: "1rem" }} className="border border-1  m-2">
+            <Card
+              style={{
+                maxWidth: "100%",
+                fontSize: "0.85rem",
+                backgroundColor: "#f0f0f0ff",
+                border: "1px solid #ccc",
+                borderRadius: "0.5rem",
+              }}
+              className="shadow-sm"
+            >
+              <Card.Body style={{ padding: "1rem" }} className="border border-1 m-2">
                 {loading ? (
                   <div className="text-center py-4">
                     <Spinner animation="border" variant="primary" />
@@ -155,7 +155,7 @@ const AuditTrailsComponent: React.FC<AuditTrailsProps> = ({ tableName, recordId 
                                   ))
                                 ) : (
                                   <tr>
-                                    <td colSpan={5} className="text-center text-muted">
+                                    <td colSpan={4} className="text-center text-muted">
                                       No field-level changes recorded.
                                     </td>
                                   </tr>
@@ -172,24 +172,23 @@ const AuditTrailsComponent: React.FC<AuditTrailsProps> = ({ tableName, recordId 
             </Card>
           </Accordion.Body>
         </Accordion.Item>
-      </Accordion >
+      </Accordion>
       <style>{`
-  .custom-audit-header.accordion-button {
-    background-color: #882626ff !important;
-    color: white !important;
-    box-shadow: none !important;
-  }
-  .custom-audit-header.accordion-button:not(.collapsed) {
-    background-color: #882626ff !important;
-    color: white !important;
-  }
-  .custom-audit-header.accordion-button::after {
-    filter: invert(1); /* make arrow white */
-  }
-`}</style>
+        .custom-audit-header.accordion-button {
+          background-color: #882626ff !important;
+          color: white !important;
+          box-shadow: none !important;
+        }
+        .custom-audit-header.accordion-button:not(.collapsed) {
+          background-color: #882626ff !important;
+          color: white !important;
+        }
+        .custom-audit-header.accordion-button::after {
+          filter: invert(1); /* make arrow white */
+        }
+      `}</style>
     </>
-
   );
 };
 
-export default AuditTrailsComponent;
+export default KiduAuditLogs;

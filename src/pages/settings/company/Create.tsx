@@ -8,8 +8,6 @@ import KiduValidation from "../../../components/KiduValidation";
 import CompanyService from "../../../services/settings/Company.services";
 import KiduPrevious from "../../../components/KiduPrevious";
 import KiduLoader from "../../../components/KiduLoader";
-import KiduReset from "../../../components/ReuseButtons/KiduReset";
-
 
 const CompanyCreate: React.FC = () => {
   const navigate = useNavigate();
@@ -29,33 +27,31 @@ const CompanyCreate: React.FC = () => {
     { name: "invoicePrefix", rules: { required: false, type: "text" as const, label: "Invoice Prefix" } },
   ];
 
-  const initialValues: any = {};
-  const initialErrors: any = {};
-  fields.forEach(f => {
-    initialValues[f.name] = "";
-    initialErrors[f.name] = "";
-  });
-
-  const [formData, setFormData] = useState({
-    ...initialValues,
+  const initialValues: any = {
     companyId: 0,
+    comapanyName: "",
+    website: "",
+    contactNumber: "",
+    email: "",
+    taxNumber: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    country: "",
+    zipCode: "",
+    invoicePrefix: "",
     companyLogo: "",
     isActive: true,
     isDeleted: false,
-  });
+  };
 
-  const [errors, setErrors] = useState(initialErrors);
+  const [formData, setFormData] = useState(initialValues);
+  const [errors, setErrors] = useState<any>({});
   const [loading, setLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>(defaultLogo);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [initialData, setInitialData] = useState<any>({
-    ...initialValues,
-    companyId: 0,
-    companyLogo: "",
-    isActive: true,
-    isDeleted: false,
-  });
 
   const getLabel = (name: string) => {
     const field = fields.find(f => f.name === name);
@@ -76,12 +72,66 @@ const CompanyCreate: React.FC = () => {
     };
   }, [previewUrl]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      const img = new window.Image();
+      
+      img.onload = () => {
+        // Create canvas to resize image
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Resize to max 800x800 to reduce base64 size
+        let width = img.width;
+        let height = img.height;
+        const maxSize = 800;
+        
+        if (width > height && width > maxSize) {
+          height = (height * maxSize) / width;
+          width = maxSize;
+        } else if (height > maxSize) {
+          width = (width * maxSize) / height;
+          height = maxSize;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Convert to base64 (quality 0.8 for JPEG)
+        const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+        resolve(base64);
+      };
+      
+      img.onerror = () => reject(new Error("Failed to load image"));
+      
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
+      
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please select an image file");
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+      
       if (previewUrl && previewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl);
       }
+      
       const objectUrl = URL.createObjectURL(file);
       setSelectedFile(file);
       setPreviewUrl(objectUrl);
@@ -96,7 +146,6 @@ const CompanyCreate: React.FC = () => {
     if (type === "checkbox") {
       updatedValue = target.checked;
     } else if (type === "tel" || (name === "contactNumber" || name === "zipCode")) {
-      // Only allow numbers for phone and zip
       updatedValue = value.replace(/[^0-9]/g, "");
     }
     
@@ -104,19 +153,13 @@ const CompanyCreate: React.FC = () => {
     if (errors[name]) setErrors((prev: any) => ({ ...prev, [name]: "" }));
   };
 
-  const overrideMessage = (name: string) => {
-    const field = fields.find(f => f.name === name);
-    const label = field?.rules.label || "This field";
-    return `${label} is required.`;
-  };
-
   const validateField = (name: string, value: any) => {
     const field = fields.find(f => f.name === name);
     if (!field) return true;
     const result = KiduValidation.validate(value, field.rules);
     if (!result.isValid) {
-      const msg = overrideMessage(name);
-      setErrors((prev: any) => ({ ...prev, [name]: msg }));
+      const label = field.rules.label || "This field";
+      setErrors((prev: any) => ({ ...prev, [name]: `${label} is required.` }));
       return false;
     }
     setErrors((prev: any) => ({ ...prev, [name]: "" }));
@@ -133,54 +176,96 @@ const CompanyCreate: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    
+    if (!validateForm()) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+    
+    if (!selectedFile) {
+      toast.error("Please upload a company logo");
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
-      const dataToCreate = {
+      // Convert image to base64 (if file selected)
+      let base64Logo = "";
+      if (selectedFile) {
+        base64Logo = await fileToBase64(selectedFile);
+      }
+      
+      // Send as JSON - all fields properly filled from form validation
+      const dataToSend = {
         companyId: 0,
-        comapanyName: formData.comapanyName || "",
-        website: formData.website || "",
-        contactNumber: formData.contactNumber || "",
-        email: formData.email || "",
-        taxNumber: formData.taxNumber || "",
-        addressLine1: formData.addressLine1 || "",
-        addressLine2: formData.addressLine2 || "",
-        city: formData.city || "",
-        state: formData.state || "",
-        country: formData.country || "",
-        zipCode: formData.zipCode || "",
-        invoicePrefix: formData.invoicePrefix || "",
-        companyLogo: formData.companyLogo || "",
-        isActive: Boolean(formData.isActive),
-        isDeleted: Boolean(formData.isDeleted),
+        comapanyName: formData.comapanyName.trim(),
+        website: formData.website.trim(),
+        contactNumber: formData.contactNumber.trim(),
+        email: formData.email.trim(),
+        taxNumber: formData.taxNumber.trim(),
+        addressLine1: formData.addressLine1.trim(),
+        addressLine2: formData.addressLine2.trim() || "",
+        city: formData.city.trim(),
+        state: formData.state.trim(),
+        country: formData.country.trim(),
+        zipCode: formData.zipCode.trim(),
+        invoicePrefix: formData.invoicePrefix.trim() || "",
+        companyLogo: base64Logo,
+        isActive: true,
+        isDeleted: false,
       };
 
-      const createResponse = await CompanyService.addCompany(dataToCreate as any);
-      if (!createResponse || createResponse.isSucess === false) {
-        throw new Error(createResponse?.customMessage || createResponse?.error || "Failed to create company");
-      }
+      // Debug: Log the payload
+      console.log("Sending data:", {
+        ...dataToSend,
+        companyLogo: dataToSend.companyLogo ? `[Base64 string length: ${dataToSend.companyLogo.length}]` : "empty"
+      });
 
-      // TODO: Logo upload will be implemented when API is ready
-      // if (selectedFile && createResponse.value?.companyId) {
-      //   const uploadFormData = new FormData();
-      //   uploadFormData.append("CompanyId", createResponse.value.companyId.toString());
-      //   uploadFormData.append("CompanyLogo", selectedFile);
-      //   try {
-      //     await CompanyService.uploadCompanyLogo(uploadFormData);
-      //   } catch (uploadError) {
-      //     console.error("Logo upload error:", uploadError);
-      //     toast.error("Company created but logo upload failed");
-      //   }
-      // }
+      const response = await CompanyService.addCompany(dataToSend);
+      
+      console.log("Server response:", response);
+      
+      // ✅ Backend returns Company directly, not CustomResponse
+      if (!response) {
+        throw new Error("Failed to create company");
+      }
 
       toast.success("Company created successfully!");
       setTimeout(() => navigate("/dashboard/settings/company-list"), 1500);
+      
     } catch (error: any) {
       console.error("Create failed:", error);
-      toast.error(`Error creating company: ${error.message}`);
+      
+      let errorMessage = "An error occurred while creating the company";
+      
+      if (error.response?.data) {
+        const data = error.response.data;
+        if (data.error) {
+          errorMessage = data.error;
+        } else if (data.customMessage) {
+          errorMessage = data.customMessage;
+        } else if (data.title) {
+          errorMessage = data.title;
+        } else if (data.errors) {
+          const validationErrors = Object.values(data.errors).flat();
+          errorMessage = validationErrors.join(", ");
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(`Error: ${errorMessage}`);
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
+  };
+
+  const handleReset = () => {
+    setFormData(initialValues);
+    setErrors({});
+    setSelectedFile(null);
+    setPreviewUrl(defaultLogo);
   };
 
   if (loading) return <KiduLoader type="Company..." />;
@@ -241,188 +326,125 @@ const CompanyCreate: React.FC = () => {
                   <h6 className="fw-bold mt-3" style={{ color: "#882626ff" }}>
                     {formData.comapanyName || "Company Logo"}
                   </h6>
-                  <p className="small text-muted">Upload company logo</p>
+                  <p className="small text-muted">Upload company logo<span style={{ color: "red" }}>*</span></p>
                 </Col>
 
                 {/* Form Fields Section */}
                 <Col xs={12} md={9}>
                   <Row className="g-2">
-                    {/* Company Name */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("comapanyName")}</Form.Label>
                       <Form.Control 
-                        size="sm" 
-                        type="text" 
-                        name="comapanyName" 
-                        value={formData.comapanyName}
-                        onChange={handleChange} 
-                        onBlur={() => validateField("comapanyName", formData.comapanyName)} 
+                        size="sm" type="text" name="comapanyName" value={formData.comapanyName}
+                        onChange={handleChange} onBlur={() => validateField("comapanyName", formData.comapanyName)} 
                         placeholder="Enter Company Name"
                       />
                       {errors.comapanyName && <div className="text-danger small">{errors.comapanyName}</div>}
                     </Col>
 
-                    {/* Website */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("website")}</Form.Label>
                       <Form.Control 
-                        size="sm" 
-                        type="text" 
-                        name="website" 
-                        value={formData.website}
-                        onChange={handleChange} 
-                        onBlur={() => validateField("website", formData.website)} 
+                        size="sm" type="text" name="website" value={formData.website}
+                        onChange={handleChange} onBlur={() => validateField("website", formData.website)} 
                         placeholder="Enter Website"
                       />
                       {errors.website && <div className="text-danger small">{errors.website}</div>}
                     </Col>
 
-                    {/* Contact Number */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("contactNumber")}</Form.Label>
                       <Form.Control 
-                        size="sm" 
-                        type="tel" 
-                        name="contactNumber" 
-                        value={formData.contactNumber}
-                        onChange={handleChange} 
-                        onBlur={() => validateField("contactNumber", formData.contactNumber)} 
-                        placeholder="Enter Contact Number"
-                        maxLength={10}
+                        size="sm" type="tel" name="contactNumber" value={formData.contactNumber}
+                        onChange={handleChange} onBlur={() => validateField("contactNumber", formData.contactNumber)} 
+                        placeholder="Enter Contact Number" maxLength={10}
                       />
                       {errors.contactNumber && <div className="text-danger small">{errors.contactNumber}</div>}
                     </Col>
 
-                    {/* Email */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("email")}</Form.Label>
                       <Form.Control 
-                        size="sm" 
-                        type="email" 
-                        name="email" 
-                        value={formData.email}
-                        onChange={handleChange} 
-                        onBlur={() => validateField("email", formData.email)} 
+                        size="sm" type="email" name="email" value={formData.email}
+                        onChange={handleChange} onBlur={() => validateField("email", formData.email)} 
                         placeholder="Enter Email"
                       />
                       {errors.email && <div className="text-danger small">{errors.email}</div>}
                     </Col>
 
-                    {/* Tax Number */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("taxNumber")}</Form.Label>
                       <Form.Control 
-                        size="sm" 
-                        type="text" 
-                        name="taxNumber" 
-                        value={formData.taxNumber}
-                        onChange={handleChange} 
-                        onBlur={() => validateField("taxNumber", formData.taxNumber)} 
+                        size="sm" type="text" name="taxNumber" value={formData.taxNumber}
+                        onChange={handleChange} onBlur={() => validateField("taxNumber", formData.taxNumber)} 
                         placeholder="Enter Tax Number"
                       />
                       {errors.taxNumber && <div className="text-danger small">{errors.taxNumber}</div>}
                     </Col>
 
-                    {/* Address Line 1 */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("addressLine1")}</Form.Label>
                       <Form.Control 
-                        size="sm" 
-                        type="text" 
-                        name="addressLine1" 
-                        value={formData.addressLine1}
-                        onChange={handleChange} 
-                        onBlur={() => validateField("addressLine1", formData.addressLine1)} 
+                        size="sm" type="text" name="addressLine1" value={formData.addressLine1}
+                        onChange={handleChange} onBlur={() => validateField("addressLine1", formData.addressLine1)} 
                         placeholder="Enter Address Line 1"
                       />
                       {errors.addressLine1 && <div className="text-danger small">{errors.addressLine1}</div>}
                     </Col>
 
-                    {/* Address Line 2 */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("addressLine2")}</Form.Label>
                       <Form.Control 
-                        size="sm" 
-                        type="text" 
-                        name="addressLine2" 
-                        value={formData.addressLine2}
-                        onChange={handleChange} 
-                        onBlur={() => validateField("addressLine2", formData.addressLine2)} 
-                        placeholder="Enter Address Line 2"
+                        size="sm" type="text" name="addressLine2" value={formData.addressLine2}
+                        onChange={handleChange} placeholder="Enter Address Line 2"
                       />
                     </Col>
 
-                    {/* City */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("city")}</Form.Label>
                       <Form.Control 
-                        size="sm" 
-                        type="text" 
-                        name="city" 
-                        value={formData.city}
-                        onChange={handleChange} 
-                        onBlur={() => validateField("city", formData.city)} 
+                        size="sm" type="text" name="city" value={formData.city}
+                        onChange={handleChange} onBlur={() => validateField("city", formData.city)} 
                         placeholder="Enter City"
                       />
                       {errors.city && <div className="text-danger small">{errors.city}</div>}
                     </Col>
 
-                    {/* State */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("state")}</Form.Label>
                       <Form.Control 
-                        size="sm" 
-                        type="text" 
-                        name="state" 
-                        value={formData.state}
-                        onChange={handleChange} 
-                        onBlur={() => validateField("state", formData.state)} 
+                        size="sm" type="text" name="state" value={formData.state}
+                        onChange={handleChange} onBlur={() => validateField("state", formData.state)} 
                         placeholder="Enter State"
                       />
                       {errors.state && <div className="text-danger small">{errors.state}</div>}
                     </Col>
 
-                    {/* Country */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("country")}</Form.Label>
                       <Form.Control 
-                        size="sm" 
-                        type="text" 
-                        name="country" 
-                        value={formData.country}
-                        onChange={handleChange} 
-                        onBlur={() => validateField("country", formData.country)} 
+                        size="sm" type="text" name="country" value={formData.country}
+                        onChange={handleChange} onBlur={() => validateField("country", formData.country)} 
                         placeholder="Enter Country"
                       />
                       {errors.country && <div className="text-danger small">{errors.country}</div>}
                     </Col>
 
-                    {/* Zip Code */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("zipCode")}</Form.Label>
                       <Form.Control 
-                        size="sm" 
-                        type="tel" 
-                        name="zipCode" 
-                        value={formData.zipCode}
-                        onChange={handleChange} 
-                        onBlur={() => validateField("zipCode", formData.zipCode)} 
+                        size="sm" type="tel" name="zipCode" value={formData.zipCode}
+                        onChange={handleChange} onBlur={() => validateField("zipCode", formData.zipCode)} 
                         placeholder="Enter Zip Code"
                       />
                       {errors.zipCode && <div className="text-danger small">{errors.zipCode}</div>}
                     </Col>
 
-                    {/* Invoice Prefix */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("invoicePrefix")}</Form.Label>
                       <Form.Control 
-                        size="sm" 
-                        type="text" 
-                        name="invoicePrefix" 
-                        value={formData.invoicePrefix}
-                        onChange={handleChange} 
-                        onBlur={() => validateField("invoicePrefix", formData.invoicePrefix)} 
-                        placeholder="Enter Invoice Prefix"
+                        size="sm" type="text" name="invoicePrefix" value={formData.invoicePrefix}
+                        onChange={handleChange} placeholder="Enter Invoice Prefix"
                       />
                     </Col>
                   </Row>
@@ -434,22 +456,12 @@ const CompanyCreate: React.FC = () => {
                 <Col xs={12}>
                   <div className="d-flex flex-wrap gap-3">
                     <Form.Check 
-                      type="switch" 
-                      id="isActive" 
-                      name="isActive" 
-                      label="Is Active"
-                      checked={formData.isActive || false} 
-                      onChange={handleChange} 
-                      className="fw-semibold" 
+                      type="switch" id="isActive" name="isActive" label="Is Active"
+                      checked={formData.isActive || false} onChange={handleChange} className="fw-semibold" 
                     />
                     <Form.Check 
-                      type="switch" 
-                      id="isDeleted" 
-                      name="isDeleted" 
-                      label="Is Deleted"
-                      checked={formData.isDeleted || false} 
-                      onChange={handleChange} 
-                      className="fw-semibold" 
+                      type="switch" id="isDeleted" name="isDeleted" label="Is Deleted"
+                      checked={formData.isDeleted || false} onChange={handleChange} className="fw-semibold" 
                     />
                   </div>
                 </Col>
@@ -457,7 +469,9 @@ const CompanyCreate: React.FC = () => {
 
               {/* Action Buttons */}
               <div className="d-flex justify-content-end gap-2 mt-4 me-2">
-                <KiduReset initialValues={initialData} setFormData={setFormData} setErrors={setErrors} />
+                <Button type="button" variant="secondary" onClick={handleReset} disabled={isSubmitting}>
+                  Reset
+                </Button>
                 <Button type="submit" style={{ backgroundColor: "#882626ff", border: "none" }} disabled={isSubmitting}>
                   {isSubmitting ? "Creating..." : "Create"}
                 </Button>

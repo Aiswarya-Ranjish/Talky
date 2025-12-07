@@ -63,8 +63,7 @@ export const API_ENDPOINTS = {
   },
   AUDIT_LOG: {
     GET_BY_TABLE_AND_ID: (tableName: string, recordId: number) =>
-      `${API_BASE_URL}/AuditLog/${tableName}/${recordId}`,
-    GET_BY_ID: (logID: string) => `${API_BASE_URL}/AuditLog/GetById/${logID}`,
+      `${API_BASE_URL}/AuditLog/${tableName}/${recordId}`
   },
 };
 

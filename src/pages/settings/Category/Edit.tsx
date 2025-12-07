@@ -78,6 +78,7 @@ const CategoryEdit: React.FC = () => {
         const response = await CategoryService.getCategoryById(categoryId);
         if (!response) throw new Error("No data received from server");
 
+        // ✅ FIX: Properly convert isDeleted to boolean
         const formattedData = {
           categoryId: response.categoryId || 0,
           categoryName: response.categoryName || "",
@@ -86,9 +87,10 @@ const CategoryEdit: React.FC = () => {
           categoryCode: response.categoryCode || "",
           companyId: response.companyId || 0,
           companyName: response.companyName || "",
-          isDeleted: response.isDeleted ?? false,
+          isDeleted: Boolean(response.isDeleted), // ✅ Convert to boolean properly
         };
 
+        console.log("Fetched category data:", formattedData); // Debug log
         setFormData(formattedData);
         setInitialData(formattedData);
       } catch (error: any) {
@@ -109,6 +111,7 @@ const CategoryEdit: React.FC = () => {
     
     if (type === "checkbox") {
       updatedValue = target.checked;
+      console.log(`${name} changed to:`, updatedValue); // Debug log
     } else if (type === "number" || name === "companyId") {
       updatedValue = value === "" ? "" : Number(value);
     }
@@ -152,6 +155,7 @@ const CategoryEdit: React.FC = () => {
     try {
       if (!categoryId) throw new Error("No category ID available");
       
+      // ✅ FIX: Ensure isDeleted is properly handled
       const dataToUpdate = {
         categoryId: Number(formData.categoryId),
         categoryName: formData.categoryName || "",
@@ -160,10 +164,15 @@ const CategoryEdit: React.FC = () => {
         categoryCode: formData.categoryCode || "",
         companyId: Number(formData.companyId) || 0,
         companyName: formData.companyName || "",
-        isDeleted: Boolean(formData.isDeleted),
+        isDeleted: formData.isDeleted === true, // ✅ Explicitly check for true
       };
 
+      console.log("Submitting data:", dataToUpdate); // Debug log
+
       const updateResponse = await CategoryService.updateCategory(categoryId, dataToUpdate as any);
+      
+      console.log("Update response:", updateResponse); // Debug log
+      
       if (!updateResponse || updateResponse.isSucess === false) {
         throw new Error(updateResponse?.customMessage || updateResponse?.error || "Failed to update category");
       }
@@ -287,7 +296,7 @@ const CategoryEdit: React.FC = () => {
                       id="isDeleted" 
                       name="isDeleted" 
                       label="Is Deleted"
-                      checked={formData.isDeleted || false} 
+                      checked={formData.isDeleted === true} 
                       onChange={handleChange} 
                       className="fw-semibold" 
                     />
