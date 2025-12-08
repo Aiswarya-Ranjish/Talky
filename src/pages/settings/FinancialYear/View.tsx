@@ -20,17 +20,31 @@ const FinancialYearView: React.FC = () => {
   useEffect(() => {
     const loadFinancialYear = async () => {
       try {
-        const res = await FinancialYearService.getFinancialYearById(financialYearId!);
-        setData(res);
-      } catch {
-        toast.error("Failed to load financial year details.");
+        if (!financialYearId) {
+          toast.error("No financial year ID provided");
+          navigate("/dashboard/settings/financial-year");
+          return;
+        }
+
+        const response = await FinancialYearService.getFinancialYearById(financialYearId);
+        
+        // ✅ FIX 1: Check response structure properly
+        if (!response || !response.isSucess) {
+          throw new Error(response?.customMessage || response?.error || "Failed to load financial year");
+        }
+
+        // ✅ FIX 2: Extract data from response.value
+        setData(response.value);
+      } catch (error: any) {
+        console.error("Failed to load financial year:", error);
+        toast.error(`Error: ${error.message}`);
         navigate("/dashboard/settings/financial-year");
       } finally {
         setLoading(false);
       }
     };
     loadFinancialYear();
-  }, [financialYearId]);
+  }, [financialYearId, navigate]);
 
   if (loading) return <KiduLoader type="financial year details..." />;
 
@@ -70,11 +84,18 @@ const FinancialYearView: React.FC = () => {
   const handleDelete = async () => {
     setLoadingDelete(true);
     try {
-      await FinancialYearService.deleteFinanceById(String(data.financialYearId ?? ""), data);
+      // ✅ FIX 3: Use correct delete method signature
+      const response = await FinancialYearService.deleteFinanceById(String(data.financialYearId ?? ""));
+      
+      if (!response || !response.isSucess) {
+        throw new Error(response?.customMessage || response?.error || "Failed to delete financial year");
+      }
+
       toast.success("Financial Year deleted successfully");
       setTimeout(() => navigate("/dashboard/settings/financial-year"), 600);
-    } catch {
-      toast.error("Failed to delete financial year.");
+    } catch (error: any) {
+      console.error("Delete failed:", error);
+      toast.error(`Error: ${error.message}`);
     } finally {
       setLoadingDelete(false);
       setShowConfirm(false);
@@ -110,13 +131,13 @@ const FinancialYearView: React.FC = () => {
 
         {/* Financial Year Info */}
         <div className="text-center mb-4">
-          <h5 className="fw-bold mb-1">Financial Year ID:{data.financialYearId || "Unknown"}</h5>
+          <h5 className="fw-bold mb-1">Financial Year ID: {data.financialYearId || "Unknown"}</h5>
           <p className="small mb-0 fw-bold" style={{ color: "#882626ff" }}>
             Code: {data.finacialYearCode}
           </p>
         </div>
 
-        {/* DETAILS TABLE (MATCHES COMPANYVIEW STYLE) */}
+        {/* DETAILS TABLE */}
         <div className="table-responsive">
           <Table
             bordered
