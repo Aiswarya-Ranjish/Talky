@@ -9,6 +9,5 @@ export interface AppNotification{
     isActive:boolean;
     notificationLink:string;
     createdAt:string;
-    category: string;
     auditLogs?: AuditTrails[];
 }

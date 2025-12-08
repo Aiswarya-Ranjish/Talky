@@ -1,4 +1,3 @@
-import React from "react";
 import { Category } from "../../types/settings/Category.type";
 import HttpService from "../common/HttpService";
 import { CustomResponse } from "../../types/common/ApiTypes";

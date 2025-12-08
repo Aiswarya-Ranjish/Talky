@@ -1,66 +1,103 @@
 import React from "react";
-import KiduServerTable from "../../../components/Trip/KiduServerTable";
 import AppNotificationService from "../../../services/settings/AppNotification.services";
-import { AppNotification } from "../../../types/settings/AppNotification";
-//import AppNotificationService from "services/AppNotificationService";
-//import { AppNotification } from "types/AppNotification";
-//import KiduServerTable from "../../components/Trip/KiduServerTable"; // adjust path if needed
+import KiduServerTable from "../../../components/Trip/KiduServerTable";
 
 const columns = [
   { key: "appNotificationId", label: "ID" },
   { key: "notificationType", label: "Type" },
   { key: "notificationTitle", label: "Title" },
   { key: "isActive", label: "Status" },
-  { key: "createdAt", label: "Created Date" },
+  { key: "createdAt", label: "Created Date" }
 ];
+
+// Format date (dd-Month-yyyy)
+const formatDate = (isoString: string) => {
+  if (!isoString) return "-";
+  const date = new Date(isoString);
+  const year = date.getFullYear();
+  const month = date.toLocaleString("en-US", { month: "long" });
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${day}-${month}-${year}`;
+};
 
 const AppNotificationList: React.FC = () => {
   const fetchAppNotificationData = async ({
     pageNumber,
     pageSize,
-    searchTerm,
+    searchTerm
   }: {
     pageNumber: number;
     pageSize: number;
     searchTerm: string;
   }) => {
     try {
-      // Fetch all notifications
-      const response: AppNotification[] = await AppNotificationService.getAllNotification();
-
-      if (!response || response.length === 0) return { data: [], total: 0 };
-
-      // Filter by search term (client-side)
-      let filteredData = response;
-      if (searchTerm) {
-        const lowerSearch = searchTerm.toLowerCase();
-        filteredData = response.filter(
-          (item) =>
-            (item.notificationTitle || "").toLowerCase().includes(lowerSearch) ||
-            (item.notificationType || "").toLowerCase().includes(lowerSearch) ||
-            (item.appNotificationId?.toString() || "").includes(searchTerm)
-        );
+      console.log("Fetching notifications...");
+      
+      // Fetch data - should return CustomResponse<AppNotification[]>
+      const response = await AppNotificationService.getAllNotification();
+      
+      console.log("API Response:", response);
+      
+      // Check if response exists
+      if (!response) {
+        console.error("No response received from API");
+        throw new Error("No response received from server");
       }
 
-      // Format createdAt date
-      const formattedData = filteredData.map((item) => ({
-        ...item,
-        createdAt: new Date(item.createdAt).toLocaleDateString("en-US", {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        }),
+      // Check if response is successful - FIX: using 'isSucess' (with one 's')
+      if (!response.isSucess) {  // Changed from isSuccess to isSucess
+        console.error("API Response not successful:", response);
+        const errorMsg = response?.customMessage || response?.error || "Failed to fetch notifications";
+        throw new Error(errorMsg);
+      }
+
+      // Extract the actual data array from response.value
+      const allData = response.value || [];
+      console.log("All data:", allData);
+
+      if (allData.length === 0) {
+        console.log("No notifications found");
+        return { data: [], total: 0 };
+      }
+
+      // SEARCH
+      let filtered = allData;
+      if (searchTerm) {
+        const s = searchTerm.toLowerCase();
+        filtered = allData.filter(
+          (item) =>
+            item.notificationTitle?.toLowerCase().includes(s) ||
+            item.notificationType?.toLowerCase().includes(s) ||
+            item.appNotificationId?.toString().includes(searchTerm)
+        );
+        console.log(`Filtered ${filtered.length} items from search term: ${searchTerm}`);
+      }
+
+      // Format createdAt date and status
+      const formattedData = filtered.map((notification) => ({
+        ...notification,
+        createdAt: formatDate(notification.createdAt ?? ""),
+        isActive: notification.isActive ? "Active" : "Inactive"
       }));
 
       const total = formattedData.length;
+      console.log(`Total items after filtering: ${total}`);
+
+      // Pagination
       const startIndex = (pageNumber - 1) * pageSize;
       const endIndex = startIndex + pageSize;
       const paginatedData = formattedData.slice(startIndex, endIndex);
-
+      
+      console.log(`Returning ${paginatedData.length} items for page ${pageNumber}`);
+      
       return { data: paginatedData, total };
-    } catch (err) {
-      console.error("Error fetching notifications:", err);
-      throw new Error("Failed to fetch notifications");
+    } catch (err: any) {
+      console.error("Error in fetchAppNotificationData:", err);
+      console.error("Error details:", {
+        message: err.message,
+        stack: err.stack
+      });
+      throw new Error(`Failed to fetch notification details: ${err.message}`);
     }
   };
 
@@ -72,7 +109,7 @@ const AppNotificationList: React.FC = () => {
       idKey="appNotificationId"
       addButtonLabel="Add New Notification"
       addRoute="/dashboard/settings/create-appNotification"
-      editRoute="/dashboard/settings/edit-appNotification/"
+      editRoute="/dashboard/settings/edit-appNotification"
       viewRoute="/dashboard/settings/view-appNotification"
       fetchData={fetchAppNotificationData}
       rowsPerPage={15}

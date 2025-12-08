@@ -6,17 +6,7 @@ import KiduValidation from "../../../components/KiduValidation";
 import AppNotificationService from "../../../services/settings/AppNotification.services";
 import KiduPrevious from "../../../components/KiduPrevious";
 import KiduReset from "../../../components/ReuseButtons/KiduReset";
-
-interface NotificationFormData {
-  notificationType: string;
-  notificationTitle: string;
-  notificationImage: string;
-  notificationLink: string;
-  createdAt: string;
-  category: string;
-  isActive: boolean;
-  [key: string]: string | boolean;
-}
+import { AppNotification } from "../../../types/settings/AppNotification";
 
 const AppNotificationCreate: React.FC = () => {
   const navigate = useNavigate();
@@ -39,28 +29,20 @@ const AppNotificationCreate: React.FC = () => {
     initialErrors[f.name] = "";
   });
 
-  const [formData, setFormData] = useState<NotificationFormData>({
-    ...initialValues,
+  const [formData, setFormData] = useState<AppNotification>({
+    appNotificationId: 0,
     notificationType: "",
     notificationTitle: "",
     notificationImage: "",
+    isActive: false,
     notificationLink: "",
     createdAt: "",
-    category: "",
-    isActive: false,
   });
 
   const [errors, setErrors] = useState(initialErrors);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [initialData] = useState({
-    ...initialValues,
-    notificationType: "",
-    notificationTitle: "",
-    notificationImage: "",
-    notificationLink: "",
-    createdAt: "",
-    category: "",
-    isActive: false,
+  const [initialData] = useState<AppNotification>({
+    ...formData
   });
 
   const getLabel = (name: string) => {
@@ -109,7 +91,9 @@ const AppNotificationCreate: React.FC = () => {
   const validateForm = () => {
     let ok = true;
     fields.forEach(f => {
-      if (!validateField(f.name, formData[f.name])) ok = false;
+      if (f.rules.required && !validateField(f.name, formData[f.name as keyof AppNotification])) {
+        ok = false;
+      }
     });
     return ok;
   };
@@ -120,25 +104,30 @@ const AppNotificationCreate: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const dataToCreate = {
+      const dataToCreate: AppNotification = {
         appNotificationId: 0,
         notificationType: formData.notificationType || "",
         notificationTitle: formData.notificationTitle || "",
         notificationImage: formData.notificationImage || "",
         notificationLink: formData.notificationLink || "",
         createdAt: formData.createdAt || "",
-        category: formData.category || "",
         isActive: Boolean(formData.isActive),
       };
 
+      const response = await AppNotificationService.createNotification(dataToCreate);
+      
+      if (!response || !response.isSucess) {
+        throw new Error(response?.customMessage || response?.error || "Failed to create notification");
+      }
 
       toast.success("Notification created successfully!");
       setTimeout(() => navigate("/dashboard/settings/appNotification-list"), 1500);
     } catch (error: any) {
       console.error("Create failed:", error);
       toast.error(`Error creating notification: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   return (
@@ -234,20 +223,7 @@ const AppNotificationCreate: React.FC = () => {
                       {errors.createdAt && <div className="text-danger small">{errors.createdAt}</div>}
                     </Col>
 
-                    {/* Category */}
-                    <Col md={4}>
-                      <Form.Label className="mb-1 fw-medium small">{getLabel("category")}</Form.Label>
-                      <Form.Control 
-                        size="sm" 
-                        type="text" 
-                        name="category" 
-                        value={formData.category}
-                        onChange={handleChange} 
-                        onBlur={() => validateField("category", formData.category)} 
-                        placeholder="Enter Category"
-                      />
-                      {errors.category && <div className="text-danger small">{errors.category}</div>}
-                    </Col>
+                   
                   </Row>
                 </Col>
               </Row>
@@ -272,7 +248,11 @@ const AppNotificationCreate: React.FC = () => {
               {/* Action Buttons */}
               <div className="d-flex justify-content-end gap-2 mt-4 me-2">
                 <KiduReset initialValues={initialData} setFormData={setFormData} setErrors={setErrors} />
-                <Button type="submit" style={{ backgroundColor: "#882626ff", border: "none" }} disabled={isSubmitting}>
+                <Button 
+                  type="submit" 
+                  style={{ backgroundColor: "#882626ff", border: "none" }} 
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? "Creating..." : "Create"}
                 </Button>
               </div>

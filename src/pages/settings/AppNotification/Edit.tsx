@@ -2,23 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Card, Form, Button, Row, Col } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import AppNotificationService from "../../../services/settings/AppNotification.services";
 import KiduValidation from "../../../components/KiduValidation";
 import KiduLoader from "../../../components/KiduLoader";
 import KiduPrevious from "../../../components/KiduPrevious";
 import KiduReset from "../../../components/ReuseButtons/KiduReset";
 import KiduAuditLogs from "../../../components/KiduAuditLogs";
-import AppNotificationService from "../../../services/settings/AppNotification.services";
-
-interface NotificationFormData {
-  notificationType: string;
-  notificationTitle: string;
-  notificationImage: string;
-  notificationLink: string;
-  createdAt: string;
-  category: string;
-  isActive: boolean;
-  [key: string]: string | boolean;
-}
+import { AppNotification } from "../../../types/settings/AppNotification";
 
 const AppNotificationEdit: React.FC = () => {
   const navigate = useNavigate();
@@ -42,21 +32,20 @@ const AppNotificationEdit: React.FC = () => {
     initialErrors[f.name] = "";
   });
 
-  const [formData, setFormData] = useState<NotificationFormData>({
-    ...initialValues,
+  const [formData, setFormData] = useState<AppNotification>({
+    appNotificationId: 0,
     notificationType: "",
     notificationTitle: "",
     notificationImage: "",
+    isActive: false,
     notificationLink: "",
     createdAt: "",
-    category: "",
-    isActive: false
   });
 
   const [errors, setErrors] = useState(initialErrors);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [initialData, setInitialData] = useState<any>(null);
+  const [initialData, setInitialData] = useState<AppNotification | null>(null);
 
   const getLabel = (name: string) => {
     const field = fields.find(f => f.name === name);
@@ -78,17 +67,23 @@ const AppNotificationEdit: React.FC = () => {
           navigate("/dashboard/settings/appNotification-list"); 
           return; 
         }
+        
         const response = await AppNotificationService.getNotificationById(appNotificationId);
-        if (!response) throw new Error("No data received from server");
+        
+        if (!response || !response.isSucess) {
+          throw new Error(response?.customMessage || response?.error || "Failed to load notification");
+        }
 
-        const formattedData = {
-          notificationType: response.notificationType || "",
-          notificationTitle: response.notificationTitle || "",
-          notificationImage: response.notificationImage || "",
-          notificationLink: response.notificationLink || "",
-          createdAt: response.createdAt?.split("T")[0] || "",
-          category: response.category || "",
-          isActive: response.isActive ?? false
+        const data = response.value;
+        const formattedData: AppNotification = {
+          appNotificationId: data.appNotificationId || 0,
+          notificationType: data.notificationType || "",
+          notificationTitle: data.notificationTitle || "",
+          notificationImage: data.notificationImage || "",
+          notificationLink: data.notificationLink || "",
+          createdAt: data.createdAt?.split("T")[0] || "",
+          isActive: data.isActive ?? false,
+          auditLogs: data.auditLogs
         };
 
         setFormData(formattedData);
@@ -104,7 +99,7 @@ const AppNotificationEdit: React.FC = () => {
     fetchNotification();
   }, [appNotificationId, navigate]);
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     const target = e.target as HTMLInputElement;
     let updatedValue: any = value;
@@ -139,7 +134,9 @@ const AppNotificationEdit: React.FC = () => {
   const validateForm = () => {
     let ok = true;
     fields.forEach(f => {
-      if (!validateField(f.name, formData[f.name])) ok = false;
+      if (f.rules.required && !validateField(f.name, formData[f.name as keyof AppNotification])) {
+        ok = false;
+      }
     });
     return ok;
   };
@@ -152,24 +149,30 @@ const AppNotificationEdit: React.FC = () => {
     try {
       if (!appNotificationId) throw new Error("No notification ID available");
       
-      const dataToUpdate = {
-        appNotificationId: Number(appNotificationId),
+      const dataToUpdate: AppNotification = {
+        appNotificationId: Number(formData.appNotificationId),
         notificationType: formData.notificationType || "",
         notificationTitle: formData.notificationTitle || "",
         notificationImage: formData.notificationImage || "",
         notificationLink: formData.notificationLink || "",
         createdAt: formData.createdAt || "",
-        category: formData.category || "",
         isActive: Boolean(formData.isActive)
       };
+
+      const response = await AppNotificationService.updateNotification(appNotificationId, dataToUpdate);
+      
+      if (!response || !response.isSucess) {
+        throw new Error(response?.customMessage || response?.error || "Failed to update notification");
+      }
 
       toast.success("Notification updated successfully!");
       setTimeout(() => navigate("/dashboard/settings/appNotification-list"), 1500);
     } catch (error: any) {
       console.error("Update failed:", error);
       toast.error(`Error updating notification: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   if (loading) return <KiduLoader type="Notification..." />;
@@ -267,20 +270,7 @@ const AppNotificationEdit: React.FC = () => {
                       {errors.createdAt && <div className="text-danger small">{errors.createdAt}</div>}
                     </Col>
 
-                    {/* Category */}
-                    <Col md={4}>
-                      <Form.Label className="mb-1 fw-medium small">{getLabel("category")}</Form.Label>
-                      <Form.Control 
-                        size="sm" 
-                        type="text" 
-                        name="category" 
-                        value={formData.category}
-                        onChange={handleChange} 
-                        onBlur={() => validateField("category", formData.category)} 
-                        placeholder="Enter Category"
-                      />
-                      {errors.category && <div className="text-danger small">{errors.category}</div>}
-                    </Col>
+                   
                   </Row>
                 </Col>
               </Row>
@@ -304,15 +294,23 @@ const AppNotificationEdit: React.FC = () => {
 
               {/* Action Buttons */}
               <div className="d-flex justify-content-end gap-2 mt-4 me-2">
-                <KiduReset initialValues={initialData} setFormData={setFormData} setErrors={setErrors} />
-                <Button type="submit" style={{ backgroundColor: "#882626ff", border: "none" }} disabled={isSubmitting}>
+                {initialData && (
+                  <KiduReset initialValues={initialData} setFormData={setFormData} setErrors={setErrors} />
+                )}
+                <Button 
+                  type="submit" 
+                  style={{ backgroundColor: "#882626ff", border: "none" }} 
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? "Updating..." : "Update"}
                 </Button>
               </div>
             </Form>
 
             {/* Audit Logs */}
-            {appNotificationId && <KiduAuditLogs tableName="AppNotification" recordId={appNotificationId.toString()} />}
+            {formData.appNotificationId && (
+              <KiduAuditLogs tableName="AppNotification" recordId={formData.appNotificationId.toString()} />
+            )}
           </Card.Body>
         </Card>
 

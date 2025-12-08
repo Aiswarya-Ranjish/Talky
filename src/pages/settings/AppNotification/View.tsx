@@ -20,17 +20,31 @@ const AppNotificationView: React.FC = () => {
   useEffect(() => {
     const loadNotification = async () => {
       try {
-        const res = await AppNotificationService.getNotificationById(appNotificationId!);
-        setData(res);
-      } catch {
-        toast.error("Failed to load notification details.");
+        if (!appNotificationId) {
+          toast.error("No notification ID provided");
+          navigate("/dashboard/settings/appNotification-list");
+          return;
+        }
+
+        const response = await AppNotificationService.getNotificationById(appNotificationId);
+        
+        // ✅ Check response structure properly
+        if (!response || !response.isSucess) {
+          throw new Error(response?.customMessage || response?.error || "Failed to load notification");
+        }
+
+        // ✅ Extract data from response.value
+        setData(response.value);
+      } catch (error: any) {
+        console.error("Failed to load notification:", error);
+        toast.error(`Error: ${error.message}`);
         navigate("/dashboard/settings/appNotification-list");
       } finally {
         setLoading(false);
       }
     };
     loadNotification();
-  }, [appNotificationId]);
+  }, [appNotificationId, navigate]);
 
   if (loading) return <KiduLoader type="notification details..." />;
 
@@ -48,7 +62,6 @@ const AppNotificationView: React.FC = () => {
     { key: "notificationTitle", label: "Title", icon: "bi-card-heading" },
     { key: "notificationImage", label: "Image URL", icon: "bi-image" },
     { key: "notificationLink", label: "Link", icon: "bi-link-45deg" },
-    { key: "category", label: "Category", icon: "bi-folder" },
     { key: "createdAt", label: "Created Date", icon: "bi-calendar-check" },
     { key: "isActive", label: "Is Active", icon: "bi-check-circle", isBoolean: true }
   ];
@@ -72,11 +85,18 @@ const AppNotificationView: React.FC = () => {
   const handleDelete = async () => {
     setLoadingDelete(true);
     try {
-      await AppNotificationService.deleteNotificationById(String(data.appNotificationId ?? ""), data);
+      // ✅ Use correct delete method signature
+      const response = await AppNotificationService.deleteNotificationById(String(data.appNotificationId ?? ""));
+      
+      if (!response || !response.isSucess) {
+        throw new Error(response?.customMessage || response?.error || "Failed to delete notification");
+      }
+
       toast.success("Notification deleted successfully");
       setTimeout(() => navigate("/dashboard/settings/appNotification-list"), 600);
-    } catch {
-      toast.error("Failed to delete notification.");
+    } catch (error: any) {
+      console.error("Delete failed:", error);
+      toast.error(`Error: ${error.message}`);
     } finally {
       setLoadingDelete(false);
       setShowConfirm(false);
@@ -112,13 +132,13 @@ const AppNotificationView: React.FC = () => {
 
         {/* Notification Info */}
         <div className="text-center mb-4">
-          <h5 className="fw-bold mb-1">Notification ID:{data.appNotificationId || "Unknown"}</h5>
+          <h5 className="fw-bold mb-1">Notification ID: {data.appNotificationId || "Unknown"}</h5>
           <p className="small mb-0 fw-bold" style={{ color: "#882626ff" }}>
             Type: {data.notificationType}
           </p>
         </div>
 
-        {/* DETAILS TABLE (MATCHES COMPANYVIEW STYLE) */}
+        {/* DETAILS TABLE */}
         <div className="table-responsive">
           <Table
             bordered
@@ -173,7 +193,9 @@ const AppNotificationView: React.FC = () => {
         </div>
 
         {/* AUDIT LOGS */}
-        <KiduAuditLogs tableName="AppNotification" recordId={data.appNotificationId ?? ""} />
+        {data.appNotificationId && (
+          <KiduAuditLogs tableName="AppNotification" recordId={data.appNotificationId.toString()} />
+        )}
 
       </Card>
 
