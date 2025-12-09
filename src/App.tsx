@@ -15,7 +15,6 @@ import ForgotPassword from './Auth/ForgotPassword';
 import DashBoard from './pages/dashboard/DashBoard';
 import HomePage from './layout/HomePage';
 
-
 //User
 import UserList from './pages/Users/User-List/List';
 import UserEdit from './pages/Users/User-List/Edit';
@@ -27,30 +26,28 @@ import CreateCompany from './pages/settings/company/Create';
 import CompanydetailsEdit from './pages/settings/company/Edit';
 import ViewCompany from './pages/settings/company/View';
 
-
-
 //purchase-coupon
 import PurchaseCouponList from './pages/settings/Purchasecoupon/List';
 import CreatePurchaseCoupon from './pages/settings/Purchasecoupon/Create';
 import EditPurchasecoupon from './pages/settings/Purchasecoupon/Edit';
 import ViewPurchasecoupon from './pages/settings/Purchasecoupon/view';
 
-//user
+//Staff
 import StaffList from './pages/Staffs/Staff-List/List';
 import StaffView from './pages/Staffs/Staff-List/View';
 import StaffEdit from './pages/Staffs/Staff-List/Edit';
 
-//user Recharge
+//User Recharge
 import UserRechargeListPage from './pages/Users/UserRecharge/List';
 import ViewUserRecharge from './pages/Users/UserRecharge/View';
 
-//App Notication
+//App Notification
 import AppNotiicationList from './pages/settings/AppNotification/List';
 import AppNotificationCreate from './pages/settings/AppNotification/Create';
 import AppNotificationEdit from './pages/settings/AppNotification/Edit';
 import AppNotificationView from './pages/settings/AppNotification/View';
 
-//Finacial Year
+//Financial Year
 import FinancialYear from './pages/settings/FinancialYear/List';
 import FinancialYearCreate from './pages/settings/FinancialYear/Create';
 import FinancialYearEdit from './pages/settings/FinancialYear/Edit';
@@ -61,6 +58,10 @@ import Category from './pages/settings/Category/List';
 import CategoryCreate from './pages/settings/Category/Create';
 import CategoryEdit from './pages/settings/Category/Edit';
 import CategoryView from './pages/settings/Category/View';
+
+//Wallet Withdrawal
+import WalletWithdrawalList from './pages/Staffs/Wallet Withdrawal/List';
+import WalletWithdrawalView from './pages/Staffs/Wallet Withdrawal/View';
 
 function App() {
 
@@ -79,8 +80,6 @@ function App() {
           {/* HomePage */}
           <Route index element={<HomePage />} />
 
-         
-         
           {/* User */}
           <Route path="user/user-list" element={<UserList />} />
           <Route path="user/edit-user/:userId" element={<UserEdit />} />
@@ -101,35 +100,38 @@ function App() {
           <Route path="settings/create-purchasecoupon" element={<CreatePurchaseCoupon />} />
           <Route path="settings/edit-purchasecoupon/:purchaseCouponId" element={<EditPurchasecoupon />} />
           <Route path="settings/view-purchasecoupon/:purchaseCouponId" element={<ViewPurchasecoupon />} />
+
           {/* Staff */}
           <Route path="staff/staff-list" element={<StaffList />} />
           <Route path="staff/staff-view/:staffUserId" element={<StaffView />} />
           <Route path="staff/staff-edit/:staffUserId" element={<StaffEdit />} />
-          {/* Wallet-Withdrawal */}
-          <Route path="wallet-withdrawal/list" element={<UserRechargeListPage />} />
-          <Route path="wallet-withdrawal/view" element={<ViewUserRecharge />} />
-          {/*App Notificatin*/}
+
+          {/* Wallet Withdrawal - FIXED: Added parameter to view route */}
+          <Route path="wallet-withdrawal/list" element={<WalletWithdrawalList />} />
+          <Route path="wallet-withdrawal/view/:walletWithdrawalRequestId" element={<WalletWithdrawalView />} />
+
+          {/* App Notification */}
           <Route path="settings/appNotification-list" element={<AppNotiicationList />} />
-          <Route path="settings/create-appNotification" element={< AppNotificationCreate />} />
-          <Route path="settings/edit-appNotification/:appNotificationId" element={< AppNotificationEdit />} />
-          <Route path="settings/view-appNotification/:appNotificationId" element={< AppNotificationView />} />
+          <Route path="settings/create-appNotification" element={<AppNotificationCreate />} />
+          <Route path="settings/edit-appNotification/:appNotificationId" element={<AppNotificationEdit />} />
+          <Route path="settings/view-appNotification/:appNotificationId" element={<AppNotificationView />} />
 
-          {/*Financial Year */}
+          {/* Financial Year */}
           <Route path="settings/financial-year" element={<FinancialYear />} />
-          <Route path="settings/create-financialYear" element={< FinancialYearCreate />} />
-          <Route path="settings/edit-financialYear/:financialYearId" element={< FinancialYearEdit />} />
-          <Route path="settings/view-financialYear/:financialYearId" element={< FinancialYearView />} />
+          <Route path="settings/create-financialYear" element={<FinancialYearCreate />} />
+          <Route path="settings/edit-financialYear/:financialYearId" element={<FinancialYearEdit />} />
+          <Route path="settings/view-financialYear/:financialYearId" element={<FinancialYearView />} />
 
-          {/*Category  */}
+          {/* Category */}
           <Route path="settings/Category" element={<Category />} />
-          <Route path="settings/create-Category" element={< CategoryCreate />} />
-          <Route path="settings/edit-Category/:categoryId" element={< CategoryEdit />} />
-          <Route path="settings/view-Category/:categoryId" element={< CategoryView />} />
+          <Route path="settings/create-Category" element={<CategoryCreate />} />
+          <Route path="settings/edit-Category/:categoryId" element={<CategoryEdit />} />
+          <Route path="settings/view-Category/:categoryId" element={<CategoryView />} />
 
         </Route>
+        
         {/* Catch-All Route for 404 */}
         <Route path='*' element={<PageNotFound />} />
-
 
       </Routes>
     </>

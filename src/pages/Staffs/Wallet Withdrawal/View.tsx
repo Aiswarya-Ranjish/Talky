@@ -22,23 +22,32 @@ const WalletWithdrawalView: React.FC = () => {
   useEffect(() => {
     const loadWithdrawal = async () => {
       try {
+        console.log("URL Parameter - walletWithdrawalRequestId:", walletWithdrawalRequestId);
+
         if (!walletWithdrawalRequestId) {
           toast.error("No withdrawal request ID provided");
           navigate("/dashboard/wallet-withdrawal/list");
           return;
         }
 
+        console.log("Fetching withdrawal data for ID:", walletWithdrawalRequestId);
         const response = await WalletWithdrawalService.getWithdrawalById(walletWithdrawalRequestId);
         
+        console.log("API Response:", response);
+
         if (!response || !response.isSucess) {
           throw new Error(response?.customMessage || response?.error || "Failed to load withdrawal request");
         }
 
+        console.log("Withdrawal data received:", response.value);
         setData(response.value);
       } catch (error: any) {
         console.error("Failed to load withdrawal:", error);
         toast.error(`Error: ${error.message}`);
-        navigate("/dashboard/wallet-withdrawal/list");
+        // Don't navigate away immediately - let user see the error
+        setTimeout(() => {
+          navigate("/dashboard/wallet-withdrawal/list");
+        }, 2000);
       } finally {
         setLoading(false);
       }
@@ -52,7 +61,10 @@ const WalletWithdrawalView: React.FC = () => {
     return (
       <div className="text-center mt-5">
         <h5>No withdrawal request details found.</h5>
-        <Button className="mt-3" onClick={() => navigate(-1)}>Back</Button>
+        <p className="text-muted">Request ID: {walletWithdrawalRequestId}</p>
+        <Button className="mt-3" onClick={() => navigate("/dashboard/wallet-withdrawal/list")}>
+          Back to List
+        </Button>
       </div>
     );
 
@@ -101,6 +113,7 @@ const WalletWithdrawalView: React.FC = () => {
     
     try {
       if (!walletWithdrawalRequestId) throw new Error("No request ID available");
+      if (!data) throw new Error("No withdrawal data available");
       
       // Prepare data to update - ensure all required fields are included
       const dataToUpdate: WalletWithdrawal = {
@@ -115,7 +128,13 @@ const WalletWithdrawalView: React.FC = () => {
         companyId: data.companyId || 0
       };
 
-      const response = await WalletWithdrawalService.updateWithdrawalStatus(walletWithdrawalRequestId, dataToUpdate);
+      console.log("Updating withdrawal status:", dataToUpdate);
+      const response = await WalletWithdrawalService.updateWithdrawalStatus(
+        data.walletWithdrawalRequestId.toString(), // Use actual ID from data
+        dataToUpdate
+      );
+      
+      console.log("Update response:", response);
       
       if (!response || !response.isSucess) {
         throw new Error(response?.customMessage || response?.error || `Failed to ${action} request`);
@@ -124,7 +143,9 @@ const WalletWithdrawalView: React.FC = () => {
       toast.success(`Withdrawal request ${action}d successfully!`);
       
       // Reload data
-      const updatedResponse = await WalletWithdrawalService.getWithdrawalById(walletWithdrawalRequestId);
+      const updatedResponse = await WalletWithdrawalService.getWithdrawalById(
+        data.walletWithdrawalRequestId.toString()
+      );
       if (updatedResponse && updatedResponse.isSucess) {
         setData(updatedResponse.value);
       }
@@ -139,9 +160,12 @@ const WalletWithdrawalView: React.FC = () => {
   const handleDelete = async () => {
     setLoadingDelete(true);
     try {
-      if (!walletWithdrawalRequestId) throw new Error("No request ID available");
+      if (!data) throw new Error("No withdrawal data available");
       
-      const response = await WalletWithdrawalService.deleteWithdrawal(walletWithdrawalRequestId);
+      console.log("Deleting withdrawal ID:", data.walletWithdrawalRequestId);
+      const response = await WalletWithdrawalService.deleteWithdrawal(
+        data.walletWithdrawalRequestId.toString()
+      );
       
       if (!response || !response.isSucess) {
         throw new Error(response?.customMessage || response?.error || "Failed to delete withdrawal request");
@@ -210,9 +234,9 @@ const WalletWithdrawalView: React.FC = () => {
 
         {/* Request Info */}
         <div className="text-center mb-4">
-          <h5 className="fw-bold mb-2">Request ID: {data.walletWithdrawalRequestId}</h5>
+          <h5 className="fw-bold mb-2">Request ID: {data.walletWithdrawalRequestId || 'N/A'}</h5>
           <p className="mb-1">
-            <strong>User:</strong> {data.appUserName} (ID: {data.appUserId})
+            <strong>User:</strong> {data.appUserName || 'N/A'} (ID: {data.appUserId || 'N/A'})
           </p>
           {getStatusBadge(data.status)}
         </div>
@@ -272,7 +296,12 @@ const WalletWithdrawalView: React.FC = () => {
         </div>
 
         {/* AUDIT LOGS */}
-        <KiduAuditLogs tableName="WalletWithdrawalRequest" recordId={data.walletWithdrawalRequestId?.toString() ?? ""} />
+        {data.walletWithdrawalRequestId && (
+          <KiduAuditLogs 
+            tableName="WalletWithdrawalRequest" 
+            recordId={data.walletWithdrawalRequestId.toString()} 
+          />
+        )}
 
       </Card>
 
