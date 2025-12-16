@@ -1,4 +1,3 @@
-// Debug version of AppNotificationService
 import { API_ENDPOINTS } from "../../constants/API_ENDPOINTS";
 import type { CustomResponse } from "../../types/common/ApiTypes";
 import { AppNotification } from "../../types/settings/AppNotification";
@@ -6,18 +5,10 @@ import HttpService from "../common/HttpService";
 
 class AppNotificationService {
   static async getAllNotification(): Promise<CustomResponse<AppNotification[]>> {
-    try {
-      console.log("Calling API endpoint:", API_ENDPOINTS.AppNotification.GET_ALL);
-      const response = await HttpService.callApi<CustomResponse<AppNotification[]>>(
-        API_ENDPOINTS.AppNotification.GET_ALL,
-        "GET"
-      );
-      console.log("Service response:", response);
-      return response;
-    } catch (error) {
-      console.error("Service error:", error);
-      throw error;
-    }
+    return HttpService.callApi<CustomResponse<AppNotification[]>>(
+      API_ENDPOINTS.AppNotification.GET_ALL,
+      "GET"
+    );
   }
 
   static async getNotificationById(id: string): Promise<CustomResponse<AppNotification>> {
@@ -47,6 +38,31 @@ class AppNotificationService {
     return HttpService.callApi<CustomResponse<null>>(
       API_ENDPOINTS.AppNotification.DELETE(id),
       "DELETE"
+    );
+  }
+
+  // ✅ NEW: Upload notification image
+  static async uploadNotificationImage(
+    notificationId: number,
+    file: File
+  ): Promise<CustomResponse<string>> {
+    const formData = new FormData();
+    formData.append("NotificationId", notificationId.toString());
+    formData.append("NotificationImage", file);
+
+    console.log("📤 Uploading notification image:", {
+      notificationId,
+      fileName: file.name,
+      fileSize: `${(file.size / 1024).toFixed(2)} KB`,
+      fileType: file.type
+    });
+
+    return HttpService.callApi<CustomResponse<string>>(
+      API_ENDPOINTS.AppNotification.UPLOAD_IMAGE,
+      "POST",
+      formData,
+      false,
+      true
     );
   }
 }

@@ -141,20 +141,6 @@ const CompanyCreate: React.FC = () => {
     return ok;
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const base64String = reader.result as string;
-        // Remove the data:image/*;base64, prefix
-        const base64Data = base64String.split(',')[1];
-        resolve(base64Data);
-      };
-      reader.onerror = error => reject(error);
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
@@ -170,12 +156,7 @@ const CompanyCreate: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Convert image to base64
-      let base64Logo = "";
-      if (selectedFile) {
-        base64Logo = await fileToBase64(selectedFile);
-      }
-      
+      // Step 1: Create company without logo
       const dataToSend = {
         companyId: 0,
         comapanyName: formData.comapanyName.trim(),
@@ -190,23 +171,43 @@ const CompanyCreate: React.FC = () => {
         country: formData.country.trim(),
         zipCode: formData.zipCode.trim(),
         invoicePrefix: formData.invoicePrefix.trim() || "",
-        companyLogo: base64Logo,
+        companyLogo: "", // Empty initially
         isActive: Boolean(formData.isActive),
         isDeleted: Boolean(formData.isDeleted),
       };
 
-      console.log("Sending data to create company...");
-      
+      console.log("Creating company...");
       const response = await CompanyService.addCompany(dataToSend);
-      
-      console.log("Create API Response:", response);
-      
       
       if (!response || !response.isSucess) {
         throw new Error(response?.customMessage || response?.error || "Failed to create company");
       }
 
-      toast.success("Company created successfully!");
+      const createdCompanyId = response.value?.companyId;
+      
+      if (!createdCompanyId) {
+        throw new Error("Company created but ID not received");
+      }
+
+      console.log("Company created with ID:", createdCompanyId);
+
+      // Step 2: Upload company logo
+      if (selectedFile) {
+        console.log("Uploading company logo...");
+        const logoResponse = await CompanyService.uploadCompanyLogo(
+          createdCompanyId,
+          selectedFile
+        );
+
+        if (!logoResponse || !logoResponse.isSucess) {
+          console.warn("Logo upload failed:", logoResponse?.customMessage || logoResponse?.error);
+          toast.success("Company created successfully, but logo upload failed. Please edit the company to add logo.");
+        } else {
+          console.log("Logo uploaded successfully");
+          toast.success("Company and logo created successfully!");
+        }
+      }
+
       setTimeout(() => navigate("/dashboard/settings/company-list"), 1500);
     } catch (error: any) {
       console.error("Create failed:", error);

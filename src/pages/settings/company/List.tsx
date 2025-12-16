@@ -1,10 +1,17 @@
-import React, { useState } from "react";
+import React from "react";
 import type { Company } from "../../../types/settings/Company.types";
 import CompanyService from "../../../services/settings/Company.services";
 import KiduServerTable from "../../../components/Trip/KiduServerTable";
+import { getFullImageUrl } from "../../../constants/API_ENDPOINTS";
+import defaultCompanyLogo from "../../../assets/Images/company.png";
 
 const columns = [
   { key: "companyId", label: "Company ID" },
+  { 
+    key: "companyLogo", 
+    label: "Logo",
+    type: "image" as const  
+  },
   { key: "comapanyName", label: "Company Name" },
   { key: "email", label: "Email" },
   { key: "contactNumber", label: "Contact" },
@@ -32,12 +39,20 @@ const CompanyPage: React.FC = () => {
         return { data: [], total: 0 };
       }
 
-      let filteredData = allData;
+      // ✅ Transform company logo paths to full URLs
+      const transformedData = allData.map((company: Company) => ({
+        ...company,
+        companyLogo: company.companyLogo 
+          ? getFullImageUrl(company.companyLogo) 
+          : defaultCompanyLogo // ✅ Use default company logo if none exists
+      }));
+
+      let filteredData = transformedData;
 
       // Apply search filter if searchTerm exists
       if (params.searchTerm) {
         const s = params.searchTerm.toLowerCase();
-        filteredData = allData.filter(company =>
+        filteredData = transformedData.filter(company =>
           (company.comapanyName || "").toLowerCase().includes(s) ||
           (company.email || "").toLowerCase().includes(s) ||
           (company.city || "").toLowerCase().includes(s) ||

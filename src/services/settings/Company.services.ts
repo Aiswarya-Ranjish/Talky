@@ -41,25 +41,35 @@ const CompanyService = {
     );
   },
 
+  /**
+   * Upload company logo using HttpService with FormData
+   * Following the same pattern as Driver.services.ts
+   */
   async uploadCompanyLogo(
     companyId: number,
-    companyLogo: File
+    file: File
   ): Promise<CustomResponse<string>> {
-  
     const formData = new FormData();
+    
+    // ✅ Backend expects "CompanyId" and "CompanyLogo" (case-sensitive!)
     formData.append("CompanyId", companyId.toString());
-    formData.append("CompanyLogo", companyLogo);
-  
-    return await HttpService.callApi<CustomResponse<string>>(
+    formData.append("CompanyLogo", file);
+    
+    console.log("📤 Uploading company logo:", {
+      companyId,
+      fileName: file.name,
+      fileSize: `${(file.size / 1024).toFixed(2)} KB`,
+      fileType: file.type
+    });
+
+    return HttpService.callApi<CustomResponse<string>>(
       API_ENDPOINTS.COMPANY.COMPANYLOGO_POST,
       "POST",
       formData,
-      true 
+      false,  // isPublic: false (requires auth)
+      true    // isFormData: true (this is FormData)
     );
-    
   },
-  
-
 }
 
 export default CompanyService;

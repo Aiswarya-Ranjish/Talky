@@ -7,6 +7,8 @@ import AppNotificationService from "../../../services/settings/AppNotification.s
 import KiduLoader from "../../../components/KiduLoader";
 import KiduPrevious from "../../../components/KiduPrevious";
 import KiduAuditLogs from "../../../components/KiduAuditLogs";
+import { getFullImageUrl } from "../../../constants/API_ENDPOINTS";
+import defaultNotificationImage from "../../../assets/Images/notification.png";
 
 const AppNotificationView: React.FC = () => {
   const navigate = useNavigate();
@@ -28,12 +30,10 @@ const AppNotificationView: React.FC = () => {
 
         const response = await AppNotificationService.getNotificationById(appNotificationId);
         
-        // ✅ Check response structure properly
         if (!response || !response.isSucess) {
           throw new Error(response?.customMessage || response?.error || "Failed to load notification");
         }
 
-        // ✅ Extract data from response.value
         setData(response.value);
       } catch (error: any) {
         console.error("Failed to load notification:", error);
@@ -60,7 +60,6 @@ const AppNotificationView: React.FC = () => {
     { key: "appNotificationId", label: "Notification ID", icon: "bi-hash" },
     { key: "notificationType", label: "Notification Type", icon: "bi-tags" },
     { key: "notificationTitle", label: "Title", icon: "bi-card-heading" },
-    { key: "notificationImage", label: "Image URL", icon: "bi-image" },
     { key: "notificationLink", label: "Link", icon: "bi-link-45deg" },
     { key: "createdAt", label: "Created Date", icon: "bi-calendar-check" },
     { key: "isActive", label: "Is Active", icon: "bi-check-circle", isBoolean: true }
@@ -85,7 +84,6 @@ const AppNotificationView: React.FC = () => {
   const handleDelete = async () => {
     setLoadingDelete(true);
     try {
-      // ✅ Use correct delete method signature
       const response = await AppNotificationService.deleteNotificationById(String(data.appNotificationId ?? ""));
       
       if (!response || !response.isSucess) {
@@ -102,6 +100,11 @@ const AppNotificationView: React.FC = () => {
       setShowConfirm(false);
     }
   };
+
+  // ✅ Get notification image URL
+  const notificationImageUrl = data.notificationImage 
+    ? getFullImageUrl(data.notificationImage)
+    : defaultNotificationImage;
 
   return (
     <div className="container d-flex justify-content-center align-items-center mt-5" style={{ fontFamily: "Urbanist" }}>
@@ -130,8 +133,23 @@ const AppNotificationView: React.FC = () => {
           </div>
         </div>
 
-        {/* Notification Info */}
+        {/* ✅ Notification Image Display */}
         <div className="text-center mb-4">
+          <img
+            src={notificationImageUrl}
+            alt="Notification"
+            style={{
+              width: "200px",
+              height: "200px",
+              objectFit: "cover",
+              borderRadius: "10px",
+              border: "2px solid #882626ff",
+              marginBottom: "15px"
+            }}
+            onError={(e) => {
+              e.currentTarget.src = defaultNotificationImage;
+            }}
+          />
           <h5 className="fw-bold mb-1">Notification ID: {data.appNotificationId || "Unknown"}</h5>
           <p className="small mb-0 fw-bold" style={{ color: "#882626ff" }}>
             Type: {data.notificationType}

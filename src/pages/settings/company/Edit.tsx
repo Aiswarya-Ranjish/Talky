@@ -139,9 +139,21 @@ const CompanyEdit: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
+      
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please select an image file");
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+      
       if (previewUrl && previewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl);
       }
+      
       const objectUrl = URL.createObjectURL(file);
       setSelectedFile(file);
       setPreviewUrl(objectUrl);
@@ -194,12 +206,17 @@ const CompanyEdit: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
       if (!companyId) throw new Error("No company ID available");
       
+      // Step 1: Update company data
       const dataToUpdate: Company = {
         companyId: Number(formData.companyId),
         comapanyName: formData.comapanyName || "",
@@ -219,13 +236,32 @@ const CompanyEdit: React.FC = () => {
         isDeleted: Boolean(formData.isDeleted)
       };
 
+      console.log("Updating company data...");
       const response = await CompanyService.updateCompany(companyId, dataToUpdate);
       
       if (!response || !response.isSucess) {
         throw new Error(response?.customMessage || response?.error || "Failed to update company");
       }
 
-      toast.success("Company updated successfully!");
+      // Step 2: Upload new logo if selected
+      if (selectedFile) {
+        console.log("Uploading new company logo...");
+        const logoResponse = await CompanyService.uploadCompanyLogo(
+          Number(companyId),
+          selectedFile
+        );
+
+        if (!logoResponse || !logoResponse.isSucess) {
+          console.warn("Logo upload failed:", logoResponse?.customMessage || logoResponse?.error);
+          toast.success("Company updated successfully, but logo upload failed.");
+        } else {
+          console.log("Logo uploaded successfully");
+          toast.success("Company and logo updated successfully!");
+        }
+      } else {
+        toast.success("Company updated successfully!");
+      }
+
       setTimeout(() => navigate("/dashboard/settings/company-list"), 1500);
     } catch (error: any) {
       console.error("Update failed:", error);
@@ -268,14 +304,15 @@ const CompanyEdit: React.FC = () => {
                     />
                     <label 
                       htmlFor="companyLogo"
-                      className="position-absolute bg-primary text-white rounded-circle d-flex justify-content-center align-items-center"
+                      className="position-absolute text-white rounded-circle d-flex justify-content-center align-items-center"
                       style={{ 
                         width: "32px", 
                         height: "32px", 
                         cursor: "pointer", 
                         bottom: "5px", 
                         right: "calc(50% - 65px)", 
-                        border: "2px solid white" 
+                        border: "2px solid white",
+                        backgroundColor: "#882626ff"
                       }}
                       title="Upload Logo"
                     >
@@ -299,7 +336,6 @@ const CompanyEdit: React.FC = () => {
                 {/* Form Fields Section */}
                 <Col xs={12} md={9}>
                   <Row className="g-2">
-                    {/* Company Name */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("comapanyName")}</Form.Label>
                       <Form.Control 
@@ -314,7 +350,6 @@ const CompanyEdit: React.FC = () => {
                       {errors.comapanyName && <div className="text-danger small">{errors.comapanyName}</div>}
                     </Col>
 
-                    {/* Website */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("website")}</Form.Label>
                       <Form.Control 
@@ -329,7 +364,6 @@ const CompanyEdit: React.FC = () => {
                       {errors.website && <div className="text-danger small">{errors.website}</div>}
                     </Col>
 
-                    {/* Contact Number */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("contactNumber")}</Form.Label>
                       <Form.Control 
@@ -345,7 +379,6 @@ const CompanyEdit: React.FC = () => {
                       {errors.contactNumber && <div className="text-danger small">{errors.contactNumber}</div>}
                     </Col>
 
-                    {/* Email */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("email")}</Form.Label>
                       <Form.Control 
@@ -360,7 +393,6 @@ const CompanyEdit: React.FC = () => {
                       {errors.email && <div className="text-danger small">{errors.email}</div>}
                     </Col>
 
-                    {/* Tax Number */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("taxNumber")}</Form.Label>
                       <Form.Control 
@@ -375,7 +407,6 @@ const CompanyEdit: React.FC = () => {
                       {errors.taxNumber && <div className="text-danger small">{errors.taxNumber}</div>}
                     </Col>
 
-                    {/* Address Line 1 */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("addressLine1")}</Form.Label>
                       <Form.Control 
@@ -390,7 +421,6 @@ const CompanyEdit: React.FC = () => {
                       {errors.addressLine1 && <div className="text-danger small">{errors.addressLine1}</div>}
                     </Col>
 
-                    {/* Address Line 2 */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("addressLine2")}</Form.Label>
                       <Form.Control 
@@ -404,7 +434,6 @@ const CompanyEdit: React.FC = () => {
                       />
                     </Col>
 
-                    {/* City */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("city")}</Form.Label>
                       <Form.Control 
@@ -419,7 +448,6 @@ const CompanyEdit: React.FC = () => {
                       {errors.city && <div className="text-danger small">{errors.city}</div>}
                     </Col>
 
-                    {/* State */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("state")}</Form.Label>
                       <Form.Control 
@@ -434,7 +462,6 @@ const CompanyEdit: React.FC = () => {
                       {errors.state && <div className="text-danger small">{errors.state}</div>}
                     </Col>
 
-                    {/* Country */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("country")}</Form.Label>
                       <Form.Control 
@@ -449,7 +476,6 @@ const CompanyEdit: React.FC = () => {
                       {errors.country && <div className="text-danger small">{errors.country}</div>}
                     </Col>
 
-                    {/* Zip Code */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("zipCode")}</Form.Label>
                       <Form.Control 
@@ -464,7 +490,6 @@ const CompanyEdit: React.FC = () => {
                       {errors.zipCode && <div className="text-danger small">{errors.zipCode}</div>}
                     </Col>
 
-                    {/* Invoice Prefix */}
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("invoicePrefix")}</Form.Label>
                       <Form.Control 

@@ -1,9 +1,16 @@
 import React from "react";
 import AppNotificationService from "../../../services/settings/AppNotification.services";
 import KiduServerTable from "../../../components/Trip/KiduServerTable";
+import { getFullImageUrl } from "../../../constants/API_ENDPOINTS";
+import defaultNotificationImage from "../../../assets/Images/notification.png";
 
 const columns = [
   { key: "appNotificationId", label: "ID" },
+  { 
+    key: "notificationImage", 
+    label: "Image",
+    type: "image" as const  // ✅ Display as image
+  },
   { key: "notificationType", label: "Type" },
   { key: "notificationTitle", label: "Title" },
   { key: "isActive", label: "Status" },
@@ -33,25 +40,21 @@ const AppNotificationList: React.FC = () => {
     try {
       console.log("Fetching notifications...");
       
-      // Fetch data - should return CustomResponse<AppNotification[]>
       const response = await AppNotificationService.getAllNotification();
       
       console.log("API Response:", response);
       
-      // Check if response exists
       if (!response) {
         console.error("No response received from API");
         throw new Error("No response received from server");
       }
 
-      // Check if response is successful - FIX: using 'isSucess' (with one 's')
-      if (!response.isSucess) {  // Changed from isSuccess to isSucess
+      if (!response.isSucess) {
         console.error("API Response not successful:", response);
         const errorMsg = response?.customMessage || response?.error || "Failed to fetch notifications";
         throw new Error(errorMsg);
       }
 
-      // Extract the actual data array from response.value
       const allData = response.value || [];
       console.log("All data:", allData);
 
@@ -73,9 +76,12 @@ const AppNotificationList: React.FC = () => {
         console.log(`Filtered ${filtered.length} items from search term: ${searchTerm}`);
       }
 
-      // Format createdAt date and status
+      // ✅ Transform data with full image URLs and formatting
       const formattedData = filtered.map((notification) => ({
         ...notification,
+        notificationImage: notification.notificationImage 
+          ? getFullImageUrl(notification.notificationImage)
+          : defaultNotificationImage,  // ✅ Use default image if none exists
         createdAt: formatDate(notification.createdAt ?? ""),
         isActive: notification.isActive ? "Active" : "Inactive"
       }));
