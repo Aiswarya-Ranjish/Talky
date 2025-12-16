@@ -8,8 +8,6 @@ import { Import } from 'lucide-react';
 import { CustomResponse } from '../../types/common/ApiTypes';
 //import{CustomResponse} from 'types/ApiTypes';
 
-
-
 const AppUserService = {
   async getAllUsers(): Promise<User[]> {
     const response = await HttpService.callApi<CustomResponse<User[]>>(API_ENDPOINTS.APP_USER.GET_ALL, 'GET');

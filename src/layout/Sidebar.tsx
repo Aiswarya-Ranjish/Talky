@@ -41,7 +41,6 @@ const Sidebar: React.FC = () => {
     const usersSubMenu = [
         { label: "User List", path: "user/user-list", icon: <BsListUl /> },
         { label: "User Recharge", path: "/dashboard/user/recharge/list", icon: <BsShieldExclamation /> },
-        { label: "Blocked Users", path: "/dashboard/users/blocked-users", icon: <BsPersonX /> },
     ];
 
     const staffsSubMenu = [
@@ -59,7 +58,6 @@ const Sidebar: React.FC = () => {
 
     const settingsSubMenu = [
         { label: "Company", path: "/dashboard/settings/company-list", icon: <BsBuilding /> },
-        { label: "Company Branch", path: "/dashboard/settings/company-branch", icon: <BsBuildingAdd /> },
         { label: "System Config", path: "/dashboard/settings/systemconfig-list", icon: <BsGearFill /> },
         { label: "Purchase Coupon", path: "/dashboard/settings/purchase-coupon-list", icon: <BsTicketPerforated /> },
         { label:'Category',path:'/dashboard/settings/Category', icon:<BiCategory />},

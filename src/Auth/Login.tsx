@@ -3,7 +3,6 @@ import { Col, Container, Row } from "react-bootstrap";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import toast, { Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import AuthServices from "../services/common/Authservices";
 
 interface Errors {
     email: string;
@@ -19,8 +18,11 @@ const Login: React.FC = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const navigate = useNavigate();
 
+    // Demo credentials
+    const DEMO_EMAIL = "admin@gmail.com";
+    const DEMO_PASSWORD = "Admin@123";
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
 
     const validateEmail = (value: string): string => {
         if (!value) return "* Email is required";
@@ -30,7 +32,6 @@ const Login: React.FC = () => {
 
     const validatePassword = (value: string): string => {
         if (!value) return "* Password is required";
-        if (!passwordRegex.test(value)) return "* Password must be at least 8 characters, include uppercase, lowercase, number, and special character";
         return "";
     };
 
@@ -56,24 +57,50 @@ const Login: React.FC = () => {
 
         if (!emailError && !passwordError) {
             setIsLoading(true);
-            try {
-                const response = await AuthServices.login({ username: email, password });
-                if (response.success && response.token && response.user) {
-                    localStorage.setItem("jwt_token", response.token);
-                    localStorage.setItem("user", JSON.stringify(response.user));
-                    localStorage.setItem("token_expires_at", (Date.now() + 3600000).toString());
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                // Check demo credentials
+                if (email === DEMO_EMAIL && password === DEMO_PASSWORD) {
+                    // Create dummy user data
+                    const dummyUser = {
+                        userId: 1,
+                        userName: "Admin User",
+                        userEmail: email,
+                        phoneNumber: "+1234567890",
+                        address: "123 Demo Street",
+                        passwordHash: "",
+                        isActive: true,
+                        islocked: false,
+                        createAt: new Date().toISOString(),
+                        lastlogin: new Date().toISOString(),
+                        lastloginString: new Date().toLocaleString(),
+                        createAtSyring: new Date().toLocaleString()
+                    };
+
+                    const dummyToken = "demo_jwt_token_" + Date.now();
+                    const expiresAt = new Date(Date.now() + 3600000).toISOString(); // 1 hour
+
+                    // Store in localStorage
+                    localStorage.setItem("jwt_token", dummyToken);
+                    localStorage.setItem("user", JSON.stringify(dummyUser));
+                    localStorage.setItem("token_expires_at", expiresAt);
+
                     toast.success("Login successful!");
+                    
                     setEmail("");
                     setPassword("");
                     setSubmitted(false);
-                    setTimeout(() => navigate("/dashboard"), 1000);
-                } else toast.error("Invalid credentials.");
-            } catch (error: any) {
-                if (error.message.includes("401")) toast.error("Invalid email or password");
-                else toast.error("Invalid email or password");
-            } finally {
+                    
+                    setTimeout(() => {
+                        navigate("/dashboard");
+                    }, 1000);
+                } else {
+                    toast.error("Invalid email or password");
+                }
+                
                 setIsLoading(false);
-            }
+            }, 800);
         }
     };
 
@@ -105,7 +132,13 @@ const Login: React.FC = () => {
                                 </div>
 
                                 <div className="d-grid gap-2 mb-2">
-                                    <input type="text" className={`p-2 rounded-2 border ${errors.email ? "border-danger" : ""}`} value={email} onChange={handleEmailChange} />
+                                    <input 
+                                        type="text" 
+                                        className={`p-2 rounded-2 border ${errors.email ? "border-danger" : ""}`} 
+                                        value={email} 
+                                        onChange={handleEmailChange}
+                                        placeholder="Enter your email"
+                                    />
                                     {submitted && errors.email && <span className="text-danger" style={{ fontFamily: "Urbanist", fontSize: "13px" }}>{errors.email}</span>}
                                 </div>
 
@@ -115,7 +148,13 @@ const Login: React.FC = () => {
 
                                 <div className="d-grid gap-2 mb-2">
                                     <div className="d-grid gap-2 mb-1" style={{ position: "relative" }}>
-                                        <input type={showPassword ? "text" : "password"} className={`p-2 rounded-2 border ${errors.password ? "border-danger" : ""}`} value={password} onChange={handlePasswordChange} />
+                                        <input 
+                                            type={showPassword ? "text" : "password"} 
+                                            className={`p-2 rounded-2 border ${errors.password ? "border-danger" : ""}`} 
+                                            value={password} 
+                                            onChange={handlePasswordChange}
+                                            placeholder="Enter your password"
+                                        />
                                         <span onClick={togglePassword} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", cursor: "pointer", fontSize: "20px", color: "#882626" }}>
                                             {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
                                         </span>
@@ -124,7 +163,21 @@ const Login: React.FC = () => {
                                 </div>
 
                                 <div className="d-grid gap-2">
-                                    <button className="rounded-3 p-2 border-0" type="submit" disabled={isLoading} style={{ backgroundColor: "#882626", fontFamily: "Urbanist", fontSize: "16px", color: "#FFFFFF", fontWeight: 800, opacity: isLoading ? 0.7 : 1, cursor: isLoading ? "not-allowed" : "pointer", transition: "0.3s" }}>
+                                    <button 
+                                        className="rounded-3 p-2 border-0" 
+                                        type="submit" 
+                                        disabled={isLoading} 
+                                        style={{ 
+                                            backgroundColor: "#882626", 
+                                            fontFamily: "Urbanist", 
+                                            fontSize: "16px", 
+                                            color: "#FFFFFF", 
+                                            fontWeight: 800, 
+                                            opacity: isLoading ? 0.7 : 1, 
+                                            cursor: isLoading ? "not-allowed" : "pointer", 
+                                            transition: "0.3s" 
+                                        }}
+                                    >
                                         {isLoading ? "Logging in..." : "Log in"}
                                     </button>
                                 </div>
@@ -137,7 +190,13 @@ const Login: React.FC = () => {
 
                                 <div className="d-grid gap-2">
                                     <p className="text-end">
-                                        <span onClick={() => navigate("/forgot-password")} className="fw-bold text-end text-decoration-underline" style={{ fontFamily: "Urbanist", fontSize: "12px", cursor: "pointer", color: "#882626" }}>Forgot your password?</span>
+                                        <span 
+                                            onClick={() => navigate("/forgot-password")} 
+                                            className="fw-bold text-end text-decoration-underline" 
+                                            style={{ fontFamily: "Urbanist", fontSize: "12px", cursor: "pointer", color: "#882626" }}
+                                        >
+                                            Forgot your password?
+                                        </span>
                                     </p>
                                 </div>
                             </div>
