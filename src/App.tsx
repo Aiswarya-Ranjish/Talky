@@ -10,6 +10,7 @@ import PageNotFound from './pages/dashboard/PageNotFound';
 //Auth
 import Login from './Auth/Login';
 import ForgotPassword from './Auth/ForgotPassword';
+import ProtectedRoute from './Auth/ProtectedRoute';
 
 //Dashboard
 import DashBoard from './pages/dashboard/DashBoard';
@@ -86,7 +87,11 @@ function App() {
         <Route path='/forgot-password' element={<ForgotPassword />} />
 
         {/* DashBoard */}
-        <Route path="/dashboard" element={<DashBoard />}>
+       <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <DashBoard />
+          </ProtectedRoute>
+        }>
           {/* HomePage */}
           <Route index element={<HomePage />} />
 

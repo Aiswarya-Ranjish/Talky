@@ -66,10 +66,11 @@ const Sidebar: React.FC = () => {
     ];
 
     const navigate = useNavigate();
-    const handleLogout = () => {
-        AuthService.logout();
-        navigate("/");
-    };
+   // In Sidebar.tsx, update the handleLogout function:
+const handleLogout = async () => {
+    await AuthService.logout();
+    window.location.href = "/login"; // Force full page navigation
+};
 
     return (
         <>
