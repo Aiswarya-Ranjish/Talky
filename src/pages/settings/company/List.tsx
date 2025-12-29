@@ -1,101 +1,113 @@
-// src/pages/settings/adminUsers/AdminUserList.tsx
 import React from "react";
-import type { User } from "../../../types/common/Auth.types";
-import AdminUserService from "../../../services/settings/AdminUser.services";
+import CompanyService from "../../../services/settings/Company.services";
+import { Company } from "../../../types/settings/Company.types";
 import KiduServerTable from "../../../components/Trip/KiduServerTable";
-import { getFullImageUrl } from "../../../constants/API_ENDPOINTS";
-import defaultUserAvatar from "../../../assets/Images/profile.jpeg"; // Add default user avatar
 
 const columns = [
-  { key: "userId", label: "User ID" },
-  { 
-    key: "profilePic", 
-    label: "Profile",
-    type: "image" as const  
-  },
-  { key: "userName", label: "User Name" },
-  { key: "companyName", label: "Company" },
-  { key: "userEmail", label: "Email" },
-  { key: "phoneNumber", label: "Phone" },
+  { key: "companyId", label: "Company ID" },
+  { key: "comapanyName", label: "Company Name" },
+  { key: "email", label: "Email" },
+  { key: "contactNumber", label: "Contact Number" },
+  { key: "website", label: "Website" },
+  { key: "taxNumber", label: "Tax Number" },
+  { key: "city", label: "City" },
+  { key: "country", label: "Country" },
+  { key: "isActive", label: "Active" }
 ];
 
-const AdminUserList: React.FC = () => {
-  const fetchData = async (params: {
+const formatValue = (value: any) => {
+  return value !== null && value !== undefined && value !== ""
+    ? value
+    : "-";
+};
+
+const CompanyList: React.FC = () => {
+  const fetchCompanyData = async ({
+    pageNumber,
+    pageSize,
+    searchTerm
+  }: {
     pageNumber: number;
     pageSize: number;
     searchTerm: string;
   }) => {
     try {
-      const response = await AdminUserService.getAll();
-      
-      // Check if response is successful
+      // Fetch companies
+      const response = await CompanyService.getAllCompany();
+
       if (!response || !response.isSucess) {
-        throw new Error(response?.customMessage || response?.error || "Failed to fetch admin users");
+        throw new Error(
+          response?.customMessage || response?.error || "Failed to fetch companies"
+        );
       }
 
-      // Extract data from response.value
-      const allData = response.value || [];
-      
+      const allData: Company[] = response.value || [];
+
       if (allData.length === 0) {
         return { data: [], total: 0 };
       }
 
-      // ✅ Transform profile image paths to full URLs
-      const transformedData = allData.map((user: User) => ({
-        ...user,
-        profilePic: user.profileImagePath 
-          ? getFullImageUrl(user.profileImagePath) 
-          : defaultUserAvatar // ✅ Use default user avatar if none exists
-      }));
+      // FILTER OUT DELETED COMPANIES
+      let filtered = allData.filter((c) => !c.isDeleted);
 
-      let filteredData = transformedData;
-
-      // Apply search filter if searchTerm exists
-      if (params.searchTerm) {
-        const s = params.searchTerm.toLowerCase();
-        filteredData = transformedData.filter(user =>
-          (user.userName || "").toLowerCase().includes(s) ||
-          (user.userEmail || "").toLowerCase().includes(s) ||
-          (user.phoneNumber || "").toLowerCase().includes(s) ||
-          (user.companyName || "").toLowerCase().includes(s) ||
-          (user.address || "").toLowerCase().includes(s) ||
-          (user.userId?.toString() || "").includes(params.searchTerm)
+      // SEARCH
+      if (searchTerm) {
+        const s = searchTerm.toLowerCase();
+        filtered = filtered.filter(
+          (c) =>
+            c.comapanyName?.toLowerCase().includes(s) ||
+            c.email?.toLowerCase().includes(s) ||
+            c.contactNumber?.toLowerCase().includes(s) ||
+            c.taxNumber?.toLowerCase().includes(s) ||
+            c.companyId?.toString().includes(searchTerm)
         );
       }
 
-      // Apply pagination
-      const start = (params.pageNumber - 1) * params.pageSize;
-      const end = start + params.pageSize;
-      const paginatedData = filteredData.slice(start, end);
+      // FORMAT DATA
+      const formattedData = filtered.map((item) => ({
+        ...item,
+        comapanyName: formatValue(item.comapanyName),
+        email: formatValue(item.email),
+        contactNumber: formatValue(item.contactNumber),
+        website: formatValue(item.website),
+        taxNumber: formatValue(item.taxNumber),
+        city: formatValue(item.city),
+        country: formatValue(item.country),
+        isActive: item.isActive ? "Yes" : "No"
+      }));
 
-      return { 
-        data: paginatedData, 
-        total: filteredData.length 
-      };
-    } catch (error: any) {
-      console.error("Error fetching admin users:", error);
-      throw new Error(`Failed to fetch admin user details: ${error.message}`);
+      const total = formattedData.length;
+
+      // PAGINATION
+      const startIndex = (pageNumber - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedData = formattedData.slice(startIndex, endIndex);
+
+      return { data: paginatedData, total };
+    } catch (err: any) {
+      console.error("Error fetching companies:", err);
+      throw new Error("Failed to fetch company details.");
     }
   };
 
   return (
     <KiduServerTable
-      title="Admin User Details"
-      subtitle="List of all admin users with Edit & View options"
+      title="Company List"
+      subtitle="List of all companies with quick edit & view"
       columns={columns}
-      idKey="userId"
-      addButtonLabel="Add New Admin User"
-      addRoute="/dashboard/settings/create-adminUser"
-      editRoute="/dashboard/settings/edit-adminUser"
-      viewRoute="/dashboard/settings/view-adminUser"
-      fetchData={fetchData}
+      idKey="companyId"
+      addButtonLabel="Add New Company"
+      addRoute="/dashboard/settings/create-company"
+      editRoute="/dashboard/settings/edit-company"
+      viewRoute="/dashboard/settings/view-company"
+      fetchData={fetchCompanyData}
+      rowsPerPage={15}
       showSearch={true}
       showActions={true}
-      showExport={true}
       showAddButton={true}
-      rowsPerPage={10}
+      showExport={true}
     />
   );
 };
 
-export default AdminUserList;
+export default CompanyList;
