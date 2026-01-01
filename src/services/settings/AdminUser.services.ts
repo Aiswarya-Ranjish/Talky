@@ -1,11 +1,11 @@
-// src/services/UserService.ts
+// src/services/settings/AdminUser.services.ts
 
 import { API_ENDPOINTS } from "../../constants/API_ENDPOINTS";
 import type { CustomResponse } from "../../types/common/ApiTypes";
-import { User } from "../../types/common/Auth.types";
+import { User } from "../../types/settings/AdminUser.types";
 import HttpService from "../common/HttpService";
 
-class UserService {
+class AdminUserService {
   static async getAll(): Promise<CustomResponse<User[]>> {
     return HttpService.callApi(API_ENDPOINTS.ADMIN_USER.GET_ALL, "GET");
   }
@@ -14,11 +14,11 @@ class UserService {
     return HttpService.callApi(API_ENDPOINTS.ADMIN_USER.GET_BY_ID(id), "GET");
   }
 
-  static async create(data: User): Promise<CustomResponse<User>> {
+  static async create(data: Partial<User>): Promise<CustomResponse<User>> {
     return HttpService.callApi(API_ENDPOINTS.ADMIN_USER.CREATE, "POST", data);
   }
 
-  static async update(id: number, data: User): Promise<CustomResponse<User>> {
+  static async update(id: number, data: Partial<User>): Promise<CustomResponse<User>> {
     return HttpService.callApi(API_ENDPOINTS.ADMIN_USER.UPDATE(id), "PUT", data);
   }
 
@@ -34,20 +34,19 @@ class UserService {
     return HttpService.callApi(API_ENDPOINTS.ADMIN_USER.CHANGE_PASSWORD, "POST", data);
   }
 
-  static async uploadProfilePic(AppUserId: number, file: File): Promise<CustomResponse<string>> {
-  const formData = new FormData();
-  formData.append("AppUserId", AppUserId.toString());
-  formData.append("ProfilePic", file);
+  static async uploadProfilePic(userId: number, file: File): Promise<CustomResponse<string>> {
+    const formData = new FormData();
+    formData.append("UserId", userId.toString());
+    formData.append("ProfilePic", file);
 
-  return HttpService.callApi(
-    API_ENDPOINTS.ADMIN_USER.UPLOAD_PROFILE_PIC,
-    "POST",
-    formData,
-    false,
-    true
-  );
+    return HttpService.callApi(
+      API_ENDPOINTS.ADMIN_USER.UPLOAD_PROFILE_PIC,
+      "POST",
+      formData,
+      false,
+      true
+    );
+  }
 }
 
-}
-
-export default UserService;
+export default AdminUserService;

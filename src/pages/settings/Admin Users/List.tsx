@@ -1,10 +1,10 @@
 // src/pages/settings/adminUsers/AdminUserList.tsx
 import React from "react";
-import type { User } from "../../../types/common/Auth.types";
 import AdminUserService from "../../../services/settings/AdminUser.services";
 import KiduServerTable from "../../../components/Trip/KiduServerTable";
+import defaultUserAvatar from "../../../assets/Images/profile.jpeg";
+import { User } from "../../../types/settings/AdminUser.types";
 import { getFullImageUrl } from "../../../constants/API_ENDPOINTS";
-import defaultUserAvatar from "../../../assets/Images/profile.jpeg"; // Add default user avatar
 
 const columns = [
   { key: "userId", label: "User ID" },
@@ -24,33 +24,32 @@ const AdminUserList: React.FC = () => {
     pageNumber: number;
     pageSize: number;
     searchTerm: string;
+    reverseOrder?: boolean;
   }) => {
     try {
       const response = await AdminUserService.getAll();
       
-      // Check if response is successful
       if (!response || !response.isSucess) {
         throw new Error(response?.customMessage || response?.error || "Failed to fetch admin users");
       }
 
-      // Extract data from response.value
       const allData = response.value || [];
       
       if (allData.length === 0) {
         return { data: [], total: 0 };
       }
 
-      // ✅ Transform profile image paths to full URLs
+      // Transform profile image paths to full URLs
       const transformedData = allData.map((user: User) => ({
         ...user,
         profilePic: user.profileImagePath 
           ? getFullImageUrl(user.profileImagePath) 
-          : defaultUserAvatar // ✅ Use default user avatar if none exists
+          : defaultUserAvatar
       }));
 
       let filteredData = transformedData;
 
-      // Apply search filter if searchTerm exists
+      // Apply search filter
       if (params.searchTerm) {
         const s = params.searchTerm.toLowerCase();
         filteredData = transformedData.filter(user =>
@@ -61,6 +60,11 @@ const AdminUserList: React.FC = () => {
           (user.address || "").toLowerCase().includes(s) ||
           (user.userId?.toString() || "").includes(params.searchTerm)
         );
+      }
+
+      // Apply reverse order (latest first)
+      if (params.reverseOrder) {
+        filteredData = [...filteredData].reverse();
       }
 
       // Apply pagination
@@ -94,6 +98,7 @@ const AdminUserList: React.FC = () => {
       showExport={true}
       showAddButton={true}
       rowsPerPage={10}
+      reverseOrder={true}
     />
   );
 };

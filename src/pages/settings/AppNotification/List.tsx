@@ -9,7 +9,7 @@ const columns = [
   { 
     key: "notificationImage", 
     label: "Image",
-    type: "image" as const  // ✅ Display as image
+    type: "image" as const
   },
   { key: "notificationType", label: "Type" },
   { key: "notificationTitle", label: "Title" },
@@ -28,14 +28,17 @@ const formatDate = (isoString: string) => {
 };
 
 const AppNotificationList: React.FC = () => {
+  // ✅ Added reverseOrder parameter
   const fetchAppNotificationData = async ({
     pageNumber,
     pageSize,
-    searchTerm
+    searchTerm,
+    reverseOrder
   }: {
     pageNumber: number;
     pageSize: number;
     searchTerm: string;
+    reverseOrder?: boolean;
   }) => {
     try {
       console.log("Fetching notifications...");
@@ -77,14 +80,19 @@ const AppNotificationList: React.FC = () => {
       }
 
       // ✅ Transform data with full image URLs and formatting
-      const formattedData = filtered.map((notification) => ({
+      let formattedData = filtered.map((notification) => ({
         ...notification,
         notificationImage: notification.notificationImage 
           ? getFullImageUrl(notification.notificationImage)
-          : defaultNotificationImage,  // ✅ Use default image if none exists
+          : defaultNotificationImage,
         createdAt: formatDate(notification.createdAt ?? ""),
         isActive: notification.isActive ? "Active" : "Inactive"
       }));
+
+      // ✅ Apply reverse order if requested (show latest notifications first)
+      if (reverseOrder) {
+        formattedData = [...formattedData].reverse();
+      }
 
       const total = formattedData.length;
       console.log(`Total items after filtering: ${total}`);
@@ -123,6 +131,7 @@ const AppNotificationList: React.FC = () => {
       showActions={true}
       showAddButton={true}
       showExport={true}
+      reverseOrder={true}  // ✅ Added this prop
     />
   );
 };

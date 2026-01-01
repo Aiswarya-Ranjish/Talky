@@ -34,10 +34,12 @@ const UserRechargeListPage: React.FC = () => {
 
   if (loading) return <KiduLoader type="Loading Recharge Orders..." />;
 
+  // ✅ Added reverseOrder parameter
   const fetchData = async (params: {
     pageNumber: number;
     pageSize: number;
     searchTerm: string;
+    reverseOrder?: boolean;
   }) => {
     try {
       const response = await PurchaseOrderService.getAllPurchaseOrder();
@@ -52,6 +54,11 @@ const UserRechargeListPage: React.FC = () => {
           (order.amount?.toString() || '').includes(searchLower) ||
           (order.description?.toString() || '').toLowerCase().includes(searchLower)
         );
+      }
+      
+      // ✅ Apply reverse order if requested (show latest recharges first)
+      if (params.reverseOrder) {
+        filteredData = [...filteredData].reverse();
       }
       
       // Apply pagination
@@ -83,6 +90,7 @@ const UserRechargeListPage: React.FC = () => {
       showExport={true}
       showAddButton={false}
       rowsPerPage={10}
+      reverseOrder={true}  // ✅ Added this prop
     />
   );
 };

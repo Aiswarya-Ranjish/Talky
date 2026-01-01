@@ -16,14 +16,17 @@ const columns = [
 ];
 
 const StaffList: React.FC = () => {
+  // ✅ Added reverseOrder parameter
   const fetchStaffData = async ({
     pageNumber,
     pageSize,
     searchTerm,
+    reverseOrder,
   }: {
     pageNumber: number;
     pageSize: number;
     searchTerm: string;
+    reverseOrder?: boolean;
   }) => {
     try {
       // Fetch data - now returns CustomResponse<StaffModel[]>
@@ -70,6 +73,11 @@ const StaffList: React.FC = () => {
         );
       }
 
+      // ✅ Apply reverse order if requested (show latest staff first)
+      if (reverseOrder) {
+        transformedData = [...transformedData].reverse();
+      }
+
       const total = transformedData.length;
 
       // Pagination
@@ -103,6 +111,7 @@ const StaffList: React.FC = () => {
       showActions={true}
       showAddButton={false}
       showExport={true}
+      reverseOrder={true}  // ✅ Added this prop
     />
   );
 };

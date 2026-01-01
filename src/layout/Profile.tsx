@@ -3,7 +3,7 @@ import type { ChangeEvent } from "react";
 import { Card, Button, Form, Row, Col } from "react-bootstrap";
 import toast, { Toaster } from "react-hot-toast";
 import { BsUpload } from "react-icons/bs";
-import UserService from "../services/settings/User.services";
+import AdminUserService from "../services/settings/AdminUser.services";
 import  profileImg from "../assets/Images/profile.jpeg"
 
 const Profile: React.FC = () => {
@@ -65,7 +65,7 @@ const Profile: React.FC = () => {
         newPassword,
       };
 
-      const response = await UserService.changePassword(payload);
+      const response = await AdminUserService.changePassword(payload);
 
       if (response.isSucess) {
         toast.success("Password changed successfully!");

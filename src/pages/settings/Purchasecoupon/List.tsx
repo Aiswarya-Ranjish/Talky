@@ -44,10 +44,12 @@ const PurchaseCouponPage: React.FC = () => {
 
   if (loading) return <KiduLoader type="Loading Purchase Coupons..." />;
 
+  // ✅ Added reverseOrder parameter
   const fetchData = async (params: {
     pageNumber: number;
     pageSize: number;
     searchTerm: string;
+    reverseOrder?: boolean;
   }) => {
     try {
       const response = await PurchaseCouponService.getAllCoupons();
@@ -65,11 +67,16 @@ const PurchaseCouponPage: React.FC = () => {
       }
 
       // Format dates for display
-      const formattedData = filteredData.map(coupon => ({
+      let formattedData = filteredData.map(coupon => ({
         ...coupon,
         createdAt: formatDate(coupon.createdAt),
         isActive: coupon.isActive ? "Active" : "Inactive"
       }));
+
+      // ✅ Apply reverse order if requested (show latest coupons first)
+      if (params.reverseOrder) {
+        formattedData = [...formattedData].reverse();
+      }
 
       // Pagination
       const start = (params.pageNumber - 1) * params.pageSize;
@@ -97,6 +104,7 @@ const PurchaseCouponPage: React.FC = () => {
       showExport={true}
       showAddButton={true}
       rowsPerPage={10}
+      reverseOrder={true}  // ✅ Added this prop
     />
   );
 };

@@ -14,10 +14,12 @@ const columns = [
 
 const SystemConfigList: React.FC = () => {
   
+  // ✅ Added reverseOrder parameter
   const fetchData = async (params: {
     pageNumber: number;
     pageSize: number;
     searchTerm: string;
+    reverseOrder?: boolean;
   }) => {
     try {
       const response = await systemconfigService.getAppmasterSetting();
@@ -44,6 +46,11 @@ const SystemConfigList: React.FC = () => {
           (item.staff_To_User_Rate_Per_Second?.toString() || "").includes(params.searchTerm) ||
           (item.one_paisa_to_coin_rate?.toString() || "").includes(params.searchTerm)
         );
+      }
+
+      // ✅ Apply reverse order if requested (show latest configs first)
+      if (params.reverseOrder) {
+        filteredData = [...filteredData].reverse();
       }
 
       // Pagination
@@ -77,6 +84,7 @@ const SystemConfigList: React.FC = () => {
       showExport={true}
       showAddButton={true}
       rowsPerPage={10}
+      reverseOrder={true}  // ✅ Added this prop
     />
   );
 };

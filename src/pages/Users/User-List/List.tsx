@@ -11,8 +11,8 @@ const columns = [
   { key: "name", label: "Name", type: "text" as const },
   { key: "mobileNumber", label: "Mobile Number", type: "text" as const },
   { key: "registeredDate", label: "Joined On", type: "date" as const },
-  { key: "status", label: "Status", type: "text" as const }, // ✅ Changed to text
-  { key: "isBlocked", label: "Is Blocked", type: "checkbox" as const }, // ✅ Checkbox only for isBlocked
+  { key: "status", label: "Status", type: "text" as const },
+  { key: "isBlocked", label: "Is Blocked", type: "checkbox" as const },
   { key: "walletBalance", label: "Wallet Balance", type: "text" as const },
 ];
 
@@ -46,11 +46,12 @@ const UserPage: React.FC = () => {
 
   if (loading) return <KiduLoader type="Loading Users..." />;
 
-  // Create a fetchData function that KiduServerTable expects
+  // ✅ Create a fetchData function with proper reverse ordering
   const fetchData = async (params: {
     pageNumber: number;
     pageSize: number;
     searchTerm: string;
+    reverseOrder?: boolean;
   }) => {
     try {
       const response = await AppUserService.getAllUsers();
@@ -65,6 +66,11 @@ const UserPage: React.FC = () => {
           (user.appUserId?.toString() || '').includes(searchLower) ||
           (user.status?.toString() || '').toLowerCase().includes(searchLower)
         );
+      }
+      
+      // ✅ Apply reverse order if requested (show latest first)
+      if (params.reverseOrder) {
+        filteredData = [...filteredData].reverse();
       }
       
       // Apply pagination
@@ -96,8 +102,9 @@ const UserPage: React.FC = () => {
       showSearch={true}
       showActions={true}
       showExport={true}
-      showAddButton={false} 
+      showAddButton={false}
       rowsPerPage={10}
+      reverseOrder={true}
     />
   );
 };

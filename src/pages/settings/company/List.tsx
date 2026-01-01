@@ -22,14 +22,17 @@ const formatValue = (value: any) => {
 };
 
 const CompanyList: React.FC = () => {
+  // ✅ Added reverseOrder parameter
   const fetchCompanyData = async ({
     pageNumber,
     pageSize,
-    searchTerm
+    searchTerm,
+    reverseOrder
   }: {
     pageNumber: number;
     pageSize: number;
     searchTerm: string;
+    reverseOrder?: boolean;
   }) => {
     try {
       // Fetch companies
@@ -64,7 +67,7 @@ const CompanyList: React.FC = () => {
       }
 
       // FORMAT DATA
-      const formattedData = filtered.map((item) => ({
+      let formattedData = filtered.map((item) => ({
         ...item,
         comapanyName: formatValue(item.comapanyName),
         email: formatValue(item.email),
@@ -75,6 +78,11 @@ const CompanyList: React.FC = () => {
         country: formatValue(item.country),
         isActive: item.isActive ? "Yes" : "No"
       }));
+
+      // ✅ Apply reverse order if requested (show latest companies first)
+      if (reverseOrder) {
+        formattedData = [...formattedData].reverse();
+      }
 
       const total = formattedData.length;
 
@@ -106,6 +114,7 @@ const CompanyList: React.FC = () => {
       showActions={true}
       showAddButton={true}
       showExport={true}
+      reverseOrder={true}  // ✅ Added this prop
     />
   );
 };

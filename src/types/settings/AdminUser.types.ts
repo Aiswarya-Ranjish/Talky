@@ -1,4 +1,4 @@
-// src/types/User.types.ts
+// src/types/AdminUser.types.ts
 import type { AuditTrails } from "../common/AuditLog.types";
 
 export interface User {

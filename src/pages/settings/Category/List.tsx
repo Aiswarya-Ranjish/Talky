@@ -17,14 +17,17 @@ const formatValue = (value: any) => {
 };
 
 const CategoryList: React.FC = () => {
+  // ✅ Added reverseOrder parameter
   const fetchCategoryData = async ({
     pageNumber,
     pageSize,
-    searchTerm
+    searchTerm,
+    reverseOrder
   }: {
     pageNumber: number;
     pageSize: number;
     searchTerm: string;
+    reverseOrder?: boolean;
   }) => {
     try {
       // Fetch data - now returns CustomResponse<Category[]>
@@ -57,7 +60,7 @@ const CategoryList: React.FC = () => {
       }
 
       // Format rows
-      const formattedData = filtered.map((item) => ({
+      let formattedData = filtered.map((item) => ({
         ...item,
         categoryName: formatValue(item.categoryName),
         categoryDescription: formatValue(item.categoryDescription),
@@ -65,6 +68,11 @@ const CategoryList: React.FC = () => {
         categoryCode: formatValue(item.categoryCode),
         companyName: formatValue(item.companyName)
       }));
+
+      // ✅ Apply reverse order if requested (show latest categories first)
+      if (reverseOrder) {
+        formattedData = [...formattedData].reverse();
+      }
 
       const total = formattedData.length;
 
@@ -96,6 +104,7 @@ const CategoryList: React.FC = () => {
       showActions={true}
       showAddButton={true}
       showExport={true}
+      reverseOrder={true}  // ✅ Added this prop
     />
   );
 };

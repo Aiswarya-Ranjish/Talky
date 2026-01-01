@@ -23,14 +23,17 @@ const formatDate = (isoString: string) => {
 };
 
 const FinancialYearList: React.FC = () => {
+  // ✅ Added reverseOrder parameter
   const fetchFinancialYearData = async ({
     pageNumber,
     pageSize,
-    searchTerm
+    searchTerm,
+    reverseOrder
   }: {
     pageNumber: number;
     pageSize: number;
     searchTerm: string;
+    reverseOrder?: boolean;
   }) => {
     try {
       // Fetch data - now returns CustomResponse<FinancialYear[]>
@@ -60,11 +63,16 @@ const FinancialYearList: React.FC = () => {
       }
 
       // Format start & end dates
-      const formattedData = filtered.map((fy) => ({
+      let formattedData = filtered.map((fy) => ({
         ...fy,
         startDate: formatDate(fy.startDate ?? ""),
         endDate: formatDate(fy.endDate ?? "")
       }));
+
+      // ✅ Apply reverse order if requested (show latest financial years first)
+      if (reverseOrder) {
+        formattedData = [...formattedData].reverse();
+      }
 
       const total = formattedData.length;
 
@@ -96,6 +104,7 @@ const FinancialYearList: React.FC = () => {
       showActions={true}
       showAddButton={true}
       showExport={true}
+      reverseOrder={true}  // ✅ Added this prop
     />
   );
 };
