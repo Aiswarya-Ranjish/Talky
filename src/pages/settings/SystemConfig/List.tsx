@@ -1,231 +1,92 @@
-// src/pages/settings/systemConfig/SystemConfigView.tsx
-
-import React, { useState, useEffect } from "react";
-import { Card, Table, Button, Modal, Spinner } from "react-bootstrap";
-import { useNavigate, useParams } from "react-router-dom";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import toast, { Toaster } from "react-hot-toast";
-import SystemConfigService from "../../../services/settings/SystemConfig.services";
-import KiduLoader from "../../../components/KiduLoader";
-import KiduPrevious from "../../../components/KiduPrevious";
-import KiduAuditLogs from "../../../components/KiduAuditLogs";
+import React from "react";
 import type { systemconfig } from "../../../types/settings/SystemConfig";
+import systemconfigService from "../../../services/settings/SystemConfig.services";
+import KiduServerTable from "../../../components/Trip/KiduServerTable";
 
-const SystemConfigView: React.FC = () => {
-  const navigate = useNavigate();
-  const { appMasterSettingId } = useParams<{ appMasterSettingId: string }>();
+// Table Columns
+const columns = [
+  { key: "appMasterSettingId", label: "Setting ID" },
+  { key: "intCurrentFinancialYear", label: "Financial Year" },
+  { key: "isActive", label: "Active Status" },
+  { key: "staff_To_User_Rate_Per_Second", label: "Staff to User coins" },
+  { key: "one_paisa_to_coin_rate", label: "Coin Rate" },
+];
 
-  const [data, setData] = useState<systemconfig | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [loadingDelete, setLoadingDelete] = useState(false);
-
-  useEffect(() => {
-    const loadConfig = async () => {
-      try {
-        if (!appMasterSettingId) {
-          toast.error("No ID provided");
-          navigate("/dashboard/settings/systemconfig-list");
-          return;
-        }
-
-        const response = await SystemConfigService.getAppmasterSetting();
-        if (!response || !response.isSucess) {
-          throw new Error(response?.customMessage || "Failed to load system configuration");
-        }
-
-        const config = response.value.find(
-          (item: systemconfig) => String(item.appMasterSettingId) === appMasterSettingId
-        );
-        
-        if (!config) throw new Error("System configuration not found");
-
-        setData(config);
-      } catch (error: any) {
-        toast.error(`Error: ${error.message}`);
-        navigate("/dashboard/settings/systemconfig-list");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadConfig();
-  }, [appMasterSettingId, navigate]);
-
-  if (loading) return <KiduLoader type="system configuration details..." />;
-
-  if (!data) {
-    return (
-      <div className="text-center mt-5">
-        <h5>No system configuration details found.</h5>
-        <Button className="mt-3" onClick={() => navigate(-1)}>
-          Back
-        </Button>
-      </div>
-    );
-  }
-
-  // ✅ Added minimumWithdrawalCoins field
-  const fields = [
-    { key: "appMasterSettingId", label: "Setting ID", icon: "bi-hash" },
-    { key: "intCurrentFinancialYear", label: "Financial Year", icon: "bi-calendar" },
-    { key: "staff_To_User_Rate_Per_Second", label: "Staff to User coins / Second", icon: "bi-clock" },
-    { key: "one_paisa_to_coin_rate", label: "1 Paisa to Coin Rate", icon: "bi-currency-exchange" },
-    { key: "minimumWithdrawalCoins", label: "Minimum Withdrawal Coins", icon: "bi-coin" },
-    { key: "isActive", label: "Is Active", icon: "bi-check-circle", isBoolean: true },
-  ];
-
-  const handleEdit = () => 
-    navigate(`/dashboard/settings/edit-systemconfig/${data.appMasterSettingId}`);
-
-  const handleDelete = async () => {
-    setLoadingDelete(true);
+const SystemConfigList: React.FC = () => {
+  
+  // ✅ Added reverseOrder parameter
+  const fetchData = async (params: {
+    pageNumber: number;
+    pageSize: number;
+    searchTerm: string;
+    reverseOrder?: boolean;
+  }) => {
     try {
-      const response = await SystemConfigService.delete(String(data.appMasterSettingId));
+      const response = await systemconfigService.getAppmasterSetting();
+
       if (!response || !response.isSucess) {
-        throw new Error(response?.customMessage || "Failed to delete system configuration");
+        throw new Error(response?.customMessage || response?.error || "Failed to fetch system config data");
       }
-      toast.success("System configuration deleted successfully");
-      setTimeout(() => navigate("/dashboard/settings/systemconfig-list"), 600);
+
+      const allData = response.value || [];
+
+      if (allData.length === 0) {
+        return { data: [], total: 0 };
+      }
+
+      let filteredData = allData;
+
+      // Apply Search
+      if (params.searchTerm) {
+        const s = params.searchTerm.toLowerCase();
+        filteredData = allData.filter((item: systemconfig) =>
+          (item.currentCompanyId || "").toLowerCase().includes(s) ||
+          (item.intCurrentFinancialYear || "").toLowerCase().includes(s) ||
+          (item.appMasterSettingId?.toString() || "").includes(params.searchTerm) ||
+          (item.staff_To_User_Rate_Per_Second?.toString() || "").includes(params.searchTerm) ||
+          (item.one_paisa_to_coin_rate?.toString() || "").includes(params.searchTerm)
+        );
+      }
+
+      // ✅ Apply reverse order if requested (show latest configs first)
+      if (params.reverseOrder) {
+        filteredData = [...filteredData].reverse();
+      }
+
+      // Pagination
+      const start = (params.pageNumber - 1) * params.pageSize;
+      const end = start + params.pageSize;
+      const paginatedData = filteredData.slice(start, end);
+
+      return {
+        data: paginatedData,
+        total: filteredData.length,
+      };
     } catch (error: any) {
-      toast.error(`Error: ${error.message}`);
-    } finally {
-      setLoadingDelete(false);
-      setShowConfirm(false);
+      console.error("Error fetching system config:", error);
+      throw new Error(`Failed to fetch system configuration details: ${error.message}`);
     }
   };
 
   return (
-    <div 
-      className="container d-flex justify-content-center align-items-center mt-5" 
-      style={{ fontFamily: "Urbanist" }}
-    >
-      <Card 
-        className="shadow-lg p-4 w-100" 
-        style={{ maxWidth: "1300px", borderRadius: "15px", border: "none" }}
-      >
-        {/* Header */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div className="d-flex align-items-center">
-            <KiduPrevious />
-            <h5 className="fw-bold m-0 ms-2" style={{ color: "#882626ff" }}>
-              System Configuration Details
-            </h5>
-          </div>
-
-          <div className="d-flex">
-            <Button
-              className="d-flex align-items-center gap-2 me-2"
-              style={{ backgroundColor: "#882626ff", border: "none", fontWeight: 500 }}
-              onClick={handleEdit}
-            >
-              <FaEdit /> Edit
-            </Button>
-
-            <Button
-              variant="danger"
-              className="d-flex align-items-center gap-2"
-              style={{ fontWeight: 500 }}
-              onClick={() => setShowConfirm(true)}
-            >
-              <FaTrash size={12} /> Delete
-            </Button>
-          </div>
-        </div>
-
-        {/* Config Info */}
-        <div className="text-center mb-4">
-          <h5 className="fw-bold mb-1">Configuration ID: {data.appMasterSettingId}</h5>
-          <p className="text-muted small">Financial Year: {data.intCurrentFinancialYear}</p>
-        </div>
-
-        {/* Details Table */}
-        <div className="table-responsive">
-          <Table 
-            bordered 
-            hover 
-            responsive 
-            className="align-middle mb-0" 
-            style={{ fontFamily: "Urbanist", fontSize: "14px" }}
-          >
-            <tbody>
-              {fields.map(({ key, label, icon, isBoolean }, index) => {
-                let value: any = (data as any)[key];
-                
-                if (isBoolean) {
-                  value = value ? "Yes" : "No";
-                } else if (value === null || value === undefined || value === "") {
-                  value = "N/A";
-                }
-
-                return (
-                  <tr
-                    key={key}
-                    style={{ 
-                      backgroundColor: index % 2 === 1 ? "#fff5f5" : "white" 
-                    }}
-                  >
-                    <td 
-                      style={{ 
-                        width: "40%", 
-                        padding: "12px", 
-                        color: "#882626ff", 
-                        fontWeight: 600 
-                      }}
-                    >
-                      <i className={`bi ${icon} me-2`}></i>
-                      {label}
-                    </td>
-                    <td style={{ padding: "12px" }}>{value}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </Table>
-        </div>
-
-        {/* Audit Logs */}
-        {data.appMasterSettingId > 0 && (
-          <div className="mt-4">
-            <KiduAuditLogs 
-              tableName="AppMasterSetting" 
-              recordId={data.appMasterSettingId} 
-            />
-          </div>
-        )}
-      </Card>
-
-      {/* Delete Confirmation Modal */}
-      <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Delete</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to delete this system configuration?
-          <div className="mt-2 text-danger small">
-            This action cannot be undone.
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowConfirm(false)}>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={handleDelete} disabled={loadingDelete}>
-            {loadingDelete ? (
-              <>
-                <Spinner animation="border" size="sm" className="me-2" />
-                Deleting...
-              </>
-            ) : (
-              "Delete"
-            )}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      <Toaster position="top-right" />
-    </div>
+    <KiduServerTable
+      title="System Configuration"
+      subtitle="List of all Application Master Settings"
+      columns={columns}
+      idKey="appMasterSettingId"
+      addButtonLabel="Add System Config"
+      addRoute="/dashboard/settings/create-systemConfig"
+      editRoute="/dashboard/settings/edit-systemconfig"
+      viewRoute="/dashboard/settings/view-systemconfig"
+      fetchData={fetchData}
+      showSearch={true}
+      showActions={true}
+      showExport={true}
+      showAddButton={true}
+      rowsPerPage={10}
+      reverseOrder={true}  // ✅ Added this prop
+    />
   );
 };
 
-export default SystemConfigView;
+export default SystemConfigList;
