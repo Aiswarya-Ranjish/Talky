@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { User } from "../../../types/Users/User.types";
+import { User } from "../../../types/Users/StaffUser.types";
 import AppUserService from "../../../services/Users/AppUserServices";
 import KiduLoader from "../../../components/KiduLoader";
 import toast from "react-hot-toast";

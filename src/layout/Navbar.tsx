@@ -8,31 +8,55 @@ import Profile from "./Profile";
 import ActivityPanel from "./ActivityPanel";
 import KiduYearSelector from "../components/KiduYearSelector";
 import { useYear } from "../context/YearContext";
-import  profileImg from "../assets/Images/profile.jpeg"
+import profileImg from "../assets/Images/profile.jpeg";
+import { getFullImageUrl } from "../constants/API_ENDPOINTS";
 
 const NavbarComponent: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [username, setUsername] = useState<string>("Username");
-   const { selectedYear, setSelectedYear } = useYear();
+  const [profileImage, setProfileImage] = useState<string>(profileImg);
+  const { selectedYear, setSelectedYear } = useYear();
   const navigate = useNavigate();
-  // Fetch username from localStorage
-  useEffect(() => {
-  try {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
 
-      if (parsedUser?.userName) {
-        queueMicrotask(() => {
+  // Function to load profile image
+  const loadProfileImage = () => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+
+        if (parsedUser?.userName) {
           setUsername(parsedUser.userName);
-        });
+        }
+
+        // Load profile image if available
+        if (parsedUser?.profileImagePath) {
+          setProfileImage(getFullImageUrl(parsedUser.profileImagePath));
+        } else {
+          setProfileImage(profileImg);
+        }
       }
+    } catch (error) {
+      console.error("Error parsing user from localStorage:", error);
     }
-  } catch (error) {
-    console.error("Error parsing user from localStorage:", error);
-  }
-}, []);
+  };
+
+  // Fetch username and profile image from localStorage
+  useEffect(() => {
+    loadProfileImage();
+
+    // Listen for profile update events
+    const handleProfileUpdate = () => {
+      loadProfileImage();
+    };
+
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
+    };
+  }, []);
 
   const toggleSettings = () => setShowSettings((prev) => !prev);
   const handleClose = () => setShowNotifications(false);
@@ -86,7 +110,6 @@ const NavbarComponent: React.FC = () => {
 
           {/* Right Side */}
           <div className="d-flex align-items-center gap-1">
-
             {/* Year Dropdown */}
             <div className="me-3">
               <KiduYearSelector
@@ -109,7 +132,7 @@ const NavbarComponent: React.FC = () => {
               onClick={toggleSettings}
             >
               <Image
-                src={profileImg}
+                src={profileImage}
                 alt="profile"
                 className="rounded-circle me-2 border border-2"
                 style={{ width: "30px", height: "30px", objectFit: "cover" }}
@@ -130,13 +153,12 @@ const NavbarComponent: React.FC = () => {
                 fontSize: "12px",
                 fontWeight: 500,
                 borderRadius: "20px",
-                backgroundColor:"white",
-                border:"none",
-                color:"#808080ff"
+                backgroundColor: "white",
+                border: "none",
+                color: "#808080ff",
               }}
               onClick={handleLogout}
             >
-              {/* <BsBoxArrowRight size={14} className="me-1"/> */}
               Logout
             </Button>
           </div>
@@ -158,7 +180,7 @@ const NavbarComponent: React.FC = () => {
           </h5>
         </Offcanvas.Header>
         <Offcanvas.Body className="p-0">
-         < Profile />
+          <Profile />
         </Offcanvas.Body>
       </Offcanvas>
     </>

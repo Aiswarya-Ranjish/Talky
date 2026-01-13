@@ -14,7 +14,6 @@ const columns = [
     type: "image" as const  
   },
   { key: "userName", label: "User Name" },
-  { key: "companyName", label: "Company" },
   { key: "userEmail", label: "Email" },
   { key: "phoneNumber", label: "Phone" },
 ];
@@ -39,7 +38,7 @@ const AdminUserList: React.FC = () => {
         return { data: [], total: 0 };
       }
 
-      // Transform profile image paths to full URLs
+      // Transform data: create profilePic field with full URL
       const transformedData = allData.map((user: User) => ({
         ...user,
         profilePic: user.profileImagePath 

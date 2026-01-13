@@ -1,40 +1,102 @@
 import React, { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
-import { Card, Button, Form, Row, Col } from "react-bootstrap";
+import { Card, Button, Form, Row, Col, Spinner } from "react-bootstrap";
 import toast, { Toaster } from "react-hot-toast";
 import { BsUpload } from "react-icons/bs";
 import AdminUserService from "../services/settings/AdminUser.services";
-import  profileImg from "../assets/Images/profile.jpeg"
+import profileImg from "../assets/Images/profile.jpeg";
+import { getFullImageUrl } from "../constants/API_ENDPOINTS";
 
 const Profile: React.FC = () => {
+  const [userId, setUserId] = useState<number | null>(null);
   const [username, setUsername] = useState("User");
- // const [password] = useState("********"); // cannot be edited
+  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [preview, setPreview] = useState<string>(profileImg);
-    // NEW password fields
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
+  // Password fields
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  
+  // Loading states
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isLoadingPassword, setIsLoadingPassword] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // Load username from localStorage (same as Navbar)
+  // Load user data from localStorage and fetch from API
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-
-        if (parsedUser?.userName) {
-          setUsername(parsedUser.userName);
-        }
-      }
-    } catch (error) {
-      console.error("Error parsing user from localStorage:", error);
-    }
+    loadUserProfile();
   }, []);
 
-  // Handle new image selection
+  const loadUserProfile = async () => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) {
+        toast.error("User not found in session");
+        return;
+      }
+
+      const parsedUser = JSON.parse(storedUser);
+      const currentUserId = parsedUser.userId;
+
+      if (!currentUserId) {
+        toast.error("User ID not found");
+        return;
+      }
+
+      setUserId(currentUserId);
+      setUsername(parsedUser.userName || "");
+      setEmail(parsedUser.userEmail || "");
+
+      // Fetch fresh data from API
+      setIsLoadingProfile(true);
+      const response = await AdminUserService.getById(currentUserId);
+
+      if (response.isSucess && response.value) {
+        const userData = response.value;
+        setUsername(userData.userName || "");
+        setEmail(userData.userEmail || "");
+        setPhoneNumber(userData.phoneNumber || "");
+
+        // Set profile picture
+        if (userData.profileImagePath) {
+          setPreview(getFullImageUrl(userData.profileImagePath));
+        }
+
+        // Update localStorage with fresh data
+        localStorage.setItem("user", JSON.stringify(userData));
+      } else {
+        toast.error(response.error || "Failed to load profile");
+      }
+    } catch (error: any) {
+      console.error("Error loading profile:", error);
+      toast.error(error.message || "Failed to load profile");
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  // Handle image selection
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file");
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+
+      setSelectedFile(file);
+
+      // Show preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);
@@ -43,24 +105,70 @@ const Profile: React.FC = () => {
     }
   };
 
-  // Save handler now also calls Change Password API
-   const handleSave = async () => {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) return toast.error("User not found!");
+  // Upload profile picture
+  const handleUploadProfilePic = async () => {
+    if (!selectedFile) {
+      toast.error("Please select an image first");
+      return;
+    }
 
-    const { userId } = JSON.parse(storedUser);
+    if (!userId) {
+      toast.error("User ID not found");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const response = await AdminUserService.uploadProfilePic(userId, selectedFile);
+
+      if (response.isSucess) {
+        toast.success("Profile picture updated successfully!");
+        
+        // Reload profile to get updated image path
+        await loadUserProfile();
+        
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new CustomEvent("profileUpdated"));
+        
+        // Clear selected file
+        setSelectedFile(null);
+      } else {
+        toast.error(response.error || "Failed to upload profile picture");
+      }
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error(error.message || "Failed to upload image");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  // Handle password change
+  const handleChangePassword = async () => {
+    if (!userId) {
+      toast.error("User not found!");
+      return;
+    }
 
     if (!oldPassword || !newPassword || !confirmPassword) {
-      return toast.error("All password fields are required.");
+      toast.error("All password fields are required");
+      return;
     }
 
     if (newPassword !== confirmPassword) {
-      return toast.error("New password and confirm password do not match!");
+      toast.error("New password and confirm password do not match!");
+      return;
     }
 
+    if (newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters");
+      return;
+    }
+
+    setIsLoadingPassword(true);
     try {
       const payload = {
-        userId: Number(userId),
+        userId: userId,
         oldPassword,
         newPassword,
       };
@@ -75,16 +183,24 @@ const Profile: React.FC = () => {
       } else {
         toast.error(response.error || "Failed to change password");
       }
-    } catch (err: any) {
-      toast.error(`Error: ${err.message}`);
+    } catch (error: any) {
+      console.error("Password change error:", error);
+      toast.error(error.message || "Failed to change password");
+    } finally {
+      setIsLoadingPassword(false);
     }
   };
 
+  if (isLoadingProfile) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "100vh" }}>
+        <Spinner animation="border" style={{ color: "#882626ff" }} />
+      </div>
+    );
+  }
+
   return (
-    <div
-      className="d-flex p-3 px-md-4 head-font"
-      style={{ minHeight: "100vh" }}
-    >
+    <div className="d-flex p-3 px-md-4 head-font" style={{ minHeight: "100vh" }}>
       <Card
         className="shadow-sm border-0 w-100"
         style={{
@@ -94,12 +210,9 @@ const Profile: React.FC = () => {
         }}
       >
         <Card.Body>
-          {/* Profile Picture */}
-          <div className="d-flex flex-column align-items-center mb-1">
-            <div
-              className="position-relative"
-              style={{ width: "80px", height: "80px" }}
-            >
+          {/* Profile Picture Section */}
+          <div className="d-flex flex-column align-items-center mb-3">
+            <div className="position-relative" style={{ width: "80px", height: "80px" }}>
               <img
                 src={preview}
                 alt="Profile"
@@ -114,7 +227,7 @@ const Profile: React.FC = () => {
               <label
                 htmlFor="profileUpload"
                 className="position-absolute bottom-0 end-0 bg-white rounded-circle px-2 py-1 shadow"
-                style={{ cursor: "pointer" }}
+                style={{ cursor: isUploadingImage ? "not-allowed" : "pointer" }}
               >
                 <BsUpload color="#882626ff" />
               </label>
@@ -124,102 +237,146 @@ const Profile: React.FC = () => {
                 accept="image/*"
                 style={{ display: "none" }}
                 onChange={handleImageChange}
+                disabled={isUploadingImage}
               />
             </div>
-            <p className="mt-2 mb-0 fw-medium" style={{fontSize:"15px"}}>{username}</p>
-            <small className="text-muted">User</small>
+            <p className="mt-2 mb-0 fw-medium" style={{ fontSize: "15px" }}>
+              {username}
+            </p>
+            <small className="text-muted">{email}</small>
+
+            {/* Upload button appears only when image is selected */}
+            {selectedFile && (
+              <Button
+                size="sm"
+                onClick={handleUploadProfilePic}
+                disabled={isUploadingImage}
+                className="mt-2"
+                style={{
+                  backgroundColor: "#882626ff",
+                  border: "none",
+                  fontSize: "12px",
+                }}
+              >
+                {isUploadingImage ? (
+                  <>
+                    <Spinner
+                      as="span"
+                      animation="border"
+                      size="sm"
+                      role="status"
+                      className="me-1"
+                    />
+                    Uploading...
+                  </>
+                ) : (
+                  "Upload Picture"
+                )}
+              </Button>
+            )}
           </div>
 
-          {/* Form Fields */}
+          {/* Profile Information */}
           <Form>
-            <Row className="mb-1">
+            <Row className="mb-2">
               <Form.Group as={Col} md={12} controlId="username">
-                <Form.Label className="fw-semibold" style={{fontSize:"15px"}}>Username</Form.Label>
+                <Form.Label className="fw-semibold" style={{ fontSize: "15px" }}>
+                  Username
+                </Form.Label>
                 <Form.Control
                   type="text"
                   value={username}
-                  placeholder="Enter username"
                   disabled
-                  style={{ borderRadius: "6px" ,height:"28px"}}
+                  style={{ borderRadius: "6px", height: "32px", backgroundColor: "#e9ecef" }}
                 />
-                <Form.Text className="text-muted" style={{fontSize:"11px"}}>
-                  User Name cannot be changed here.
+                <Form.Text className="text-muted" style={{ fontSize: "11px" }}>
+                  Username cannot be changed
                 </Form.Text>
               </Form.Group>
             </Row>
-
-            <Row className="mb-1">
-              <Form.Group as={Col} md={12} controlId="oldpassword">
-                <Form.Label className="fw-semibold" style={{fontSize:"15px"}}>Old Password</Form.Label>
+            {/* Password Change Section */}
+            <hr />
+            <Row className="mb-2">
+              <Form.Group as={Col} md={12} controlId="oldPassword">
+                <Form.Label className="fw-semibold" style={{ fontSize: "15px" }}>
+                  Old Password
+                </Form.Label>
                 <Form.Control
                   type="password"
-                   value={oldPassword}
+                  value={oldPassword}
                   onChange={(e) => setOldPassword(e.target.value)}
-                  style={{
-                    borderRadius: "6px",
-                    backgroundColor: "#ffffff",
-                    height:"28px"
-                  }}
+                  disabled={isLoadingPassword}
+                  placeholder="Enter old password"
+                  style={{ borderRadius: "6px", height: "32px" }}
                 />
-
               </Form.Group>
             </Row>
 
-            <Row className="mb-1">
-              <Form.Group as={Col} md={12} controlId="newpassword">
-                <Form.Label className="fw-semibold" style={{fontSize:"15px"}}>New Password</Form.Label>
+            <Row className="mb-2">
+              <Form.Group as={Col} md={12} controlId="newPassword">
+                <Form.Label className="fw-semibold" style={{ fontSize: "15px" }}>
+                  New Password
+                </Form.Label>
                 <Form.Control
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-
-                  style={{
-                    borderRadius: "6px",
-                    backgroundColor: "#ffffff",
-                    height:"28px"
-                  }}
+                  disabled={isLoadingPassword}
+                  placeholder="Enter new password"
+                  style={{ borderRadius: "6px", height: "32px" }}
                 />
-
               </Form.Group>
             </Row>
 
-            <Row className="mb-1">
+            <Row className="mb-3">
               <Form.Group as={Col} md={12} controlId="confirmPassword">
-                <Form.Label className="fw-semibold" style={{fontSize:"15px"}}>Confirm Password</Form.Label>
+                <Form.Label className="fw-semibold" style={{ fontSize: "15px" }}>
+                  Confirm Password
+                </Form.Label>
                 <Form.Control
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  style={{
-                    borderRadius: "6px",
-                    backgroundColor: "white",
-                    height:"28px"
-                  }}
+                  disabled={isLoadingPassword}
+                  placeholder="Confirm new password"
+                  style={{ borderRadius: "6px", height: "32px" }}
                 />
-
               </Form.Group>
             </Row>
 
-            {/* Save Button */}
-            <div className="text-center mt-3">
+            {/* Change Password Button */}
+            <div className="text-center">
               <Button
-                onClick={handleSave}
+                onClick={handleChangePassword}
+                disabled={isLoadingPassword}
                 className="fw-semibold px-4"
                 style={{
                   backgroundColor: "#882626ff",
-                   color: "white",
+                  color: "white",
                   border: "none",
                   borderRadius: "6px",
                 }}
               >
-                Save Changes
+                {isLoadingPassword ? (
+                  <>
+                    <Spinner
+                      as="span"
+                      animation="border"
+                      size="sm"
+                      role="status"
+                      className="me-2"
+                    />
+                    Changing Password...
+                  </>
+                ) : (
+                  "Change Password"
+                )}
               </Button>
             </div>
           </Form>
         </Card.Body>
       </Card>
       <Toaster position="top-right" />
-
     </div>
   );
 };
