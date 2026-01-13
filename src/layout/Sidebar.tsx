@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Nav, Navbar, Container, Collapse } from "react-bootstrap";
 import { NavLink, useNavigate } from "react-router-dom";
 import { BiCategory } from "react-icons/bi";
@@ -30,10 +30,47 @@ import {
 import { BiLogOut } from "react-icons/bi";
 import AuthService from "../services/common/Authservices";
 import profileImage from "../assets/Images/profile.jpeg";
+import { getFullImageUrl } from "../constants/API_ENDPOINTS";
 
 const Sidebar: React.FC = () => {
     const [hovered, setHovered] = useState(false);
     const [openMenu, setOpenMenu] = useState<string | null>(null);
+    const [userProfileImage, setUserProfileImage] = useState<string>(profileImage);
+
+    // Load profile image on mount
+    useEffect(() => {
+        loadProfileImage();
+
+        // Listen for profile updates
+        const handleProfileUpdate = () => {
+            loadProfileImage();
+        };
+
+        window.addEventListener("profileUpdated", handleProfileUpdate);
+
+        return () => {
+            window.removeEventListener("profileUpdated", handleProfileUpdate);
+        };
+    }, []);
+
+    const loadProfileImage = () => {
+        try {
+            const storedUser = localStorage.getItem("user");
+            if (storedUser) {
+                const parsedUser = JSON.parse(storedUser);
+
+                // Load profile image if available
+                if (parsedUser?.profileImagePath) {
+                    setUserProfileImage(getFullImageUrl(parsedUser.profileImagePath));
+                } else {
+                    setUserProfileImage(profileImage);
+                }
+            }
+        } catch (error) {
+            console.error("Error loading profile image:", error);
+            setUserProfileImage(profileImage);
+        }
+    };
 
     const handleMenuToggle = (menuName: string) => {
         setOpenMenu(openMenu === menuName ? null : menuName);
@@ -66,11 +103,11 @@ const Sidebar: React.FC = () => {
     ];
 
     const navigate = useNavigate();
-   // In Sidebar.tsx, update the handleLogout function:
-const handleLogout = async () => {
-    await AuthService.logout();
-    window.location.href = "/login"; // Force full page navigation
-};
+    
+    const handleLogout = async () => {
+        await AuthService.logout();
+        window.location.href = "/login";
+    };
 
     return (
         <>
@@ -99,7 +136,7 @@ const handleLogout = async () => {
                         </p>
                     )}
                     <img
-                        src={profileImage}
+                        src={userProfileImage}
                         alt="profile"
                         className="rounded-circle mb-2"
                         style={{
