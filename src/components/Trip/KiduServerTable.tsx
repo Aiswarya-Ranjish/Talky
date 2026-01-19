@@ -171,6 +171,28 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
     );
   };
 
+  // Helper function to format date to DD-MONTH-YYYY format
+  const formatDate = (dateValue: any): string => {
+    if (!dateValue) return '-';
+    
+    try {
+      const valueStr = String(dateValue);
+      const date = new Date(valueStr);
+      
+      if (!isNaN(date.getTime())) {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = date.toLocaleString('en-US', { month: 'long' }).toUpperCase();
+        const year = date.getFullYear();
+        
+        return `${day}-${month}-${year}`;
+      }
+    } catch (e) {
+      console.error("Error formatting date:", e);
+    }
+    
+    return String(dateValue);
+  };
+
   // Define columns for React Table
   const tableColumns = useMemo<ColumnDef<any>[]>(() => {
     const cols: ColumnDef<any>[] = columns.map((col) => ({
@@ -273,21 +295,7 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
             );
 
           case 'date':
-            try {
-              const valueStr = String(rawValue);
-              const date = new Date(valueStr);
-              
-              if (!isNaN(date.getTime())) {
-                return date.toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric'
-                });
-              }
-            } catch (e) {
-              // If date parsing fails, return original value
-            }
-            break;
+            return formatDate(rawValue);
 
           case 'text':
           default:

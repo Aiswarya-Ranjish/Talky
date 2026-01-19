@@ -73,10 +73,8 @@ const Login: React.FC = () => {
                     setPassword("");
                     setSubmitted(false);
                     
-                    // Navigate to dashboard after a short delay
-                    setTimeout(() => {
-                        navigate("/dashboard");
-                    }, 1000);
+                    // Navigate to dashboard (Dashboard component will handle user data refresh)
+                    navigate("/dashboard");
                 } else {
                     // Handle unsuccessful login
                     const errorMessage = response.customMessage || response.error || "Invalid email or password";

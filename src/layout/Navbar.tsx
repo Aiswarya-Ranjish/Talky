@@ -23,38 +23,67 @@ const NavbarComponent: React.FC = () => {
   const loadProfileImage = () => {
     try {
       const storedUser = localStorage.getItem("user");
+      console.log('Navbar - Loading profile, storedUser exists:', !!storedUser);
+      
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
+        console.log('Navbar - Parsed user:', parsedUser);
 
         if (parsedUser?.userName) {
           setUsername(parsedUser.userName);
         }
 
+        // Try multiple possible field names (profileImagePath, ProfileImagePath, profilePic)
+        const imagePath = parsedUser?.profileImagePath 
+            || parsedUser?.ProfileImagePath 
+            || parsedUser?.profilePic;
+        
+        console.log('Navbar - Image path found:', imagePath);
+
         // Load profile image if available
-        if (parsedUser?.profileImagePath) {
-          setProfileImage(getFullImageUrl(parsedUser.profileImagePath));
+        if (imagePath && imagePath.trim() !== '') {
+          const imageUrl = getFullImageUrl(imagePath);
+          console.log('Navbar - Setting profile image:', imageUrl);
+          setProfileImage(imageUrl);
         } else {
+          console.log('Navbar - No profileImagePath, using default');
           setProfileImage(profileImg);
         }
+      } else {
+        console.log('Navbar - No user in localStorage');
       }
     } catch (error) {
-      console.error("Error parsing user from localStorage:", error);
+      console.error("Navbar - Error parsing user from localStorage:", error);
+      setProfileImage(profileImg);
     }
   };
 
   // Fetch username and profile image from localStorage
   useEffect(() => {
+    console.log('Navbar - Component mounted, loading profile');
     loadProfileImage();
 
     // Listen for profile update events
     const handleProfileUpdate = () => {
+      console.log('Navbar - Profile update event received');
       loadProfileImage();
     };
 
     window.addEventListener("profileUpdated", handleProfileUpdate);
 
+    // Also listen for storage events (in case of updates from other tabs)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'user' && e.newValue) {
+        console.log('Navbar - Storage change detected');
+        loadProfileImage();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
     return () => {
       window.removeEventListener("profileUpdated", handleProfileUpdate);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 
@@ -135,7 +164,16 @@ const NavbarComponent: React.FC = () => {
                 src={profileImage}
                 alt="profile"
                 className="rounded-circle me-2 border border-2"
-                style={{ width: "30px", height: "30px", objectFit: "cover" }}
+                style={{ 
+                  width: "30px", 
+                  height: "30px", 
+                  objectFit: "cover",
+                  borderColor: "#882626ff"
+                }}
+                onError={(e) => {
+                  console.error('Navbar - Image failed to load:', profileImage);
+                  (e.target as HTMLImageElement).src = profileImg;
+                }}
               />
               <div className="text-end">
                 <p className="mb-0" style={{ color: "#787486", fontSize: "12px" }}>

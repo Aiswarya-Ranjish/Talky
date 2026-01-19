@@ -37,37 +37,70 @@ const Sidebar: React.FC = () => {
     const [openMenu, setOpenMenu] = useState<string | null>(null);
     const [userProfileImage, setUserProfileImage] = useState<string>(profileImage);
 
-    // Load profile image on mount
+    // Load profile image on mount and when profile updates
     useEffect(() => {
+        console.log('Sidebar - Component mounted/updated');
         loadProfileImage();
 
         // Listen for profile updates
         const handleProfileUpdate = () => {
-            loadProfileImage();
+            console.log('Sidebar - Profile update event received');
+            // Add a small delay to ensure localStorage is updated
+            setTimeout(() => {
+                loadProfileImage();
+            }, 50);
         };
 
         window.addEventListener("profileUpdated", handleProfileUpdate);
 
+        // Also listen for storage events
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'user') {
+                console.log('Sidebar - Storage change detected for user key');
+                loadProfileImage();
+            }
+        };
+
+        window.addEventListener("storage", handleStorageChange);
+
         return () => {
             window.removeEventListener("profileUpdated", handleProfileUpdate);
+            window.removeEventListener("storage", handleStorageChange);
         };
     }, []);
 
     const loadProfileImage = () => {
         try {
             const storedUser = localStorage.getItem("user");
+            console.log('Sidebar - Loading profile image');
+            console.log('Sidebar - storedUser exists:', !!storedUser);
+            
             if (storedUser) {
                 const parsedUser = JSON.parse(storedUser);
+                console.log('Sidebar - Parsed user:', parsedUser);
+                
+                // Try multiple possible field names (profileImagePath, ProfileImagePath, profilePic)
+                const imagePath = parsedUser?.profileImagePath 
+                    || parsedUser?.ProfileImagePath 
+                    || parsedUser?.profilePic;
+                
+                console.log('Sidebar - profileImagePath:', imagePath);
 
                 // Load profile image if available
-                if (parsedUser?.profileImagePath) {
-                    setUserProfileImage(getFullImageUrl(parsedUser.profileImagePath));
+                if (imagePath && imagePath.trim() !== '') {
+                    const imageUrl = getFullImageUrl(imagePath);
+                    console.log('Sidebar - Setting profile image URL:', imageUrl);
+                    setUserProfileImage(imageUrl);
                 } else {
+                    console.log('Sidebar - No profileImagePath found, using default image');
                     setUserProfileImage(profileImage);
                 }
+            } else {
+                console.log('Sidebar - No user data in localStorage, using default image');
+                setUserProfileImage(profileImage);
             }
         } catch (error) {
-            console.error("Error loading profile image:", error);
+            console.error("Sidebar - Error loading profile image:", error);
             setUserProfileImage(profileImage);
         }
     };
@@ -145,6 +178,10 @@ const Sidebar: React.FC = () => {
                             border: "2px solid white",
                             transition: "all 0.3s",
                             objectFit: "cover",
+                        }}
+                        onError={(e) => {
+                            console.error('Sidebar - Image failed to load:', userProfileImage);
+                            (e.target as HTMLImageElement).src = profileImage;
                         }}
                     />
                 </div>

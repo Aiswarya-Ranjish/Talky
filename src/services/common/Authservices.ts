@@ -1,4 +1,4 @@
-// src/services/AuthService.ts
+// src/services/common/Authservices.ts
 import HttpService from "./HttpService";
 import type { CustomResponse } from "../../types/common/ApiTypes";
 import { API_ENDPOINTS } from "../../constants/API_ENDPOINTS";
@@ -29,24 +29,24 @@ class AuthService {
       if (response.isSucess && response.value) {
         console.log('Login successful, storing data...');
 
-        // Store token
+        // Store token FIRST
         if (response.value.token) {
           localStorage.setItem('jwt_token', response.value.token);
           console.log('Token stored:', localStorage.getItem('jwt_token') !== null);
-        }
-
-        // Store user data
-        if (response.value.user) {
-          const userString = JSON.stringify(response.value.user);
-          localStorage.setItem('user', userString);
-          console.log('User stored:', localStorage.getItem('user') !== null);
-          console.log('Stored user data:', localStorage.getItem('user'));
         }
 
         // Store token expiry
         if (response.value.expiresAt) {
           localStorage.setItem('token_expires_at', response.value.expiresAt);
           console.log('Expiry stored:', localStorage.getItem('token_expires_at') !== null);
+        }
+
+        // Store initial user data
+        if (response.value.user) {
+          const userString = JSON.stringify(response.value.user);
+          localStorage.setItem('user', userString);
+          console.log('User stored:', localStorage.getItem('user') !== null);
+          console.log('Stored user data:', localStorage.getItem('user'));
         }
 
         // Verify storage
@@ -62,6 +62,30 @@ class AuthService {
     } catch (error) {
       console.error('Login error in AuthService:', error);
       throw error;
+    }
+  }
+
+  // ✅ Refresh User Data After Login (call this after navigation)
+  static async refreshUserDataAfterLogin(): Promise<void> {
+    try {
+      console.log('Refreshing user data after login...');
+      const freshUserResponse = await this.getCurrentUserFromAPI();
+      if (freshUserResponse.isSucess && freshUserResponse.value) {
+        console.log('Fresh user data fetched:', freshUserResponse.value);
+        localStorage.setItem('user', JSON.stringify(freshUserResponse.value));
+        
+        // Dispatch event to notify all components
+        console.log('Dispatching profileUpdated event');
+        window.dispatchEvent(new CustomEvent("profileUpdated"));
+        
+        // Also dispatch with a small delay to ensure all components are mounted
+        setTimeout(() => {
+          console.log('Dispatching delayed profileUpdated event');
+          window.dispatchEvent(new CustomEvent("profileUpdated"));
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
     }
   }
 
@@ -170,6 +194,7 @@ class AuthService {
       // Update local storage with fresh user data
       if (response.isSucess && response.value) {
         localStorage.setItem('user', JSON.stringify(response.value));
+        console.log('User data updated in localStorage from API');
       }
       
       return response;
