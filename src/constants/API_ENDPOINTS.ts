@@ -1,6 +1,6 @@
 // src/constants/apiEndpoints.ts
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://sreenathganga-001-site12.jtempurl.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://talkyapi.hestiatechnology.com/api';
 
 export const API_ENDPOINTS = {
   STAFF: {
