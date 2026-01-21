@@ -75,14 +75,14 @@ const StaffEdit: React.FC = () => {
     const fetchStaff = async () => {
       try {
         setLoading(true);
-        if (!staffUserId) { 
-          toast.error("No staff ID provided"); 
-          navigate("/dashboard/staff/staff-list"); 
-          return; 
+        if (!staffUserId) {
+          toast.error("No staff ID provided");
+          navigate("/dashboard/staff/staff-list");
+          return;
         }
-        
+
         const response = await StaffService.getStaffById(staffUserId);
-        
+
         if (!response || !response.isSucess) {
           throw new Error(response?.customMessage || response?.error || "Failed to load staff");
         }
@@ -93,6 +93,12 @@ const StaffEdit: React.FC = () => {
           kycCompletedDate: data.kycCompletedDate ? new Date(data.kycCompletedDate).toISOString().split('T')[0] : "",
           kycDocumentNumber: String(data.kycDocumentNumber || ""),
           starRating: data.starRating || 0,
+          walletBalance: data.walletBalance ?? 0,
+          priority: data.priority ?? 0,
+          customerCoinsPerSecondVideo: data.customerCoinsPerSecondVideo ?? 0,
+          customerCoinsPerSecondAudio: data.customerCoinsPerSecondAudio ?? 0,
+          companyCoinsPerSecondVideo: data.companyCoinsPerSecondVideo ?? 0,
+          companyCoinsPerSecondAudio: data.companyCoinsPerSecondAudio ?? 0,
           auditLogs: data.auditLogs
         };
 
@@ -104,17 +110,17 @@ const StaffEdit: React.FC = () => {
         console.error("Failed to load staff:", error);
         toast.error(`Error loading staff: ${error.message}`);
         navigate("/dashboard/staff/staff-list");
-      } finally { 
-        setLoading(false); 
+      } finally {
+        setLoading(false);
       }
     };
     fetchStaff();
   }, [staffUserId, navigate]);
 
-  useEffect(() => { 
-    return () => { 
-      if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl); 
-    }; 
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
+    };
   }, [previewUrl]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,14 +137,14 @@ const StaffEdit: React.FC = () => {
     const { name, value, type } = e.target;
     const target = e.target as HTMLInputElement;
     let updatedValue: any = value;
-    
+
     if (type === "checkbox") {
       updatedValue = target.checked;
-      
+
       // If KYC Completed is toggled ON and there's no completion date, set current date
       if (name === "isKYCCompleted" && updatedValue === true && !formData.kycCompletedDate) {
-        setFormData((prev: any) => ({ 
-          ...prev, 
+        setFormData((prev: any) => ({
+          ...prev,
           [name]: updatedValue,
           kycCompletedDate: new Date().toISOString().split('T')[0]
         }));
@@ -147,8 +153,8 @@ const StaffEdit: React.FC = () => {
       }
       // If KYC Completed is toggled OFF, clear the completion date
       if (name === "isKYCCompleted" && updatedValue === false) {
-        setFormData((prev: any) => ({ 
-          ...prev, 
+        setFormData((prev: any) => ({
+          ...prev,
           [name]: updatedValue,
           kycCompletedDate: ""
         }));
@@ -156,9 +162,10 @@ const StaffEdit: React.FC = () => {
         return;
       }
     } else if (type === "number") {
-      updatedValue = value === "" ? "" : Number(value);
+      // Handle number fields properly - allow empty string or convert to number
+      updatedValue = value === "" ? 0 : Number(value);
     }
-    
+
     setFormData((prev: any) => ({ ...prev, [name]: updatedValue }));
     if (errors[name]) setErrors((prev: any) => ({ ...prev, [name]: "" }));
   };
@@ -197,7 +204,7 @@ const StaffEdit: React.FC = () => {
 
     try {
       if (!staffUserId) throw new Error("No staff ID available");
-      
+
       const dataToUpdate = {
         staffUserId: Number(formData.staffUserId),
         appUserId: formData.appUserId,
@@ -214,17 +221,17 @@ const StaffEdit: React.FC = () => {
         kycDocument: formData.kycDocument || "",
         kycDocumentNumber: formData.kycDocumentNumber || "",
         isKYCCompleted: Boolean(formData.isKYCCompleted),
-        kycCompletedDate: formData.kycCompletedDate && formData.kycCompletedDate !== "" 
-          ? new Date(formData.kycCompletedDate).toISOString() 
+        kycCompletedDate: formData.kycCompletedDate && formData.kycCompletedDate !== ""
+          ? new Date(formData.kycCompletedDate).toISOString()
           : null,
-        customerCoinsPerSecondVideo: Number(formData.customerCoinsPerSecondVideo) || 0,
-        customerCoinsPerSecondAudio: Number(formData.customerCoinsPerSecondAudio) || 0,
-        companyCoinsPerSecondVideo: Number(formData.companyCoinsPerSecondVideo) || 0,
-        companyCoinsPerSecondAudio: Number(formData.companyCoinsPerSecondAudio) || 0,
+        customerCoinsPerSecondVideo: Number(formData.customerCoinsPerSecondVideo ?? 0),
+        customerCoinsPerSecondAudio: Number(formData.customerCoinsPerSecondAudio ?? 0),
+        companyCoinsPerSecondVideo: Number(formData.companyCoinsPerSecondVideo ?? 0),
+        companyCoinsPerSecondAudio: Number(formData.companyCoinsPerSecondAudio ?? 0),
         profileImagePath: formData.profileImagePath || "",
-        walletBalance: Number(formData.walletBalance) || 0,
+        walletBalance: Number(formData.walletBalance ?? 0),
         isOnline: Boolean(formData.isOnline),
-        priority: Number(formData.priority) || 0,
+        priority: Number(formData.priority ?? 0),
         registeredDate: formData.registeredDate,
         lastLogin: formData.lastLogin,
         referredBy: formData.referredBy || "",
@@ -232,8 +239,10 @@ const StaffEdit: React.FC = () => {
         starRating: formData.starRating || 0
       };
 
+      console.log("Submitting data:", dataToUpdate); // Debug log
+
       const updateResponse = await StaffService.editStaffById(staffUserId, dataToUpdate as any);
-      
+
       if (!updateResponse || !updateResponse.isSucess) {
         throw new Error(updateResponse?.customMessage || updateResponse?.error || "Failed to update staff");
       }
@@ -271,16 +280,16 @@ const StaffEdit: React.FC = () => {
       } else {
         date = new Date(isoString);
       }
-      
+
       if (isNaN(date.getTime())) return 'Invalid Date';
       const day = String(date.getDate()).padStart(2, '0');
       const month = date.toLocaleString("en-US", { month: "long" });
       const year = date.getFullYear();
-      
+
       if (dateOnly) {
         return `${day}-${month}-${year}`;
       }
-      
+
       const time = date.toLocaleString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
       return `${day}-${month}-${year}  ${time}`;
     } catch (error) {
@@ -352,10 +361,17 @@ const StaffEdit: React.FC = () => {
 
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("mobileNumber")}</Form.Label>
-                      <Form.Control size="sm" type="text" name="mobileNumber" value={formData.mobileNumber}
-                        onChange={handleChange} onBlur={() => validateField("mobileNumber", formData.mobileNumber)} />
-                      {errors.mobileNumber && <div className="text-danger small">{errors.mobileNumber}</div>}
+                      <Form.Control
+                        size="sm"
+                        type="text"
+                        name="mobileNumber"
+                        value={formData.mobileNumber}
+                        disabled
+                        readOnly
+                        style={{ backgroundColor: "#f8f9fa", cursor: "not-allowed" }}
+                      />
                     </Col>
+
 
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("address")}</Form.Label>
@@ -371,44 +387,44 @@ const StaffEdit: React.FC = () => {
 
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("walletBalance")}</Form.Label>
-                      <Form.Control size="sm" type="number" name="walletBalance" 
-                        value={formData.walletBalance === "" ? "" : formData.walletBalance || ""}
-                        onChange={handleChange} onBlur={() => validateField("walletBalance", formData.walletBalance)} 
+                      <Form.Control size="sm" type="number" name="walletBalance"
+                        value={formData.walletBalance}
+                        onChange={handleChange} onBlur={() => validateField("walletBalance", formData.walletBalance)}
                         placeholder="0" />
                     </Col>
 
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("customerCoinsPerSecondVideo")}</Form.Label>
-                      <Form.Control size="sm" type="number" name="customerCoinsPerSecondVideo" 
-                        value={formData.customerCoinsPerSecondVideo === "" ? "" : formData.customerCoinsPerSecondVideo || ""}
+                      <Form.Control size="sm" type="number" name="customerCoinsPerSecondVideo"
+                        value={formData.customerCoinsPerSecondVideo}
                         onChange={handleChange} placeholder="0" />
                     </Col>
 
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("customerCoinsPerSecondAudio")}</Form.Label>
-                      <Form.Control size="sm" type="number" name="customerCoinsPerSecondAudio" 
-                        value={formData.customerCoinsPerSecondAudio === "" ? "" : formData.customerCoinsPerSecondAudio || ""}
+                      <Form.Control size="sm" type="number" name="customerCoinsPerSecondAudio"
+                        value={formData.customerCoinsPerSecondAudio}
                         onChange={handleChange} placeholder="0" />
                     </Col>
 
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("companyCoinsPerSecondVideo")}</Form.Label>
-                      <Form.Control size="sm" type="number" name="companyCoinsPerSecondVideo" 
-                        value={formData.companyCoinsPerSecondVideo === "" ? "" : formData.companyCoinsPerSecondVideo || ""}
+                      <Form.Control size="sm" type="number" name="companyCoinsPerSecondVideo"
+                        value={formData.companyCoinsPerSecondVideo}
                         onChange={handleChange} placeholder="0" />
                     </Col>
 
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("companyCoinsPerSecondAudio")}</Form.Label>
-                      <Form.Control size="sm" type="number" name="companyCoinsPerSecondAudio" 
-                        value={formData.companyCoinsPerSecondAudio === "" ? "" : formData.companyCoinsPerSecondAudio || ""}
+                      <Form.Control size="sm" type="number" name="companyCoinsPerSecondAudio"
+                        value={formData.companyCoinsPerSecondAudio}
                         onChange={handleChange} placeholder="0" />
                     </Col>
 
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("priority")}</Form.Label>
-                      <Form.Control size="sm" type="number" name="priority" 
-                        value={formData.priority === "" ? "" : formData.priority || ""}
+                      <Form.Control size="sm" type="number" name="priority"
+                        value={formData.priority}
                         onChange={handleChange} placeholder="0" />
                     </Col>
 
@@ -430,18 +446,18 @@ const StaffEdit: React.FC = () => {
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("kycCompletedDate")}</Form.Label>
                       {formData.isKYCCompleted ? (
-                        <Form.Control 
-                          size="sm" 
-                          type="text" 
+                        <Form.Control
+                          size="sm"
+                          type="text"
                           value={formData.kycCompletedDate ? formatDate(formData.kycCompletedDate, true) : "Not Available"}
                           readOnly
                           disabled
                           style={{ backgroundColor: "#f8f9fa", cursor: "not-allowed" }}
                         />
                       ) : (
-                        <Form.Control 
-                          size="sm" 
-                          type="text" 
+                        <Form.Control
+                          size="sm"
+                          type="text"
                           value="KYC Not Completed"
                           readOnly
                           disabled

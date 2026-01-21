@@ -1,6 +1,6 @@
 // src/services/UserService.ts
 import HttpService from '../../services/common/HttpService';
-import { User } from '../../types/Users/StaffUser.types';
+import { User } from '../../types/Users/AppUser.types';
 import { API_ENDPOINTS } from '../../constants/API_ENDPOINTS';
 import { CustomResponse } from '../../types/common/ApiTypes';
 
