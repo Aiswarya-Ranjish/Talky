@@ -71,11 +71,26 @@ const WalletWithdrawalView: React.FC = () => {
   };
 
   const formatDate = (value: string | Date) => {
-    if (!value) return "N/A";
-    const d = new Date(value);
-    if (isNaN(d.getTime())) return "Invalid Date";
-    return `${d.getDate().toString().padStart(2, "0")}-${d.toLocaleString("en-US", { month: "long" })}-${d.getFullYear()} ${d.toLocaleString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}`;
-  };
+  if (!value) return "N/A";
+
+  const utcDate = new Date(value);
+  if (isNaN(utcDate.getTime())) return "Invalid Date";
+
+  const istOffsetMs = 5.5 * 60 * 60 * 1000;
+  const istDate = new Date(utcDate.getTime() + istOffsetMs);
+
+  const day = String(istDate.getDate()).padStart(2, "0");
+  const month = istDate.toLocaleString("en-IN", { month: "long" });
+  const year = istDate.getFullYear();
+  const time = istDate.toLocaleString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+
+  return `${day}-${month}-${year} ${time}`;
+};
+
 
   const handleStatusUpdate = async (newStatus: number) => {
     const actionMap: any = { 1: "approve", 2: "reject", 3: "complete" };
@@ -219,10 +234,7 @@ const WalletWithdrawalView: React.FC = () => {
                       <td className="text-muted">Created At:</td>
                       <td>{formatDate(data.createdAt)}</td>
                     </tr>
-                    <tr>
-                      <td className="text-muted">Company ID:</td>
-                      <td>{data.companyId}</td>
-                    </tr>
+                   
                   </tbody>
                 </Table>
               </Card.Body>
