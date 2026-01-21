@@ -35,15 +35,36 @@ const UserEdit: React.FC = () => {
   const interestOptions = [{ value: "reading", label: "Reading" }, { value: "travel", label: "Travel" }, { value: "music", label: "Music" }, { value: "sports", label: "Sports" }, { value: "dance", label: "Dance" }];
   const languageOptions = [{ value: "hindi", label: "Hindi" }, { value: "malayalam", label: "Malayalam" }, { value: "english", label: "English" }];
 
-  const formatDate = (isoString: string | null) => {
-    if (!isoString) return "N/A";
-    const date = new Date(isoString);
-    const d = String(date.getDate()).padStart(2, "0");
-    const m = date.toLocaleString("en-US", { month: "long" });
-    const y = date.getFullYear();
-    const t = date.toLocaleString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
-    return `${d}-${m}-${y} ${t}`;
-  };
+  const formatDate = (isoString: string | Date | null, dateOnly: boolean = false): string => {
+  if (!isoString) return "N/A";
+
+  try {
+    const utcDate = new Date(isoString);
+    if (isNaN(utcDate.getTime())) return "Invalid Date";
+
+    const istOffsetMs = 5.5 * 60 * 60 * 1000;
+    const istDate = new Date(utcDate.getTime() + istOffsetMs);
+
+    const day = String(istDate.getDate()).padStart(2, "0");
+    const month = istDate.toLocaleString("en-IN", { month: "long" });
+    const year = istDate.getFullYear();
+
+    if (dateOnly) {
+      return `${day}-${month}-${year}`;
+    }
+
+    const time = istDate.toLocaleString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+
+    return `${day}-${month}-${year}  ${time}`;
+  } catch {
+    return "Invalid Date";
+  }
+};
+
 
   const toArray = (value: string | string[] | undefined | null): string[] => {
     if (!value || value === "") return [];

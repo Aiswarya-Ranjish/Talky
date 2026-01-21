@@ -268,34 +268,36 @@ const StaffEdit: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+const formatDate = (isoString: string | Date | null, dateOnly: boolean = false): string => {
+  if (!isoString) return "N/A";
 
-  const formatDate = (isoString: string | Date | null, dateOnly: boolean = false): string => {
-    if (!isoString) return 'N/A';
-    try {
-      // For date-only strings (YYYY-MM-DD), parse without timezone conversion
-      let date: Date;
-      if (typeof isoString === 'string' && isoString.length === 10 && dateOnly) {
-        const [year, month, day] = isoString.split('-').map(Number);
-        date = new Date(year, month - 1, day);
-      } else {
-        date = new Date(isoString);
-      }
+  try {
+    const utcDate = new Date(isoString);
+    if (isNaN(utcDate.getTime())) return "Invalid Date";
 
-      if (isNaN(date.getTime())) return 'Invalid Date';
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = date.toLocaleString("en-US", { month: "long" });
-      const year = date.getFullYear();
+    const istOffsetMs = 5.5 * 60 * 60 * 1000;
+    const istDate = new Date(utcDate.getTime() + istOffsetMs);
 
-      if (dateOnly) {
-        return `${day}-${month}-${year}`;
-      }
+    const day = String(istDate.getDate()).padStart(2, "0");
+    const month = istDate.toLocaleString("en-IN", { month: "long" });
+    const year = istDate.getFullYear();
 
-      const time = date.toLocaleString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
-      return `${day}-${month}-${year}  ${time}`;
-    } catch (error) {
-      return 'Invalid Date';
+    if (dateOnly) {
+      return `${day}-${month}-${year}`;
     }
-  };
+
+    const time = istDate.toLocaleString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+
+    return `${day}-${month}-${year}  ${time}`;
+  } catch {
+    return "Invalid Date";
+  }
+};
+
 
   if (loading) return <KiduLoader type="Staff..." />;
 

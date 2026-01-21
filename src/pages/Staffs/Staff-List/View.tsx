@@ -113,7 +113,7 @@ const StaffView: React.FC = () => {
   };
 
   return (
-    <div className="container d-flex justify-content-center align-items-center mt-1" style={{ fontFamily: "Urbanist" }}>
+    <div className="container d-flex justify-content-center align-items-center mt-4 pt-4" style={{ fontFamily: "Urbanist" }}>
       <Card className="shadow-lg p-4 w-100" style={{ maxWidth: "1300px", borderRadius: "15px", border: "none" }}>
 
         {/* Header */}
