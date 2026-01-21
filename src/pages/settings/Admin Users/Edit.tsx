@@ -49,20 +49,27 @@ const EditAdminUser: React.FC = () => {
     );
   };
 
-  const formatDate = (isoString: string | Date | null): string => {
-    if (!isoString) return 'N/A';
-    try {
-      const date = new Date(isoString);
-      if (isNaN(date.getTime())) return 'Invalid Date';
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = date.toLocaleString("en-US", { month: "long" });
-      const year = date.getFullYear();
-      const time = date.toLocaleString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
-      return `${day}-${month}-${year}  ${time}`;
-    } catch (error) {
-      return 'Invalid Date';
-    }
-  };
+  const formatDate = (value: string | Date) => {
+  if (!value) return "N/A";
+
+  const utcDate = new Date(value);
+  if (isNaN(utcDate.getTime())) return "Invalid Date";
+
+  const istOffsetMs = 5.5 * 60 * 60 * 1000;
+  const istDate = new Date(utcDate.getTime() + istOffsetMs);
+
+  const day = String(istDate.getDate()).padStart(2, "0");
+  const month = istDate.toLocaleString("en-IN", { month: "long" });
+  const year = istDate.getFullYear();
+  const time = istDate.toLocaleString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+
+  return `${day}-${month}-${year} ${time}`;
+};
+
 
   useEffect(() => {
     const loadCompanies = async () => {

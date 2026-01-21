@@ -102,16 +102,7 @@ const HomePage: React.FC = () => {
 
           <KiduSearchBar onSearch={handleSearch} />
 
-          <KiduButton
-            label={
-              <div className="d-flex align-items-center gap-2" style={{ textDecoration: "none" }}>
-                <FaPlus className="fw-bold" />
-                <span className="head-font mt-1">Add New</span>
-              </div>
-            }
-            to="/dashboard/create"
-            style={{ width: 200 }}
-          />
+          
         </div>
 
         {/* Cards */}

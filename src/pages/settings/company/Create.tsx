@@ -273,7 +273,6 @@ const CompanyCreate: React.FC = () => {
                   <h6 className="fw-bold mt-3" style={{ color: "#882626ff" }}>
                     {formData.comapanyName || "Company Logo"}
                   </h6>
-                  <p className="small text-muted">Upload company logo<span style={{ color: "red" }}>*</span></p>
                 </Col>
 
                 {/* Form Fields Section */}

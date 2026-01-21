@@ -116,7 +116,6 @@ const Sidebar: React.FC = () => {
 
     const staffsSubMenu = [
         { label: "Staff List", path: "/dashboard/staff/staff-list", icon: <BsPeopleFill /> },
-        { label: "Staff KYC", path: "/dashboard/staffs/staff-tyc", icon: <BsFileText /> },
         { label: "Staff Reports", path: "/dashboard/staffs/staff-reports", icon: <BsClipboardData /> },
         { label: "Wallet Withdrawal", path: "/dashboard/wallet-withdrawal/list", icon: <BsCashCoin /> },
     ];
