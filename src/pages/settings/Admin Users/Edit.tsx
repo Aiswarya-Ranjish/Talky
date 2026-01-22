@@ -119,7 +119,7 @@ const EditAdminUser: React.FC = () => {
           setErrors(errObj);
         } else {
           toast.error("Failed to load admin user details");
-          navigate("/dashboard/settings/adminUsers-list");
+          navigate("dashboard/settings/adminUsers-list");
         }
       } catch (err: any) {
         toast.error(err.message);
@@ -196,45 +196,58 @@ const EditAdminUser: React.FC = () => {
     return ok;
   };
 
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-    if (!validateForm()) return;
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!validateForm()) return;
+  setIsSubmitting(true);
 
-    setIsSubmitting(true);
-
-    try {
-      const userData = {
-        ...formData,
-        userId: Number(userId),
-        isActive: true
-      };
-
-      const res = await AdminUserService.update(Number(userId), userData);
-
-      if (res.isSucess) {
-        // If profile picture is selected, upload it
-        if (selectedFile && userId) {
-          try {
-            await AdminUserService.uploadProfilePic(Number(userId), selectedFile);
-            toast.success("Admin user updated with new profile picture!");
-          } catch (uploadError) {
-            console.error("Image upload error:", uploadError);
-            toast.success("Admin user updated but profile picture upload failed");
-          }
-        } else {
-          toast.success("Admin user updated successfully!");
-        }
-
-        setTimeout(() => navigate("/dashboard/settings/adminUsers-list"), 1500);
-      } else {
-        toast.error(res.customMessage || res.error);
+  try {
+    const userIdFromUrl = parseInt(userId!);
+    
+    // Upload profile picture first if a new one was selected
+    let profileImagePath = formData.profileImagePath;
+    if (selectedFile) {
+      const uploadResponse = await AdminUserService.uploadProfilePic(userIdFromUrl, selectedFile);
+      if (uploadResponse && uploadResponse.isSucess) {
+        profileImagePath = uploadResponse.value;
       }
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+    
+    // Prepare data matching the exact Swagger format
+    const dataToUpdate = {
+      userId: userIdFromUrl, // CRITICAL: Must match URL parameter
+      userName: formData.userName,
+      userEmail: formData.userEmail,
+      phoneNumber: formData.phoneNumber,
+      profileImagePath: profileImagePath || "string",
+      address: formData.address || "",
+      passwordHash: formData.passwordHash || "",
+      isActive: true,
+      islocked: false,
+      createAt: formData.createAt ? new Date(formData.createAt).toISOString() : new Date().toISOString(),
+      lastlogin: formData.lastlogin ? new Date(formData.lastlogin).toISOString() : new Date().toISOString(),
+      companyId: parseInt(formData.companyId) || 0
+    };
+
+    console.log("🔍 URL userId:", userIdFromUrl);
+    console.log("📦 Payload:", JSON.stringify(dataToUpdate, null, 2));
+
+    // Call the update service
+    const updateResponse = await AdminUserService.update(userIdFromUrl, dataToUpdate);
+
+    if (!updateResponse || !updateResponse.isSucess) {
+      throw new Error(updateResponse?.customMessage || updateResponse?.error || "Failed to update user");
+    }
+
+    toast.success("User updated successfully!");
+    setTimeout(() => navigate("/dashboard/settings/adminUsers-list"), 1500);
+  } catch (error: any) {
+    console.error("❌ Update failed:", error);
+    toast.error(`Error updating user: ${error.message}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   if (loading) return <KiduLoader type="admin user details..." />;
 

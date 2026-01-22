@@ -29,8 +29,8 @@ export interface User {
   isActive: boolean;
   islocked: boolean;
   createAt: string;
-  lastlogin: string;
-  lastloginString: string;
+  lastlogin?: string;
+  lastloginString?: string;
   createAtSyring: string;
   companyId?: number;
   companyName?: string;
