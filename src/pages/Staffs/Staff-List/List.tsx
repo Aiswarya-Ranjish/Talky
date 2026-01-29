@@ -106,7 +106,7 @@ const StaffList: React.FC = () => {
       editRoute="/dashboard/staff/staff-edit"
       viewRoute="/dashboard/staff/staff-view"
       fetchData={fetchStaffData}
-      rowsPerPage={15}
+      rowsPerPage={10}
       showSearch={true}
       showActions={true}
       showAddButton={false}

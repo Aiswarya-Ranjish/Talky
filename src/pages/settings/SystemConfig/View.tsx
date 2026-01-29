@@ -65,11 +65,12 @@ const SystemConfigView: React.FC = () => {
     );
   }
 
-  // ✅ Added minimumWithdrawalCoins field
+  // ✅ All fields including rewardCoins
   const fields = [
     { key: "appMasterSettingId", label: "Setting ID", icon: "bi-hash" },
     { key: "intCurrentFinancialYear", label: "Financial Year", icon: "bi-calendar" },
-    { key: "staff_To_User_Rate_Per_Second", label: "Staff to User coins / Second", icon: "bi-clock" },
+    { key: "staff_To_User_Rate_Per_Second", label: "Staff to User Coins / Second", icon: "bi-clock" },
+    { key: "rewardCoins", label: "Reward Coins", icon: "bi-gift" }, // ✅ Added with gift icon
     { key: "one_paisa_to_coin_rate", label: "1 Paisa to Coin Rate", icon: "bi-currency-exchange" },
     { key: "minimumWithdrawalCoins", label: "Minimum Withdrawal Coins", icon: "bi-coin" },
     { key: "isActive", label: "Is Active", icon: "bi-check-circle", isBoolean: true },

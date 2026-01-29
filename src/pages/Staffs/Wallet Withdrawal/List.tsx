@@ -124,7 +124,7 @@ const WalletWithdrawalList: React.FC = () => {
       addButtonLabel="Add Withdrawal"
       viewRoute="/dashboard/wallet-withdrawal/view"
       fetchData={fetchWithdrawalData}
-      rowsPerPage={15}
+      rowsPerPage={10}
       showSearch={true}
       showActions={true}
       showAddButton={false}

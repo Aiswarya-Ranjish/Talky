@@ -17,11 +17,12 @@ const SystemConfigEdit: React.FC = () => {
   const navigate = useNavigate();
   const { appMasterSettingId } = useParams<{ appMasterSettingId: string }>();
 
-  // ✅ Added all fields including minimumWithdrawalCoins
+  // ✅ All fields including rewardCoins
   const fields = [
     { name: "currentCompanyId", rules: { required: true, type: "select" as const, label: "Company" } },
     { name: "intCurrentFinancialYear", rules: { required: true, type: "text" as const, label: "Financial Year" } },
-    { name: "staff_To_User_Rate_Per_Second", rules: { required: true, type: "number" as const, label: "Staff to User coins per Second" } },
+    { name: "staff_To_User_Rate_Per_Second", rules: { required: true, type: "number" as const, label: "Staff to User Coins per Second" } },
+    { name: "rewardCoins", rules: { required: true, type: "number" as const, label: "Reward Coins" } },
     { name: "one_paisa_to_coin_rate", rules: { required: true, type: "number" as const, label: "1 Paisa to Coin Rate" } },
     { name: "minimumWithdrawalCoins", rules: { required: true, type: "number" as const, label: "Minimum Withdrawal Coins" } },
   ];
@@ -36,6 +37,7 @@ const SystemConfigEdit: React.FC = () => {
     currentCompanyId: "",
     intCurrentFinancialYear: "",
     staff_To_User_Rate_Per_Second: 0,
+    rewardCoins: 0, // ✅ Added
     one_paisa_to_coin_rate: 0,
     minimumWithdrawalCoins: 0,
     isActive: true,
@@ -92,12 +94,13 @@ const SystemConfigEdit: React.FC = () => {
         
         if (!data) throw new Error("System configuration not found");
 
-        // ✅ Ensure all fields are populated
+        // ✅ Ensure all fields are populated including rewardCoins
         const loadedData: systemconfig = {
           appMasterSettingId: data.appMasterSettingId || 0,
           currentCompanyId: data.currentCompanyId || "",
           intCurrentFinancialYear: data.intCurrentFinancialYear || "",
           staff_To_User_Rate_Per_Second: data.staff_To_User_Rate_Per_Second || 0,
+          rewardCoins: data.rewardCoins || 0, // ✅ Added
           one_paisa_to_coin_rate: data.one_paisa_to_coin_rate || 0,
           minimumWithdrawalCoins: data.minimumWithdrawalCoins || 0,
           isActive: data.isActive ?? true,
@@ -172,6 +175,7 @@ const SystemConfigEdit: React.FC = () => {
       const payload: systemconfig = {
         ...formData,
         staff_To_User_Rate_Per_Second: Number(formData.staff_To_User_Rate_Per_Second),
+        rewardCoins: Number(formData.rewardCoins), // ✅ Added
         one_paisa_to_coin_rate: Number(formData.one_paisa_to_coin_rate),
         minimumWithdrawalCoins: Number(formData.minimumWithdrawalCoins),
       };
@@ -260,6 +264,22 @@ const SystemConfigEdit: React.FC = () => {
                 )}
               </Col>
 
+              {/* ✅ Reward Coins - ADDED */}
+              <Col md={6}>
+                <Form.Label>{getLabel("rewardCoins")}</Form.Label>
+                <Form.Control
+                  type="number"
+                  name="rewardCoins"
+                  value={formData.rewardCoins}
+                  onChange={handleChange}
+                  onBlur={() => validateField("rewardCoins", formData.rewardCoins)}
+                  placeholder="Enter reward coins"
+                />
+                {errors.rewardCoins && (
+                  <small className="text-danger">{errors.rewardCoins}</small>
+                )}
+              </Col>
+
               {/* Coin Rate */}
               <Col md={6}>
                 <Form.Label>{getLabel("one_paisa_to_coin_rate")}</Form.Label>
@@ -276,7 +296,7 @@ const SystemConfigEdit: React.FC = () => {
                 )}
               </Col>
 
-              {/* Minimum Withdrawal Coins - ✅ ADDED */}
+              {/* Minimum Withdrawal Coins */}
               <Col md={6}>
                 <Form.Label>{getLabel("minimumWithdrawalCoins")}</Form.Label>
                 <Form.Control
@@ -293,7 +313,7 @@ const SystemConfigEdit: React.FC = () => {
               </Col>
 
               {/* Active Switch */}
-              <Col md={6} className="d-flex align-items-center">
+              <Col md={12} className="d-flex align-items-center">
                 <Form.Check
                   type="switch"
                   id="isActive"

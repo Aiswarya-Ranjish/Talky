@@ -16,11 +16,12 @@ type ErrorState = Record<string, string>;
 const SystemConfigCreate: React.FC = () => {
   const navigate = useNavigate();
 
-  // ✅ Added all fields including company and minimumWithdrawalCoins
+  // ✅ All fields including rewardCoins
   const fields = [
     { name: "currentCompanyId", rules: { required: true, type: "select" as const, label: "Company" } },
     { name: "intCurrentFinancialYear", rules: { required: true, type: "text" as const, label: "Financial Year" } },
-    { name: "staff_To_User_Rate_Per_Second", rules: { required: true, type: "number" as const, label: "Staff to User coins per Second" } },
+    { name: "staff_To_User_Rate_Per_Second", rules: { required: true, type: "number" as const, label: "Staff to User Coins per Second" } },
+    { name: "rewardCoins", rules: { required: true, type: "number" as const, label: "Reward Coins" } },
     { name: "one_paisa_to_coin_rate", rules: { required: true, type: "number" as const, label: "1 Paisa to Coin Rate" } },
     { name: "minimumWithdrawalCoins", rules: { required: true, type: "number" as const, label: "Minimum Withdrawal Coins" } },
   ];
@@ -29,6 +30,7 @@ const SystemConfigCreate: React.FC = () => {
     currentCompanyId: "",
     intCurrentFinancialYear: "",
     staff_To_User_Rate_Per_Second: 0,
+    rewardCoins: 0, // ✅ Added
     one_paisa_to_coin_rate: 0,
     minimumWithdrawalCoins: 0,
     isActive: true,
@@ -135,6 +137,7 @@ const SystemConfigCreate: React.FC = () => {
       const payload: systemconfig = {
         ...formData,
         staff_To_User_Rate_Per_Second: Number(formData.staff_To_User_Rate_Per_Second),
+        rewardCoins: Number(formData.rewardCoins), // ✅ Added
         one_paisa_to_coin_rate: Number(formData.one_paisa_to_coin_rate),
         minimumWithdrawalCoins: Number(formData.minimumWithdrawalCoins),
       };
@@ -170,7 +173,7 @@ const SystemConfigCreate: React.FC = () => {
             <Form onSubmit={handleSubmit}>
               <Row className="g-3">
 
-                {/* Company Selection - ✅ ADDED */}
+                {/* Company Selection */}
                 <Col md={6}>
                   <Form.Label>{getLabel("currentCompanyId")}</Form.Label>
                   <Form.Select
@@ -224,6 +227,22 @@ const SystemConfigCreate: React.FC = () => {
                   )}
                 </Col>
 
+                {/* ✅ Reward Coins - ADDED */}
+                <Col md={6}>
+                  <Form.Label>{getLabel("rewardCoins")}</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="rewardCoins"
+                    value={formData.rewardCoins}
+                    onChange={handleChange}
+                    onBlur={() => validateField("rewardCoins", formData.rewardCoins)}
+                    placeholder="Enter reward coins"
+                  />
+                  {errors.rewardCoins && (
+                    <small className="text-danger">{errors.rewardCoins}</small>
+                  )}
+                </Col>
+
                 {/* Coin Rate */}
                 <Col md={6}>
                   <Form.Label>{getLabel("one_paisa_to_coin_rate")}</Form.Label>
@@ -241,7 +260,7 @@ const SystemConfigCreate: React.FC = () => {
                   )}
                 </Col>
 
-                {/* Minimum Withdrawal Coins - ✅ ADDED */}
+                {/* Minimum Withdrawal Coins */}
                 <Col md={6}>
                   <Form.Label>{getLabel("minimumWithdrawalCoins")}</Form.Label>
                   <Form.Control
@@ -258,7 +277,7 @@ const SystemConfigCreate: React.FC = () => {
                 </Col>
 
                 {/* Active Switch */}
-                <Col md={6} className="d-flex align-items-center">
+                <Col md={12} className="d-flex align-items-center">
                   <Form.Check
                     type="switch"
                     id="isActive"
