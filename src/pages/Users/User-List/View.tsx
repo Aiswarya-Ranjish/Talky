@@ -54,7 +54,7 @@ const UserPageView: React.FC = () => {
     { key: "isAudultVerificationCompleted", label: "Is Adult Verified" },
     { key: "isStaff", label: "Is Staff" },
     { key: "isLockedOut", label: "Is Locked Out" },
-    { key: "isKYCCompleted", label: "Is KYC Completed" },
+    // { key: "isKYCCompleted", label: "Is KYC Completed" },
     { key: "walletBalance", label: "Wallet Balance" }
   ];
 

@@ -207,7 +207,7 @@ const StaffView: React.FC = () => {
 
         {/* AUDIT LOGS */}
          {/* <KiduAttachments tableName="Staff" recordId={formData.staffUserId.toString()} /> */}
-        <KiduAuditLogs tableName="Staff" recordId={data.staffUserId ?? ""} />
+        <KiduAuditLogs tableName="StaffUser" recordId={data.staffUserId ?? ""} />
 
       </Card>
 

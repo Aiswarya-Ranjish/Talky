@@ -6,24 +6,31 @@ import { BsUpload } from "react-icons/bs";
 import AdminUserService from "../services/settings/AdminUser.services";
 import profileImg from "../assets/Images/profile.jpeg";
 import { getFullImageUrl } from "../constants/API_ENDPOINTS";
+import { FaEye, FaEyeSlash } from "react-icons/fa6";
 
 const Profile: React.FC = () => {
   const [userId, setUserId] = useState<number | null>(null);
   const [username, setUsername] = useState("User");
   const [email, setEmail] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [_phoneNumber, setPhoneNumber] = useState("");
   const [preview, setPreview] = useState<string>(profileImg);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
+
   // Password fields
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  
+
   // Loading states
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [isLoadingPassword, setIsLoadingPassword] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  //password eye button
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
 
   // Load user data from localStorage and fetch from API
   useEffect(() => {
@@ -123,13 +130,13 @@ const Profile: React.FC = () => {
 
       if (response.isSucess) {
         toast.success("Profile picture updated successfully!");
-        
+
         // Reload profile to get updated image path
         await loadUserProfile();
-        
+
         // Dispatch custom event to notify other components
         window.dispatchEvent(new CustomEvent("profileUpdated"));
-        
+
         // Clear selected file
         setSelectedFile(null);
       } else {
@@ -301,14 +308,23 @@ const Profile: React.FC = () => {
                 <Form.Label className="fw-semibold" style={{ fontSize: "15px" }}>
                   Old Password
                 </Form.Label>
-                <Form.Control
-                  type="password"
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                  disabled={isLoadingPassword}
-                  placeholder="Enter old password"
-                  style={{ borderRadius: "6px", height: "32px" }}
-                />
+                <div className="position-relative">
+                  <Form.Control
+                    type={showOldPassword ? "text" : "password"}
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    disabled={isLoadingPassword}
+                    placeholder="Enter old password"
+                    style={{ borderRadius: "6px", height: "32px", paddingRight: "35px" }}
+                  />
+                  <span
+                    onClick={() => setShowOldPassword(!showOldPassword)}
+                    className="position-absolute top-50 end-0 translate-middle-y me-2"
+                    style={{ cursor: "pointer", color: "#882626ff" }}
+                  >
+                    {showOldPassword ? <FaEyeSlash /> : <FaEye />}
+                  </span>
+                </div>
               </Form.Group>
             </Row>
 
@@ -317,14 +333,24 @@ const Profile: React.FC = () => {
                 <Form.Label className="fw-semibold" style={{ fontSize: "15px" }}>
                   New Password
                 </Form.Label>
-                <Form.Control
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  disabled={isLoadingPassword}
-                  placeholder="Enter new password"
-                  style={{ borderRadius: "6px", height: "32px" }}
-                />
+                <div className="position-relative">
+
+                  <Form.Control
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    disabled={isLoadingPassword}
+                    placeholder="Enter new password"
+                    style={{ borderRadius: "6px", height: "32px", paddingRight: "35px" }}
+                  />
+                  <span
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="position-absolute top-50 end-0 translate-middle-y me-2"
+                    style={{ cursor: "pointer", color: "#882626ff" }}
+                  >
+                    {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+                  </span>
+                </div>
               </Form.Group>
             </Row>
 
@@ -333,14 +359,23 @@ const Profile: React.FC = () => {
                 <Form.Label className="fw-semibold" style={{ fontSize: "15px" }}>
                   Confirm Password
                 </Form.Label>
-                <Form.Control
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  disabled={isLoadingPassword}
-                  placeholder="Confirm new password"
-                  style={{ borderRadius: "6px", height: "32px" }}
-                />
+                <div className="position-relative">
+                  <Form.Control
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={isLoadingPassword}
+                    placeholder="Confirm new password"
+                    style={{ borderRadius: "6px", height: "32px", paddingRight: "35px" }}
+                  />
+                  <span
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="position-absolute top-50 end-0 translate-middle-y me-2"
+                    style={{ cursor: "pointer", color: "#882626ff" }}
+                  >
+                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                  </span>
+                </div>
               </Form.Group>
             </Row>
 

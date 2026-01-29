@@ -14,6 +14,7 @@ import KiduCard from "../components/KiduCard";
 import KiduButton from "../components/KiduButton";
 import KiduSearchBar from "../components/KiduSearchBar";
 import { useYear } from "../context/YearContext";
+import AppUserService from "../services/Users/AppUserServices";
 
 interface CardData {
   title: string;
@@ -41,7 +42,7 @@ const HomePage: React.FC = () => {
         
         // Mock data for demonstration
         const mockData: CardData[] = [
-          { title: "Total Users", value: 150, change: 12, color: "#4CAF50", route: "/dashboard/users" },
+          { title: "Total Users", value: 150, change: 12, color: "#4CAF50", route: "/dashboard/user/user-list" },
           { title: "Total Staff", value: 25, change: 5, color: "#2196F3", route: "/dashboard/staff/staff-list" },
           { title: "Active Sessions", value: 45, change: -3, color: "#FF9800", route: "/dashboard/sessions" },
           { title: "Revenue", value: 12500, change: 8, color: "#9C27B0", route: "/dashboard/revenue" },
@@ -69,27 +70,42 @@ const HomePage: React.FC = () => {
   // --------------------- HANDLE SEARCH ---------------------
   const handleSearch = async (term: string) => {
     if (!term) {
-      toast.error("Please enter a search term.");
+      toast.error("Please enter an app user id.");
       return;
     }
 
+     // Show loading toast
+    const loadingToast = toast.loading(`Searching for: ${term}`);
     try {
-      // TODO: Replace with your actual search service call
-      // Example: const response = await SearchService.search(term);
+      // Validate that the term contains only digits (numbers only)
+      if (!/^\d+$/.test(term)) {
+        toast.dismiss(loadingToast);
+        toast.error("Please enter a valid app user ID (numbers only).");
+        return;
+      }
       
-      toast.info(`Searching for: ${term}`);
+      const response = await AppUserService.getUserById(term);
+      toast.dismiss(loadingToast);
+      if (response) {
+        const user = response;
+        // prefer common id fields if present, fallback to the searched term
+        const userId = (user as any).id ?? (user as any).userId ?? (user as any).appUserId ?? term;
+        toast.success(`User ${userId} found!`);
+        
+        // Navigate to trip view page
+        navigate(`/dashboard/user/view-user/${userId}`);
+      } else {
+        toast.error("No user found with this ID.");
+      }
+    } catch (error: any) {
+      toast.dismiss(loadingToast);
+      console.error("Error fetching user by ID:", error);
       
-      // Uncomment and modify when you have the actual service
-      // if (response.isSuccess && response.value) {
-      //   const item = response.value;
-      //   navigate(`/dashboard/details/${item.id}`);
-      //   toast.success(`Item found!`);
-      // } else {
-      //   toast.error("No results found.");
-      // }
-    } catch (error) {
-      console.error("Error searching:", error);
-      toast.error("Error performing search.");
+      if (error.message.includes("404")) {
+        toast.error("User not found. Please check the Trip ID.");
+      } else {
+        toast.error("Error fetching user details. Please try again.");
+      }
     }
   };
 
@@ -102,7 +118,7 @@ const HomePage: React.FC = () => {
 
           <KiduSearchBar onSearch={handleSearch} />
 
-          
+         
         </div>
 
         {/* Cards */}

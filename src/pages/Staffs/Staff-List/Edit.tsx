@@ -503,7 +503,7 @@ const formatDate = (isoString: string | Date | null, dateOnly: boolean = false):
             {formData.staffUserId && (
               <>
                 <KiduAttachments tableName="Staff" recordId={formData.staffUserId.toString()} />
-                <KiduAuditLogs tableName="Staff" recordId={formData.staffUserId.toString()} />
+                <KiduAuditLogs tableName="StaffUser" recordId={formData.staffUserId.toString()} />
               </>
             )}
           </Card.Body>

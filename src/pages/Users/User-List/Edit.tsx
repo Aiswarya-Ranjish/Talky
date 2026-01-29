@@ -200,7 +200,9 @@ const UserEdit: React.FC = () => {
               </Row>
               <Row className="mt-4 mb-4">
                 <Col md={3}><Form.Check type="switch" label="Blocked" checked={formData.isBlocked} name="isBlocked" onChange={handleChange} /></Col>
-                <Col md={3}><Form.Check type="switch" label="KYC Complete" checked={formData.isKYCCompleted} name="isKYCCompleted" onChange={handleChange} /></Col>
+                
+                {/*  <Col md={3}><Form.Check type="switch" label="KYC Complete" checked={formData.isKYCCompleted} name="isKYCCompleted" onChange={handleChange} /></Col>*/}
+
                 <Col md={3}><Form.Check type="switch" label="Adult Verification" checked={formData.isAudultVerificationCompleted} name="isAudultVerificationCompleted" onChange={handleChange} /></Col>
                 <Col md={3}><Form.Check type="switch" label="Is Staff" checked={formData.isStaff} name="isStaff" onChange={handleChange} /></Col>
               </Row>
