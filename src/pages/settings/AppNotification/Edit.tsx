@@ -356,7 +356,7 @@ const AppNotificationEdit: React.FC = () => {
 
             {/* Audit Logs */}
             {formData.appNotificationId && (
-              <KiduAuditLogs tableName="AppNotifications" recordId={formData.appNotificationId.toString()} />
+              <KiduAuditLogs tableName="APPNOTIFICATION" recordId={formData.appNotificationId.toString()} />
             )}
           </Card.Body>
         </Card>

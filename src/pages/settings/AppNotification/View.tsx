@@ -212,7 +212,7 @@ const AppNotificationView: React.FC = () => {
 
         {/* AUDIT LOGS */}
         {data.appNotificationId && (
-          <KiduAuditLogs tableName="AppNotifications" recordId={data.appNotificationId.toString()} />
+          <KiduAuditLogs tableName="APPNOTIFICATION" recordId={data.appNotificationId.toString()} />
         )}
 
       </Card>
