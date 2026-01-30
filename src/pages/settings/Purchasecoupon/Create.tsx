@@ -14,7 +14,7 @@ const CreatePurchaseCoupon: React.FC = () => {
     { name: "coins", rules: { required: true, type: "number" as const, label: "Coins" } },
     { name: "amount", rules: { required: true, type: "number" as const, label: "Amount" } },
     { name: "pastAmount", rules: { required: false, type: "number" as const, label: "Past Amount" } },
-    { name: "description", rules: { required: true, type: "text" as const, label: "Description", maxLength: 100 } },
+    { name: "description", rules: { required: false, type: "text" as const, label: "Description", maxLength: 100 } },
   ];
 
   const initialValues: any = {};
