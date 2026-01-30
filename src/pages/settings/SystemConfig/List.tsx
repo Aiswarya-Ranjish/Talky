@@ -40,13 +40,24 @@ const SystemConfigList: React.FC = () => {
       // Apply Search
       if (params.searchTerm) {
         const s = params.searchTerm.toLowerCase();
-        filteredData = allData.filter((item: systemconfig) =>
-          (item.currentCompanyId || "").toLowerCase().includes(s) ||
-          (item.intCurrentFinancialYear || "").toLowerCase().includes(s) ||
-          (item.appMasterSettingId?.toString() || "").includes(params.searchTerm) ||
-          (item.staff_To_User_Rate_Per_Second?.toString() || "").includes(params.searchTerm) ||
-          (item.one_paisa_to_coin_rate?.toString() || "").includes(params.searchTerm)
-        );
+        filteredData = allData.filter((item: systemconfig) => {
+          // Convert all values to strings safely
+          const companyId = String(item.currentCompanyId || "").toLowerCase();
+          const financialYear = String(item.intCurrentFinancialYear || "").toLowerCase();
+          const settingId = String(item.appMasterSettingId || "");
+          const staffRate = String(item.staff_To_User_Rate_Per_Second || "");
+          const coinRate = String(item.one_paisa_to_coin_rate || "");
+          const rewardCoins = String(item.rewardCoins || "");
+          
+          return (
+            companyId.includes(s) ||
+            financialYear.includes(s) ||
+            settingId.includes(params.searchTerm) ||
+            staffRate.includes(params.searchTerm) ||
+            coinRate.includes(params.searchTerm) ||
+            rewardCoins.includes(params.searchTerm)
+          );
+        });
       }
 
       // ✅ Apply reverse order if requested (show latest configs first)
