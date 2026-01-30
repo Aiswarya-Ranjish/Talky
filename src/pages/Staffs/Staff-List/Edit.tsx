@@ -29,7 +29,7 @@ const StaffEdit: React.FC = () => {
     { name: "customerCoinsPerSecondAudio", rules: { required: false, type: "number" as const, label: "Customer Coins Per Second Audio" } },
     { name: "companyCoinsPerSecondVideo", rules: { required: false, type: "number" as const, label: "Company Coins Per Second Video" } },
     { name: "companyCoinsPerSecondAudio", rules: { required: false, type: "number" as const, label: "Company Coins Per Second Audio" } },
-    { name: "priority", rules: { required: false, type: "number" as const, label: "Priority" } },
+    { name: "priority", rules: { required: false, type: "number" as const, label: "Priority", min: 0  } },
     { name: "kycDocument", rules: { required: false, type: "select" as const, label: "KYC Document" } },
     { name: "kycDocumentNumber", rules: { required: false, type: "text" as const, label: "KYC Document Number" } },
     { name: "kycCompletedDate", rules: { required: false, type: "date" as const, label: "KYC Completed Date" } }
@@ -47,8 +47,7 @@ const StaffEdit: React.FC = () => {
     staffUserId: 0, appUserId: 0, gender: "", registeredDate: new Date().toISOString(),
     referredBy: "", referralCode: "", starRating: 0, profileImagePath: "",
     lastLogin: new Date().toISOString(), isBlocked: false, isKYCCompleted: false,
-    isAudioEnbaled: false, isVideoEnabled: false, isOnline: false, isDeleted: false,
-    walletBalance: 0, priority: 0
+    isAudioEnbaled: false, isVideoEnabled: false, isOnline: false, isDeleted: false
   });
 
   const [errors, setErrors] = useState(initialErrors);
@@ -93,12 +92,13 @@ const StaffEdit: React.FC = () => {
           kycCompletedDate: data.kycCompletedDate ? new Date(data.kycCompletedDate).toISOString().split('T')[0] : "",
           kycDocumentNumber: String(data.kycDocumentNumber || ""),
           starRating: data.starRating || 0,
-          walletBalance: data.walletBalance ?? 0,
-          priority: data.priority ?? 0,
-          customerCoinsPerSecondVideo: data.customerCoinsPerSecondVideo ?? 0,
-          customerCoinsPerSecondAudio: data.customerCoinsPerSecondAudio ?? 0,
-          companyCoinsPerSecondVideo: data.companyCoinsPerSecondVideo ?? 0,
-          companyCoinsPerSecondAudio: data.companyCoinsPerSecondAudio ?? 0,
+          // Keep actual values from API or empty string (not 0)
+          walletBalance: data.walletBalance ?? "",
+          priority: data.priority ?? "",
+          customerCoinsPerSecondVideo: data.customerCoinsPerSecondVideo ?? "",
+          customerCoinsPerSecondAudio: data.customerCoinsPerSecondAudio ?? "",
+          companyCoinsPerSecondVideo: data.companyCoinsPerSecondVideo ?? "",
+          companyCoinsPerSecondAudio: data.companyCoinsPerSecondAudio ?? "",
           auditLogs: data.auditLogs
         };
 
@@ -162,8 +162,8 @@ const StaffEdit: React.FC = () => {
         return;
       }
     } else if (type === "number") {
-      // Handle number fields properly - allow empty string or convert to number
-      updatedValue = value === "" ? 0 : Number(value);
+      // Keep empty string as empty string, don't convert to 0
+      updatedValue = value === "" ? "" : Number(value);
     }
 
     setFormData((prev: any) => ({ ...prev, [name]: updatedValue }));
@@ -224,14 +224,15 @@ const StaffEdit: React.FC = () => {
         kycCompletedDate: formData.kycCompletedDate && formData.kycCompletedDate !== ""
           ? new Date(formData.kycCompletedDate).toISOString()
           : null,
-        customerCoinsPerSecondVideo: Number(formData.customerCoinsPerSecondVideo ?? 0),
-        customerCoinsPerSecondAudio: Number(formData.customerCoinsPerSecondAudio ?? 0),
-        companyCoinsPerSecondVideo: Number(formData.companyCoinsPerSecondVideo ?? 0),
-        companyCoinsPerSecondAudio: Number(formData.companyCoinsPerSecondAudio ?? 0),
+        // Convert empty strings to null, not 0
+        customerCoinsPerSecondVideo: formData.customerCoinsPerSecondVideo === "" ? null : Number(formData.customerCoinsPerSecondVideo),
+        customerCoinsPerSecondAudio: formData.customerCoinsPerSecondAudio === "" ? null : Number(formData.customerCoinsPerSecondAudio),
+        companyCoinsPerSecondVideo: formData.companyCoinsPerSecondVideo === "" ? null : Number(formData.companyCoinsPerSecondVideo),
+        companyCoinsPerSecondAudio: formData.companyCoinsPerSecondAudio === "" ? null : Number(formData.companyCoinsPerSecondAudio),
         profileImagePath: formData.profileImagePath || "",
-        walletBalance: Number(formData.walletBalance ?? 0),
+        walletBalance: formData.walletBalance === "" ? null : Number(formData.walletBalance),
         isOnline: Boolean(formData.isOnline),
-        priority: Number(formData.priority ?? 0),
+        priority: formData.priority === "" ? null : Number(formData.priority),
         registeredDate: formData.registeredDate,
         lastLogin: formData.lastLogin,
         referredBy: formData.referredBy || "",
@@ -389,45 +390,81 @@ const formatDate = (isoString: string | Date | null, dateOnly: boolean = false):
 
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("walletBalance")}</Form.Label>
-                      <Form.Control size="sm" type="number" name="walletBalance"
+                      <Form.Control 
+                        size="sm" 
+                        type="number" 
+                        name="walletBalance"
                         value={formData.walletBalance}
-                        onChange={handleChange} onBlur={() => validateField("walletBalance", formData.walletBalance)}
-                        placeholder="0" />
+                        onChange={handleChange} 
+                        onBlur={() => validateField("walletBalance", formData.walletBalance)}
+                        onWheel={(e) => e.currentTarget.blur()}
+                        min={0}
+                        placeholder="" />
                     </Col>
 
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("customerCoinsPerSecondVideo")}</Form.Label>
-                      <Form.Control size="sm" type="number" name="customerCoinsPerSecondVideo"
+                      <Form.Control 
+                        size="sm" 
+                        type="number" 
+                        name="customerCoinsPerSecondVideo"
                         value={formData.customerCoinsPerSecondVideo}
-                        onChange={handleChange} placeholder="0" />
+                        onChange={handleChange} 
+                        onWheel={(e) => e.currentTarget.blur()}
+                        min={0}
+                        placeholder="" />
                     </Col>
 
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("customerCoinsPerSecondAudio")}</Form.Label>
-                      <Form.Control size="sm" type="number" name="customerCoinsPerSecondAudio"
+                      <Form.Control 
+                        size="sm" 
+                        type="number" 
+                        name="customerCoinsPerSecondAudio"
                         value={formData.customerCoinsPerSecondAudio}
-                        onChange={handleChange} placeholder="0" />
+                        onChange={handleChange} 
+                        onWheel={(e) => e.currentTarget.blur()}
+                        min={0}
+                        placeholder="" />
                     </Col>
 
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("companyCoinsPerSecondVideo")}</Form.Label>
-                      <Form.Control size="sm" type="number" name="companyCoinsPerSecondVideo"
+                      <Form.Control 
+                        size="sm" 
+                        type="number" 
+                        name="companyCoinsPerSecondVideo"
                         value={formData.companyCoinsPerSecondVideo}
-                        onChange={handleChange} placeholder="0" />
+                        onChange={handleChange} 
+                        onWheel={(e) => e.currentTarget.blur()}
+                        min={0}
+                        placeholder="" />
                     </Col>
 
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("companyCoinsPerSecondAudio")}</Form.Label>
-                      <Form.Control size="sm" type="number" name="companyCoinsPerSecondAudio"
+                      <Form.Control 
+                        size="sm" 
+                        type="number" 
+                        name="companyCoinsPerSecondAudio"
                         value={formData.companyCoinsPerSecondAudio}
-                        onChange={handleChange} placeholder="0" />
+                        onChange={handleChange} 
+                        onWheel={(e) => e.currentTarget.blur()}
+                        min={0}
+                        placeholder="" />
                     </Col>
 
                     <Col md={4}>
                       <Form.Label className="mb-1 fw-medium small">{getLabel("priority")}</Form.Label>
-                      <Form.Control size="sm" type="number" name="priority"
+                      <Form.Control 
+                        size="sm" 
+                        type="number" 
+                        name="priority"
                         value={formData.priority}
-                        onChange={handleChange} placeholder="0" />
+                        onChange={handleChange} 
+                        onWheel={(e) => e.currentTarget.blur()}
+                        min={0}
+                        placeholder="" />
                     </Col>
 
                     <Col md={4}>

@@ -48,25 +48,24 @@ const KiduAuditLogs: React.FC<AuditTrailsProps> = ({ tableName, recordId }) => {
   }, [history]);
 
   const formatDateSafe = (isoOrAny?: string) => {
-  if (!isoOrAny) return "—";
+    if (!isoOrAny) return "—";
 
-  const utcDate = new Date(isoOrAny);
-  if (isNaN(utcDate.getTime())) return isoOrAny;
+    const utcDate = new Date(isoOrAny);
+    if (isNaN(utcDate.getTime())) return isoOrAny;
 
-  const istOffsetMs = 5.5 * 60 * 60 * 1000;
-  const istDate = new Date(utcDate.getTime() + istOffsetMs);
+    // Convert to IST using toLocaleString with Asia/Kolkata timezone
+    const istDateString = utcDate.toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
 
-  const day = String(istDate.getDate()).padStart(2, "0");
-  const month = istDate.toLocaleString("en-IN", { month: "long" });
-  const year = istDate.getFullYear();
-  const time = istDate.toLocaleString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true
-  });
-
-  return `${day} ${month} ${year}, ${time}`;
-};
+    return istDateString;
+  };
 
 
   return (
