@@ -217,7 +217,7 @@ const UserEdit: React.FC = () => {
         </Form>
         
        <div className="mt-2 pb-3"> {/* Audit Logs Section - Remove the wrapper div and let the component handle its own spacing */}
-        {formData.appUserId && <KiduAuditLogs tableName="AppUser" recordId={formData.appUserId} />}</div>
+        {formData.appUserId && <KiduAuditLogs tableName="APPUSER" recordId={formData.appUserId} />}</div>
         
       </Container>
       <Toaster position="top-right" />
