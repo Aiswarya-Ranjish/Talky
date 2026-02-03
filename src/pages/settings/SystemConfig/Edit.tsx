@@ -25,6 +25,7 @@ const SystemConfigEdit: React.FC = () => {
     { name: "rewardCoins", rules: { required: true, type: "number" as const, label: "Reward Coins" } },
     { name: "one_paisa_to_coin_rate", rules: { required: true, type: "number" as const, label: "1 Paisa to Coin Rate" } },
     { name: "minimumWithdrawalCoins", rules: { required: true, type: "number" as const, label: "Minimum Withdrawal Coins" } },
+    { name: "isActive", rules: { required: false, type: "radio" as const, label: "Active Status" } }
   ];
 
   const initialErrors: Record<string, string> = {};
@@ -91,7 +92,7 @@ const SystemConfigEdit: React.FC = () => {
         const data = response.value.find(
           (item: systemconfig) => String(item.appMasterSettingId) === appMasterSettingId
         );
-        
+
         if (!data) throw new Error("System configuration not found");
 
         // ✅ Ensure all fields are populated including rewardCoins
@@ -142,9 +143,9 @@ const SystemConfigEdit: React.FC = () => {
 
     const result = KiduValidation.validate(value, field.rules);
     if (!result.isValid) {
-      setErrors((prev) => ({ 
-        ...prev, 
-        [name]: `${field.rules.label} is required.` 
+      setErrors((prev) => ({
+        ...prev,
+        [name]: `${field.rules.label} is required.`
       }));
       return false;
     }
@@ -164,7 +165,7 @@ const SystemConfigEdit: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast.error("Please fill all required fields");
       return;
@@ -181,7 +182,7 @@ const SystemConfigEdit: React.FC = () => {
       };
 
       const response = await SystemConfigService.updateSystemconfig(payload);
-      
+
       if (!response?.isSucess) {
         throw new Error(response?.customMessage || "Failed to update system configuration");
       }
@@ -210,7 +211,7 @@ const SystemConfigEdit: React.FC = () => {
         <Card.Body>
           <Form onSubmit={handleSubmit}>
             <Row className="g-3">
-              
+
               {/* Company */}
               <Col md={6}>
                 <Form.Label>{getLabel("currentCompanyId")}</Form.Label>
@@ -313,7 +314,7 @@ const SystemConfigEdit: React.FC = () => {
               </Col>
 
               {/* Active Switch */}
-              <Col md={12} className="d-flex align-items-center">
+              {/* <Col md={12} className="d-flex align-items-center">
                 <Form.Check
                   type="switch"
                   id="isActive"
@@ -322,19 +323,39 @@ const SystemConfigEdit: React.FC = () => {
                   checked={formData.isActive}
                   onChange={handleChange}
                 />
+              </Col> */}
+
+              <Col md={12}>
+                <div className="p-3 border rounded" style={{ backgroundColor: "#f8f9fa" }}>
+                  <Form.Label className="fw-bold mb-3">{getLabel("isActive")}</Form.Label>
+                  <div className="d-flex align-items-center">
+                    <Form.Check
+                      type="switch"
+                      id="isActive"
+                      name="isActive"
+                      checked={formData.isActive}
+                      onChange={handleChange}
+                      style={{ transform: "scale(1.3)" }}
+                      className="me-3"
+                    />
+                    <span className="fw-semibold" style={{ color: formData.isActive ? "#28a745" : "#dc3545" }}>
+                      {formData.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                </div>
               </Col>
 
             </Row>
 
             <div className="d-flex justify-content-end gap-2 mt-4">
-              <KiduReset 
-                initialValues={initialData} 
-                setFormData={setFormData} 
-                setErrors={setErrors} 
+              <KiduReset
+                initialValues={initialData}
+                setFormData={setFormData}
+                setErrors={setErrors}
               />
-              <Button 
-                type="submit" 
-                disabled={isSubmitting} 
+              <Button
+                type="submit"
+                disabled={isSubmitting}
                 style={{ backgroundColor: "#882626ff", border: "none" }}
               >
                 {isSubmitting ? "Updating..." : "Update"}
@@ -344,9 +365,9 @@ const SystemConfigEdit: React.FC = () => {
 
           {formData.appMasterSettingId > 0 && (
             <div className="mt-4">
-              <KiduAuditLogs 
-                tableName="AppMasterSetting" 
-                recordId={formData.appMasterSettingId} 
+              <KiduAuditLogs
+                tableName="AppMasterSetting"
+                recordId={formData.appMasterSettingId}
               />
             </div>
           )}

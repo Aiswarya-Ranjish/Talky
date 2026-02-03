@@ -1,7 +1,7 @@
 // src/pages/settings/systemConfig/SystemConfigCreate.tsx
 
 import React, { useEffect, useState } from "react";
-import { Card, Form, Button, Row, Col } from "react-bootstrap";
+import { Card, Form, Button, Row, Col, Modal } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import KiduValidation from "../../../components/KiduValidation";
@@ -16,7 +16,7 @@ type ErrorState = Record<string, string>;
 const SystemConfigCreate: React.FC = () => {
   const navigate = useNavigate();
 
-  // ✅ All fields including rewardCoins
+  //  All fields including rewardCoins
   const fields = [
     { name: "currentCompanyId", rules: { required: true, type: "select" as const, label: "Company" } },
     { name: "intCurrentFinancialYear", rules: { required: true, type: "text" as const, label: "Financial Year" } },
@@ -24,15 +24,16 @@ const SystemConfigCreate: React.FC = () => {
     { name: "rewardCoins", rules: { required: true, type: "number" as const, label: "Reward Coins" } },
     { name: "one_paisa_to_coin_rate", rules: { required: true, type: "number" as const, label: "1 Paisa to Coin Rate" } },
     { name: "minimumWithdrawalCoins", rules: { required: true, type: "number" as const, label: "Minimum Withdrawal Coins" } },
+    { name: "isActive", rules: { required: true, type: "radio" as const, label: "Active Status" } }
   ];
 
   const initialValues: Partial<systemconfig> = {
     currentCompanyId: "",
     intCurrentFinancialYear: "",
-    staff_To_User_Rate_Per_Second: 0,
-    rewardCoins: 0, // ✅ Added
-    one_paisa_to_coin_rate: 0,
-    minimumWithdrawalCoins: 0,
+    staff_To_User_Rate_Per_Second: undefined,
+    rewardCoins: undefined, // ✅ Added
+    one_paisa_to_coin_rate: undefined,
+    minimumWithdrawalCoins: undefined,
     isActive: true,
   };
 
@@ -49,7 +50,7 @@ const SystemConfigCreate: React.FC = () => {
   const [companyList, setCompanyList] = useState<CompanyLookup[]>([]);
   const [errors, setErrors] = useState<ErrorState>(initialErrors);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   // Load company lookup
   useEffect(() => {
     const getCompanyLookup = async () => {
@@ -99,12 +100,15 @@ const SystemConfigCreate: React.FC = () => {
     const field = fields.find((f) => f.name === name);
     if (!field) return true;
 
+    // For isActive, convert boolean to string for validation
+    const valueToValidate = name === "isActive" ? String(value) : value;
+
     const result = KiduValidation.validate(value, field.rules);
 
     if (!result.isValid) {
-      setErrors((prev) => ({ 
-        ...prev, 
-        [name]: `${field.rules.label} is required.` 
+      setErrors((prev) => ({
+        ...prev,
+        [name]: `${field.rules.label} is required.`
       }));
       return false;
     }
@@ -131,6 +135,13 @@ const SystemConfigCreate: React.FC = () => {
       return;
     }
 
+    // setIsSubmitting(true);
+    // Show confirmation modal
+    setShowConfirmModal(true);
+  }
+
+  const handleConfirmCreate = async () => {
+    setShowConfirmModal(false);
     setIsSubmitting(true);
 
     try {
@@ -156,6 +167,10 @@ const SystemConfigCreate: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCancelCreate = () => {
+    setShowConfirmModal(false);
   };
 
   return (
@@ -227,7 +242,7 @@ const SystemConfigCreate: React.FC = () => {
                   )}
                 </Col>
 
-                {/* ✅ Reward Coins - ADDED */}
+                {/*  Reward Coins - ADDED */}
                 <Col md={6}>
                   <Form.Label>{getLabel("rewardCoins")}</Form.Label>
                   <Form.Control
@@ -277,7 +292,7 @@ const SystemConfigCreate: React.FC = () => {
                 </Col>
 
                 {/* Active Switch */}
-                <Col md={12} className="d-flex align-items-center">
+                {/* <Col md={12} className="d-flex align-items-center">
                   <Form.Check
                     type="switch"
                     id="isActive"
@@ -286,19 +301,43 @@ const SystemConfigCreate: React.FC = () => {
                     checked={formData.isActive}
                     onChange={handleChange}
                   />
+                </Col> */}
+
+                {/*  Active Status - Enhanced Design */}
+                <Col md={12}>
+                  <div className="p-3 border rounded" style={{ backgroundColor: "#f8f9fa" }}>
+                    <Form.Label className="fw-bold mb-3">{getLabel("isActive")}</Form.Label>
+                    <div className="d-flex align-items-center">
+                      <Form.Check
+                        type="switch"
+                        id="isActive"
+                        name="isActive"
+                        checked={formData.isActive}
+                        onChange={handleChange}
+                        style={{ transform: "scale(1.3)" }}
+                        className="me-3"
+                      />
+                      <span className="fw-semibold" style={{ color: formData.isActive ? "#28a745" : "#dc3545" }}>
+                        {formData.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                    {errors.isActive && (
+                      <small className="text-danger d-block mt-2">{errors.isActive}</small>
+                    )}
+                  </div>
                 </Col>
 
               </Row>
 
               <div className="d-flex justify-content-end gap-2 mt-4">
-                <KiduReset 
-                  initialValues={initialValues} 
-                  setFormData={setFormData} 
-                  setErrors={setErrors} 
+                <KiduReset
+                  initialValues={initialValues}
+                  setFormData={setFormData}
+                  setErrors={setErrors}
                 />
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting} 
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
                   style={{ backgroundColor: "#882626ff", border: "none" }}
                 >
                   {isSubmitting ? "Creating..." : "Create"}
@@ -310,6 +349,45 @@ const SystemConfigCreate: React.FC = () => {
 
         <Toaster position="top-right" />
       </div>
+      {/*  Confirmation Modal */}
+      <Modal show={showConfirmModal} onHide={handleCancelCreate} centered>
+        <Modal.Header closeButton style={{ borderBottom: "2px solid #882626ff" }}>
+          <Modal.Title className="fw-bold fs-5" style={{ color: "#882626ff" }}>
+            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            Confirm System Configuration Creation
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="p-4">
+          <div className="alert alert-warning d-flex align-items-start" role="alert">
+            <i className="bi bi-info-circle-fill me-3 fs-4"></i>
+            <div>
+              <strong>Important Notice:</strong>
+              <p className="mb-0 mt-2">
+                When you create this new system configuration, <strong>all other existing configurations will be disabled</strong> and this configuration will become active immediately.
+              </p>
+            </div>
+          </div>
+          <p className="mb-0 text-muted">
+            Are you sure you want to proceed with creating this system configuration?
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={handleCancelCreate}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            style={{ backgroundColor: "#882626ff", border: "none" }}
+            onClick={handleConfirmCreate}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Creating..." : "Confirm & Create"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 };
