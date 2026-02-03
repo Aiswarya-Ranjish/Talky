@@ -9,6 +9,7 @@ const columns = [
   { key: "intCurrentFinancialYear", label: "Financial Year" },
   { key: "isActive", label: "Active Status" },
   { key: "rewardCoins", label: "Reward Coins" },
+  { key: "minimumWithdrawalCoins", label: "Minimum Withdrawal Coins" },
   { key: "staff_To_User_Rate_Per_Second", label: "Staff to User coins" },
   { key: "one_paisa_to_coin_rate", label: "Coin Rate" },
 ];
