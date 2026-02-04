@@ -29,7 +29,7 @@ const UserEdit: React.FC = () => {
     { name: "walletBalance", label: "Wallet Amount", rules: { required: false, type: "number" as const } },
     { name: "registeredDate", label: "Registered Date", rules: { required: true, type: "date" as const } },
     { name: "mobileNumber", label: "Mobile Number", rules: { required: true, type: "tel" as const, minLength: 10, maxLength: 10 } },
-    { name: "gender", label: "Gender", rules: { required: true, type: "radio" as const, options: ["Male", "Female", "Other"] } }
+    { name: "gender", label: "Gender", rules: { required: false, type: "radio" as const, options: ["Male", "Female", "Other"] } }
   ];
 
   const interestOptions = [{ value: "reading", label: "Reading" }, { value: "travel", label: "Travel" }, { value: "music", label: "Music" }, { value: "sports", label: "Sports" }, { value: "dance", label: "Dance" }];
