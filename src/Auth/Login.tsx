@@ -33,7 +33,7 @@ const Login: React.FC = () => {
     };
 
     const handleEmailChange = (e: ChangeEvent<HTMLInputElement>): void => {
-        const value = e.target.value;
+        const value = e.target.value.toLowerCase().trim(); // Normalize to lowercase
         setEmail(value);
         if (submitted) setErrors(prev => ({ ...prev, email: validateEmail(value) }));
     };
@@ -56,9 +56,9 @@ const Login: React.FC = () => {
             setIsLoading(true);
             
             try {
-                // Call the actual API through AuthService
+                // Call the actual API through AuthService with normalized email
                 const response = await AuthService.login({
-                    email: email,
+                    email: email.toLowerCase().trim(), // Ensure email is lowercase
                     password: password
                 });
 

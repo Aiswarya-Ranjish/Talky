@@ -50,25 +50,25 @@ const EditAdminUser: React.FC = () => {
   };
 
   const formatDate = (value: string | Date) => {
-  if (!value) return "N/A";
+    if (!value) return "N/A";
 
-  const utcDate = new Date(value);
-  if (isNaN(utcDate.getTime())) return "Invalid Date";
+    const utcDate = new Date(value);
+    if (isNaN(utcDate.getTime())) return "Invalid Date";
 
-  const istOffsetMs = 5.5 * 60 * 60 * 1000;
-  const istDate = new Date(utcDate.getTime() + istOffsetMs);
+    const istOffsetMs = 5.5 * 60 * 60 * 1000;
+    const istDate = new Date(utcDate.getTime() + istOffsetMs);
 
-  const day = String(istDate.getDate()).padStart(2, "0");
-  const month = istDate.toLocaleString("en-IN", { month: "long" });
-  const year = istDate.getFullYear();
-  const time = istDate.toLocaleString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true
-  });
+    const day = String(istDate.getDate()).padStart(2, "0");
+    const month = istDate.toLocaleString("en-IN", { month: "long" });
+    const year = istDate.getFullYear();
+    const time = istDate.toLocaleString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
 
-  return `${day}-${month}-${year} ${time}`;
-};
+    return `${day}-${month}-${year} ${time}`;
+  };
 
 
   useEffect(() => {
@@ -97,7 +97,7 @@ const EditAdminUser: React.FC = () => {
           const loadedValues = {
             userName: d.userName || "",
             companyId: d.companyId || "",
-            userEmail: d.userEmail || "",
+            userEmail: (d.userEmail || "").toLowerCase().trim(), // Normalize email on load
             phoneNumber: d.phoneNumber || "",
             address: d.address || "",
             createAt: d.createAt || "",
@@ -170,7 +170,12 @@ const EditAdminUser: React.FC = () => {
 
   const handleChange = (e: any) => {
     const { name, value, type } = e.target;
-    const updated = type === "tel" ? value.replace(/[^0-9]/g, "") : value;
+    let updated = type === "tel" ? value.replace(/[^0-9]/g, "") : value;
+
+    // Normalize email to lowercase and trim whitespace
+    if (name === "userEmail") {
+      updated = value.toLowerCase().trim();
+    }
 
     setFormData((prev: any) => ({ ...prev, [name]: updated }));
 
@@ -196,58 +201,58 @@ const EditAdminUser: React.FC = () => {
     return ok;
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!validateForm()) return;
-  setIsSubmitting(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    setIsSubmitting(true);
 
-  try {
-    const userIdFromUrl = parseInt(userId!);
-    
-    // Upload profile picture first if a new one was selected
-    let profileImagePath = formData.profileImagePath;
-    if (selectedFile) {
-      const uploadResponse = await AdminUserService.uploadProfilePic(userIdFromUrl, selectedFile);
-      if (uploadResponse && uploadResponse.isSucess) {
-        profileImagePath = uploadResponse.value;
+    try {
+      const userIdFromUrl = parseInt(userId!);
+      
+      // Upload profile picture first if a new one was selected
+      let profileImagePath = formData.profileImagePath;
+      if (selectedFile) {
+        const uploadResponse = await AdminUserService.uploadProfilePic(userIdFromUrl, selectedFile);
+        if (uploadResponse && uploadResponse.isSucess) {
+          profileImagePath = uploadResponse.value;
+        }
       }
+      
+      // Prepare data matching the exact Swagger format
+      const dataToUpdate = {
+        userId: userIdFromUrl, // CRITICAL: Must match URL parameter
+        userName: formData.userName,
+        userEmail: formData.userEmail.toLowerCase().trim(), // Ensure email is lowercase
+        phoneNumber: formData.phoneNumber,
+        profileImagePath: profileImagePath || "string",
+        address: formData.address || "",
+        passwordHash: formData.passwordHash || "",
+        isActive: true,
+        islocked: false,
+        createAt: formData.createAt ? new Date(formData.createAt).toISOString() : new Date().toISOString(),
+        lastlogin: formData.lastlogin ? new Date(formData.lastlogin).toISOString() : new Date().toISOString(),
+        companyId: parseInt(formData.companyId) || 0
+      };
+
+      console.log("🔍 URL userId:", userIdFromUrl);
+      console.log("📦 Payload:", JSON.stringify(dataToUpdate, null, 2));
+
+      // Call the update service
+      const updateResponse = await AdminUserService.update(userIdFromUrl, dataToUpdate);
+
+      if (!updateResponse || !updateResponse.isSucess) {
+        throw new Error(updateResponse?.customMessage || updateResponse?.error || "Failed to update user");
+      }
+
+      toast.success("User updated successfully!");
+      setTimeout(() => navigate("/dashboard/settings/adminUsers-list"), 1500);
+    } catch (error: any) {
+      console.error("❌ Update failed:", error);
+      toast.error(`Error updating user: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    // Prepare data matching the exact Swagger format
-    const dataToUpdate = {
-      userId: userIdFromUrl, // CRITICAL: Must match URL parameter
-      userName: formData.userName,
-      userEmail: formData.userEmail,
-      phoneNumber: formData.phoneNumber,
-      profileImagePath: profileImagePath || "string",
-      address: formData.address || "",
-      passwordHash: formData.passwordHash || "",
-      isActive: true,
-      islocked: false,
-      createAt: formData.createAt ? new Date(formData.createAt).toISOString() : new Date().toISOString(),
-      lastlogin: formData.lastlogin ? new Date(formData.lastlogin).toISOString() : new Date().toISOString(),
-      companyId: parseInt(formData.companyId) || 0
-    };
-
-    console.log("🔍 URL userId:", userIdFromUrl);
-    console.log("📦 Payload:", JSON.stringify(dataToUpdate, null, 2));
-
-    // Call the update service
-    const updateResponse = await AdminUserService.update(userIdFromUrl, dataToUpdate);
-
-    if (!updateResponse || !updateResponse.isSucess) {
-      throw new Error(updateResponse?.customMessage || updateResponse?.error || "Failed to update user");
-    }
-
-    toast.success("User updated successfully!");
-    setTimeout(() => navigate("/dashboard/settings/adminUsers-list"), 1500);
-  } catch (error: any) {
-    console.error("❌ Update failed:", error);
-    toast.error(`Error updating user: ${error.message}`);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   if (loading) return <KiduLoader type="admin user details..." />;
 

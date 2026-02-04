@@ -100,7 +100,13 @@ const CreateAdminUser: React.FC = () => {
 
     const handleChange = (e: any) => {
         const { name, value, type } = e.target;
-        const updated = type === "tel" ? value.replace(/[^0-9]/g, "") : value;
+        let updated = type === "tel" ? value.replace(/[^0-9]/g, "") : value;
+        
+        // Normalize email to lowercase and trim whitespace
+        if (name === "userEmail") {
+            updated = value.toLowerCase().trim();
+        }
+        
         setFormData((prev: any) => ({ ...prev, [name]: updated }));
         if (errors[name]) setErrors((prev: any) => ({ ...prev, [name]: "" }));
     };
@@ -128,6 +134,7 @@ const CreateAdminUser: React.FC = () => {
         try {
             const userData = {
                 ...formData,
+                userEmail: formData.userEmail.toLowerCase().trim(), // Ensure email is lowercase
                 isActive: true,
                 createdAt: new Date().toISOString()
             };
