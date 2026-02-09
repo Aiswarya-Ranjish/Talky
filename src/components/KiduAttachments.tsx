@@ -58,6 +58,25 @@ const KiduAttachments: React.FC<AttachmentsProps> = ({ tableName, recordId }) =>
         }
     });
 
+    const formatDate = (dateString: string): string => {
+    // Add 'Z' to force JavaScript to treat it as UTC
+    const date = new Date(dateString + 'Z');
+    
+    const istOffset = 5.5 * 60 * 60 * 1000; // IST offset
+    const istDate = new Date(date.getTime() + istOffset);
+    
+    const day = istDate.getUTCDate().toString().padStart(2, '0');
+    const month = istDate.toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
+    const year = istDate.getUTCFullYear();
+    
+    let hours = istDate.getUTCHours();
+    const minutes = istDate.getUTCMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    
+    return `${day} ${month} ${year}, ${hours}:${minutes} ${ampm}`;
+};
+
     const handleUpload = async () => {
         if (!selectedFile) {
             setUploadError("Please select a file to upload");
@@ -130,16 +149,16 @@ const KiduAttachments: React.FC<AttachmentsProps> = ({ tableName, recordId }) =>
         return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
     };
 
-    const formatDate = (dateString: string): string => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    };
+    // const formatDate = (dateString: string): string => {
+    //     const date = new Date(dateString);
+    //     return date.toLocaleDateString("en-GB", {
+    //         day: "2-digit",
+    //         month: "long",
+    //         year: "numeric",
+    //         hour: "2-digit",
+    //         minute: "2-digit",
+    //     });
+    // };
 
     const getFileIcon = (fileName: string) => {
         const ext = fileName.split(".").pop()?.toLowerCase();
