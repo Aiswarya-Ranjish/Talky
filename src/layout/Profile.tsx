@@ -8,6 +8,15 @@ import profileImg from "../assets/Images/profile.jpeg";
 import { getFullImageUrl } from "../constants/API_ENDPOINTS";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
 
+const PASSWORD_RULE = {
+  minLength: 6,
+  maxLength: 30,
+  regex: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]+$/,
+  message:
+    "Minimum 8 characters, with at least one uppercase letter and one number.",
+};
+
+
 const Profile: React.FC = () => {
   const [userId, setUserId] = useState<number | null>(null);
   const [username, setUsername] = useState("User");
@@ -30,6 +39,38 @@ const Profile: React.FC = () => {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  //password validation
+  const [passwordErrors, setPasswordErrors] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const validatePasswordField = (
+    name: "oldPassword" | "newPassword" | "confirmPassword",
+    value: string
+  ) => {
+    let error = "";
+
+    if (!value) {
+      error = "This field is required";
+    } else if (
+      name === "newPassword" &&
+      (!PASSWORD_RULE.regex.test(value) ||
+        value.length < PASSWORD_RULE.minLength ||
+        value.length > PASSWORD_RULE.maxLength)
+    ) {
+      error = PASSWORD_RULE.message;
+    } else if (
+      name === "confirmPassword" &&
+      value !== newPassword
+    ) {
+      error = "Passwords do not match";
+    }
+
+    setPasswordErrors((prev) => ({ ...prev, [name]: error }));
+    return error === "";
+  };
 
 
   // Load user data from localStorage and fetch from API
@@ -167,10 +208,18 @@ const Profile: React.FC = () => {
       return;
     }
 
-    if (newPassword.length < 6) {
-      toast.error("New password must be at least 6 characters");
+    if (newPassword.length < 8) {
+      toast.error("New password must be at least 8 characters");
       return;
     }
+
+    const isValid =
+      validatePasswordField("oldPassword", oldPassword) &&
+      validatePasswordField("newPassword", newPassword) &&
+      validatePasswordField("confirmPassword", confirmPassword);
+
+    if (!isValid) return;
+
 
     setIsLoadingPassword(true);
     try {
@@ -312,11 +361,18 @@ const Profile: React.FC = () => {
                   <Form.Control
                     type={showOldPassword ? "text" : "password"}
                     value={oldPassword}
-                    onChange={(e) => setOldPassword(e.target.value)}
+                    onChange={(e) => {
+                      setOldPassword(e.target.value);
+                      if (passwordErrors.oldPassword)
+                        validatePasswordField("oldPassword", e.target.value);
+                    }}
                     disabled={isLoadingPassword}
                     placeholder="Enter old password"
                     style={{ borderRadius: "6px", height: "32px", paddingRight: "35px" }}
                   />
+                  {passwordErrors.oldPassword && (
+                    <small className="text-danger">{passwordErrors.oldPassword}</small>
+                  )}
                   <span
                     onClick={() => setShowOldPassword(!showOldPassword)}
                     className="position-absolute top-50 end-0 translate-middle-y me-2"
@@ -338,11 +394,18 @@ const Profile: React.FC = () => {
                   <Form.Control
                     type={showNewPassword ? "text" : "password"}
                     value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      if (passwordErrors.newPassword)
+                        validatePasswordField("newPassword", e.target.value);
+                    }}
                     disabled={isLoadingPassword}
                     placeholder="Enter new password"
                     style={{ borderRadius: "6px", height: "32px", paddingRight: "35px" }}
                   />
+                  {passwordErrors.newPassword && (
+                    <small className="text-danger">{passwordErrors.newPassword}</small>
+                  )}
                   <span
                     onClick={() => setShowNewPassword(!showNewPassword)}
                     className="position-absolute top-50 end-0 translate-middle-y me-2"
@@ -363,11 +426,20 @@ const Profile: React.FC = () => {
                   <Form.Control
                     type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      if (passwordErrors.confirmPassword)
+                        validatePasswordField("confirmPassword", e.target.value);
+                    }}
                     disabled={isLoadingPassword}
                     placeholder="Confirm new password"
                     style={{ borderRadius: "6px", height: "32px", paddingRight: "35px" }}
                   />
+                  {passwordErrors.confirmPassword && (
+                    <small className="text-danger">
+                      {passwordErrors.confirmPassword}
+                    </small>
+                  )}
                   <span
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="position-absolute top-50 end-0 translate-middle-y me-2"
