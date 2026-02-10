@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import 'bootstrap/dist/css/bootstrap.min.css';
+import "bootstrap-icons/font/bootstrap-icons.css";
 import './App.css'
 // Preloader
 import Preloader from './pages/dashboard/PreLoader';

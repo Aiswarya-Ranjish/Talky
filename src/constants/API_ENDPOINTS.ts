@@ -74,6 +74,7 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `${API_BASE_URL}/AppNotification/Update/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/AppNotification/Delete/${id}`,
     UPLOAD_IMAGE: `${API_BASE_URL}/AppNotification/UploadNotificationImage/upload-notification-image`,
+    SEND_TARGETED: `${API_BASE_URL}/AppNotification/SendTargetedNotification/send-targeted`,
   },
   PURCHASE_ORDER: {
     GET_ALL: `${API_BASE_URL}/PurchaseOrder/GetAll`,

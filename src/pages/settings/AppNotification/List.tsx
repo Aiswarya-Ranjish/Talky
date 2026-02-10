@@ -1,8 +1,13 @@
-import React from "react";
+// pages/settings/AppNotification/AppNotificationList.tsx
+
+import React, { useState } from "react";
+import { Button } from "react-bootstrap";
 import AppNotificationService from "../../../services/settings/AppNotification.services";
 import KiduServerTable from "../../../components/Trip/KiduServerTable";
+import { AppNotification } from "../../../types/settings/AppNotification";
 import { getFullImageUrl } from "../../../constants/API_ENDPOINTS";
 import defaultNotificationImage from "../../../assets/Images/notification.png";
+import SendNotificationModal from "./SendNotificationModal";
 
 const columns = [
   { key: "appNotificationId", label: "ID" },
@@ -17,7 +22,6 @@ const columns = [
   { key: "createdAt", label: "Created Date" }
 ];
 
-// Format date (dd-Month-yyyy)
 const formatDate = (isoString: string) => {
   if (!isoString) return "-";
   const date = new Date(isoString);
@@ -28,7 +32,9 @@ const formatDate = (isoString: string) => {
 };
 
 const AppNotificationList: React.FC = () => {
-  // ✅ Added reverseOrder parameter
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<AppNotification | null>(null);
+
   const fetchAppNotificationData = async ({
     pageNumber,
     pageSize,
@@ -41,32 +47,15 @@ const AppNotificationList: React.FC = () => {
     reverseOrder?: boolean;
   }) => {
     try {
-      console.log("Fetching notifications...");
-      
       const response = await AppNotificationService.getAllNotification();
       
-      console.log("API Response:", response);
-      
-      if (!response) {
-        console.error("No response received from API");
-        throw new Error("No response received from server");
-      }
-
-      if (!response.isSucess) {
-        console.error("API Response not successful:", response);
-        const errorMsg = response?.customMessage || response?.error || "Failed to fetch notifications";
-        throw new Error(errorMsg);
+      if (!response || !response.isSucess) {
+        throw new Error(response?.customMessage || response?.error || "Failed to fetch notifications");
       }
 
       const allData = response.value || [];
-      console.log("All data:", allData);
 
-      if (allData.length === 0) {
-        console.log("No notifications found");
-        return { data: [], total: 0 };
-      }
-
-      // SEARCH
+      // Search
       let filtered = allData;
       if (searchTerm) {
         const s = searchTerm.toLowerCase();
@@ -76,10 +65,9 @@ const AppNotificationList: React.FC = () => {
             item.notificationType?.toLowerCase().includes(s) ||
             item.appNotificationId?.toString().includes(searchTerm)
         );
-        console.log(`Filtered ${filtered.length} items from search term: ${searchTerm}`);
       }
 
-      // ✅ Transform data with full image URLs and formatting
+      // Transform data
       let formattedData = filtered.map((notification) => ({
         ...notification,
         notificationImage: notification.notificationImage 
@@ -89,50 +77,80 @@ const AppNotificationList: React.FC = () => {
         isActive: notification.isActive ? "Active" : "Inactive"
       }));
 
-      // ✅ Apply reverse order if requested (show latest notifications first)
       if (reverseOrder) {
         formattedData = [...formattedData].reverse();
       }
 
       const total = formattedData.length;
-      console.log(`Total items after filtering: ${total}`);
-
-      // Pagination
       const startIndex = (pageNumber - 1) * pageSize;
       const endIndex = startIndex + pageSize;
       const paginatedData = formattedData.slice(startIndex, endIndex);
       
-      console.log(`Returning ${paginatedData.length} items for page ${pageNumber}`);
-      
       return { data: paginatedData, total };
     } catch (err: any) {
-      console.error("Error in fetchAppNotificationData:", err);
-      console.error("Error details:", {
-        message: err.message,
-        stack: err.stack
-      });
-      throw new Error(`Failed to fetch notification details: ${err.message}`);
+      console.error("Error fetching notifications:", err);
+      throw new Error(`Failed to fetch notifications: ${err.message}`);
     }
   };
 
+  // ✅ Custom action buttons renderer
+  const renderCustomActions = (notification: any) => {
+    return (
+      <>
+        {/* Default Edit button will be rendered by KiduServerTable */}
+        {/* Default View button will be rendered by KiduServerTable */}
+        
+        {/* ✅ NEW: Send button */}
+        {notification.isActive === "Active" && (
+          <Button
+            size="sm"
+            variant="outline-success"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedNotification(notification);
+              setShowSendModal(true);
+            }}
+            className="ms-2"
+          >
+            <i className="bi bi-send"></i> Send
+          </Button>
+        )}
+      </>
+    );
+  };
+
   return (
-    <KiduServerTable
-      title="App Notifications"
-      subtitle="List of all app notifications with quick edit & view"
-      columns={columns}
-      idKey="appNotificationId"
-      addButtonLabel="Add New Notification"
-      addRoute="/dashboard/settings/create-appNotification"
-      editRoute="/dashboard/settings/edit-appNotification"
-      viewRoute="/dashboard/settings/view-appNotification"
-      fetchData={fetchAppNotificationData}
-      rowsPerPage={15}
-      showSearch={true}
-      showActions={true}
-      showAddButton={true}
-      showExport={true}
-      reverseOrder={true}  // ✅ Added this prop
-    />
+    <>
+      <KiduServerTable
+        title="App Notifications"
+        subtitle="List of all app notifications with quick edit, view & send"
+        columns={columns}
+        idKey="appNotificationId"
+        addButtonLabel="Add New Notification"
+        addRoute="/dashboard/settings/create-appNotification"
+        editRoute="/dashboard/settings/edit-appNotification"
+        viewRoute="/dashboard/settings/view-appNotification"
+        fetchData={fetchAppNotificationData}
+        rowsPerPage={15}
+        showSearch={true}
+        showActions={true}
+        showAddButton={true}
+        showExport={true}
+        reverseOrder={true}
+        // ✅ Pass custom actions renderer
+        customActionsRenderer={renderCustomActions}
+      />
+
+      {/* ✅ Send Notification Modal */}
+      <SendNotificationModal
+        show={showSendModal}
+        onHide={() => {
+          setShowSendModal(false);
+          setSelectedNotification(null);
+        }}
+        notification={selectedNotification}
+      />
+    </>
   );
 };
 

@@ -4,6 +4,7 @@ import { AppNotification } from "../../types/settings/AppNotification";
 import HttpService from "../common/HttpService";
 
 class AppNotificationService {
+
   static async getAllNotification(): Promise<CustomResponse<AppNotification[]>> {
     return HttpService.callApi<CustomResponse<AppNotification[]>>(
       API_ENDPOINTS.AppNotification.GET_ALL,
@@ -40,6 +41,25 @@ class AppNotificationService {
       "DELETE"
     );
   }
+  static async sendTargetedNotification(data: {
+    notificationType: string;
+    notificationTitle: string;
+    notificationBody: string;
+    notificationLink: string;
+    notificationImage?: string;
+    targetCriteria: string;
+    balanceThreshold?: number;
+    daysWithoutActivity?: number;
+    customUserIds?: number[];
+    additionalData?: Record<string, string>;
+  }): Promise<CustomResponse<any>> {
+    return HttpService.callApi<CustomResponse<any>>(
+      API_ENDPOINTS.AppNotification.SEND_TARGETED,
+      "POST",
+      data
+    );
+  }
+
 
   // ✅ NEW: Upload notification image
   static async uploadNotificationImage(

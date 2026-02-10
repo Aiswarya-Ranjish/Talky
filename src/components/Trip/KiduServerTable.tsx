@@ -52,6 +52,8 @@ interface KiduServerTableProps {
   }) => Promise<{ data: any[]; total: number }>;
   rowsPerPage?: number;
   reverseOrder?: boolean;
+  // ✅ NEW: Custom actions renderer prop
+  customActionsRenderer?: (row: any) => React.ReactNode;
 }
 
 const KiduServerTable: React.FC<KiduServerTableProps> = ({
@@ -74,6 +76,7 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
   fetchData,
   rowsPerPage = 10,
   reverseOrder = true,
+  customActionsRenderer, // ✅ NEW
 }) => {
   const tableRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -102,7 +105,7 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
           pageNumber: page,
           pageSize: rowsPerPage,
           searchTerm: search,
-          ...(reverseOrder !== undefined && { reverseOrder }), // Only include if defined
+          ...(reverseOrder !== undefined && { reverseOrder }),
         });
 
         setData(result.data || []);
@@ -134,10 +137,8 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
 
   // Helper function to render status badge with fixed width
   const renderStatusBadge = (status: string | number) => {
-    // Convert to lowercase string for comparison
     const statusStr = String(status).toLowerCase();
     
-    // Map status values to badge variants
     let variant = "secondary";
     let displayText = String(status);
     
@@ -161,9 +162,9 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
         className="px-3 py-2" 
         style={{ 
           fontSize: "12px",
-          minWidth: "100px",        // Fixed minimum width for uniform sizing
-          display: "inline-block",  // Ensures width is respected
-          textAlign: "center"       // Centers text within badge
+          minWidth: "100px",
+          display: "inline-block",
+          textAlign: "center"
         }}
       >
         {displayText}
@@ -209,7 +210,6 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
 
         switch (col.type) {
           case 'status':
-            // Use the statusValue if available, otherwise use the display value
             const statusValue = row.original.statusValue ?? rawValue;
             return renderStatusBadge(statusValue);
 
@@ -327,6 +327,7 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
             className="d-flex justify-content-center gap-2"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Default Edit Button */}
             {editRoute && (
               <Button
                 size="sm"
@@ -352,6 +353,7 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
               </Button>
             )}
 
+            {/* Default View Button */}
             {viewRoute && (
               <Button
                 size="sm"
@@ -374,13 +376,16 @@ const KiduServerTable: React.FC<KiduServerTableProps> = ({
                 <FaEye className="me-1" /> View
               </Button>
             )}
+
+            {/* ✅ NEW: Render custom actions if provided */}
+            {customActionsRenderer && customActionsRenderer(row.original)}
           </div>
         ),
       });
     }
 
     return cols;
-  }, [columns, showActions, showExport, total, data, title, editRoute, viewRoute, navigate, idKey]);
+  }, [columns, showActions, showExport, total, data, title, editRoute, viewRoute, navigate, idKey, customActionsRenderer]);
 
   // Create React Table instance
   const table = useReactTable({
