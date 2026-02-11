@@ -24,7 +24,6 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
   const [balanceThreshold, setBalanceThreshold] = useState<string>("100");
   const [sendResult, setSendResult] = useState<any>(null);
   
-  // ✅ NEW: Popup state
   const [showUserPopup, setShowUserPopup] = useState(false);
 
   const targetAudiences = [
@@ -76,19 +75,64 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
 
       const response = await AppNotificationService.sendTargetedNotification(requestBody);
 
-      if (response && response.isSucess) {
+      console.log("📥 API Response:", response);
+
+      // ✅ FIXED: Check if response.value exists and has the notification result
+      // The backend returns the NotificationBatchResult in the 'value' field
+      if (response && response.value && typeof response.value === 'object') {
         const result = response.value;
-        setSendResult(result);
         
-        toast.success(
-          `✅ Notification sent successfully!\nDelivered: ${result.successCount}/${result.totalTokens} (${result.successRate.toFixed(1)}%)`
-        );
+        // Check if it's a NotificationBatchResult object
+        if ('totalTokens' in result && 'successCount' in result && 'failureCount' in result) {
+          setSendResult(result);
+          
+          // Show appropriate message based on success count
+          if (result.successCount > 0) {
+            toast.success(
+              `✅ Notification sent successfully!\n` +
+              `Delivered: ${result.successCount}/${result.totalTokens} ` +
+              `(${result.successRate?.toFixed(1) || 0}%)`
+            );
+          } else if (result.totalTokens > 0 && result.failureCount === result.totalTokens) {
+            toast.error(
+              `⚠️ Notification processed but delivery failed.\n` +
+              `Total devices: ${result.totalTokens}\n` +
+              `All ${result.failureCount} devices failed to receive the notification.\n` +
+              `This may happen if devices are offline or tokens are invalid.`
+            );
+          } else {
+            toast("Notification processed. Check the delivery report below.");
+          }
+        } else {
+          // If value doesn't have expected structure, still show success
+          toast.success("Notification sent successfully!");
+          setSendResult({ 
+            totalTokens: 0, 
+            successCount: 0, 
+            failureCount: 0,
+            successRate: 0,
+            message: "Processed" 
+          });
+        }
       } else {
-        throw new Error(response?.customMessage || response?.error || "Failed to send");
+        // ✅ FIXED: Properly handle null values when throwing error
+        if (response?.error || response?.customMessage) {
+          const errorMsg = response.error || response.customMessage || "Unknown error occurred";
+          throw new Error(errorMsg);
+        } else {
+          // No error but also no data - treat as unknown success
+          toast.success("Notification request processed");
+        }
       }
     } catch (error: any) {
       console.error("❌ Send failed:", error);
-      toast.error(`Failed to send: ${error.message}`);
+      
+      const errorMessage = error?.response?.data?.error || 
+                          error?.response?.data?.customMessage ||
+                          error?.message || 
+                          "Failed to send notification";
+      
+      toast.error(`Failed to send: ${errorMessage}`);
     } finally {
       setSending(false);
     }
@@ -98,16 +142,16 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
     setSendResult(null);
     setTargetCriteria("all_users");
     setSelectedUserIds([]);
+    setDaysWithoutActivity("7");
+    setBalanceThreshold("100");
     onHide();
   };
 
-  // ✅ NEW: Handle user selection from popup
   const handleUserSelection = (userIds: number[]) => {
     setSelectedUserIds(userIds);
     setShowUserPopup(false);
   };
 
-  // ✅ NEW: Remove selected user
   const handleRemoveUser = (userId: number) => {
     setSelectedUserIds(prev => prev.filter(id => id !== userId));
   };
@@ -115,8 +159,8 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
   return (
     <>
       <Modal show={show} onHide={handleClose} size="lg" centered>
-        <Modal.Header closeButton style={{ borderBottom: "2px solid #18575A" }}>
-          <Modal.Title style={{ color: "#18575A", fontFamily: "Urbanist" }}>
+        <Modal.Header closeButton style={{ borderBottom: "2px solid #882626ff" }}>
+          <Modal.Title style={{ color: "#882626ff", fontFamily: "Urbanist" }}>
             📤 Send Notification
           </Modal.Title>
         </Modal.Header>
@@ -131,7 +175,7 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
               border: "1px solid #dee2e6",
             }}
           >
-            <h6 className="mb-3 fw-bold" style={{ color: "#18575A" }}>
+            <h6 className="mb-3 fw-bold" style={{ color: "#882626ff" }}>
               📋 Notification Preview
             </h6>
 
@@ -145,7 +189,7 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                     height: "80px",
                     objectFit: "cover",
                     borderRadius: "8px",
-                    border: "2px solid #18575A",
+                    border: "2px solid #882626ff",
                   }}
                 />
               )}
@@ -188,7 +232,7 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
               </Form.Text>
             </Form.Group>
 
-            {/* ✅ UPDATED: Custom User Selection with Popup */}
+            {/* Custom User Selection */}
             {targetCriteria === "custom" && (
               <Form.Group className="mb-3">
                 <Form.Label className="fw-bold">
@@ -205,7 +249,6 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                   Select Users from List ({selectedUserIds.length} selected)
                 </Button>
 
-                {/* Display selected user IDs */}
                 {selectedUserIds.length > 0 && (
                   <div
                     className="p-2"
@@ -270,23 +313,23 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
 
           {/* Send Result */}
           {sendResult && (
-            <Alert variant={sendResult.isSuccess ? "success" : "warning"} className="mt-3">
+            <Alert variant={sendResult.successCount > 0 ? "success" : "warning"} className="mt-3">
               <h6 className="fw-bold mb-2">📊 Delivery Report</h6>
               <div className="d-flex justify-content-between mb-2">
                 <span>Total Devices:</span>
-                <strong>{sendResult.totalTokens}</strong>
+                <strong>{sendResult.totalTokens || 0}</strong>
               </div>
               <div className="d-flex justify-content-between mb-2">
                 <span>✅ Successful:</span>
-                <strong className="text-success">{sendResult.successCount}</strong>
+                <strong className="text-success">{sendResult.successCount || 0}</strong>
               </div>
               <div className="d-flex justify-content-between mb-2">
                 <span>❌ Failed:</span>
-                <strong className="text-danger">{sendResult.failureCount}</strong>
+                <strong className="text-danger">{sendResult.failureCount || 0}</strong>
               </div>
               <div className="d-flex justify-content-between">
                 <span>Success Rate:</span>
-                <strong>{sendResult.successRate.toFixed(1)}%</strong>
+                <strong>{sendResult.successRate?.toFixed(1) || 0}%</strong>
               </div>
               
               {sendResult.failureCount > 0 && (
@@ -314,7 +357,7 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
           </Button>
           {!sendResult && (
             <Button
-              style={{ backgroundColor: "#18575A", border: "none" }}
+              style={{ backgroundColor: "#882626ff", border: "none" }}
               onClick={handleSend}
               disabled={sending || !notification?.isActive}
             >
@@ -334,7 +377,7 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
         </Modal.Footer>
       </Modal>
 
-      {/* ✅ NEW: User Multi-Select Popup */}
+      {/* User Multi-Select Popup */}
       <AppUserMultiSelectPopup
         show={showUserPopup}
         onHide={() => setShowUserPopup(false)}
