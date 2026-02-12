@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Nav, Navbar, Container, Collapse } from "react-bootstrap";
 import { NavLink, useNavigate } from "react-router-dom";
 import { BiCategory } from "react-icons/bi";
-import { 
-    BsPeople, 
-    BsGear, 
-    BsChevronDown, 
-    BsCashStack, 
+import {
+    BsPeople,
+    BsGear,
+    BsChevronDown,
+    BsCashStack,
     BsPersonBadge,
     BsListUl,
     BsShieldExclamation,
@@ -31,11 +31,14 @@ import { BiLogOut } from "react-icons/bi";
 import AuthService from "../services/common/Authservices";
 import profileImage from "../assets/Images/profile.jpeg";
 import { getFullImageUrl } from "../constants/API_ENDPOINTS";
+import KiduLogoutModal from "../components/KiduLogoutModal";
 
 const Sidebar: React.FC = () => {
     const [hovered, setHovered] = useState(false);
     const [openMenu, setOpenMenu] = useState<string | null>(null);
     const [userProfileImage, setUserProfileImage] = useState<string>(profileImage);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+
 
     // Load profile image on mount and when profile updates
     useEffect(() => {
@@ -74,16 +77,16 @@ const Sidebar: React.FC = () => {
             const storedUser = localStorage.getItem("user");
             console.log('Sidebar - Loading profile image');
             console.log('Sidebar - storedUser exists:', !!storedUser);
-            
+
             if (storedUser) {
                 const parsedUser = JSON.parse(storedUser);
                 console.log('Sidebar - Parsed user:', parsedUser);
-                
+
                 // Try multiple possible field names (profileImagePath, ProfileImagePath, profilePic)
-                const imagePath = parsedUser?.profileImagePath 
-                    || parsedUser?.ProfileImagePath 
+                const imagePath = parsedUser?.profileImagePath
+                    || parsedUser?.ProfileImagePath
                     || parsedUser?.profilePic;
-                
+
                 console.log('Sidebar - profileImagePath:', imagePath);
 
                 // Load profile image if available
@@ -129,16 +132,30 @@ const Sidebar: React.FC = () => {
         { label: "Company", path: "/dashboard/settings/company-list", icon: <BsBuilding /> },
         { label: "System Config", path: "/dashboard/settings/systemconfig-list", icon: <BsGearFill /> },
         { label: "Purchase Coupon", path: "/dashboard/settings/purchase-coupon-list", icon: <BsTicketPerforated /> },
-        { label:'Category',path:'/dashboard/settings/Category', icon:<BiCategory />},
+        { label: 'Category', path: '/dashboard/settings/Category', icon: <BiCategory /> },
         { label: "Financial Year", path: "/dashboard/settings/financial-year", icon: <BsCalendar3 /> },
-        { label: "App Notification", path: "/dashboard/settings/appNotification-list",  icon: <BsBell /> },
+        { label: "App Notification", path: "/dashboard/settings/appNotification-list", icon: <BsBell /> },
     ];
 
     const navigate = useNavigate();
-    
-    const handleLogout = async () => {
+
+    // const handleLogout = async () => {
+    //     await AuthService.logout();
+    //     window.location.href = "/login";
+    // };
+
+    const handleLogoutClick = () => {
+        setShowLogoutModal(true);
+    };
+
+    const handleConfirmLogout = async () => {
+        setShowLogoutModal(false);
         await AuthService.logout();
         window.location.href = "/login";
+    };
+
+    const handleCancelLogout = () => {
+        setShowLogoutModal(false);
     };
 
     return (
@@ -209,9 +226,9 @@ const Sidebar: React.FC = () => {
                         >
                             {({ isActive }) => (
                                 <>
-                                    <BsSpeedometer2 
-                                        className={isActive ? "text-danger" : "text-white"} 
-                                        style={{ fontSize: "20px", minWidth: "20px" }} 
+                                    <BsSpeedometer2
+                                        className={isActive ? "text-danger" : "text-white"}
+                                        style={{ fontSize: "20px", minWidth: "20px" }}
                                     />
                                     {hovered && (
                                         <span className={`fw-bold flex-grow-1 ${isActive ? "text-danger" : "text-white"}`}>
@@ -392,7 +409,8 @@ const Sidebar: React.FC = () => {
 
                         {/* Logout */}
                         <p
-                            onClick={handleLogout}
+                            onClick={handleLogoutClick}
+
                             className="d-flex align-items-center justify-content-center p-2 text-white mt-5 mx-3 rounded fw-bold"
                             style={{
                                 fontSize: "15px",
@@ -480,6 +498,12 @@ const Sidebar: React.FC = () => {
           }
         `}
             </style>
+            <KiduLogoutModal
+                show={showLogoutModal}
+                onConfirm={handleConfirmLogout}
+                onCancel={handleCancelLogout}
+            />
+
         </>
     );
 };

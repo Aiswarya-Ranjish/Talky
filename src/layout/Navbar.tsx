@@ -10,6 +10,7 @@ import KiduYearSelector from "../components/KiduYearSelector";
 import { useYear } from "../context/YearContext";
 import profileImg from "../assets/Images/profile.jpeg";
 import { getFullImageUrl } from "../constants/API_ENDPOINTS";
+import KiduLogoutModal from "../components/KiduLogoutModal";
 
 const NavbarComponent: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -17,6 +18,8 @@ const NavbarComponent: React.FC = () => {
   const [username, setUsername] = useState<string>("Username");
   const [profileImage, setProfileImage] = useState<string>(profileImg);
   const { selectedYear, setSelectedYear } = useYear();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
   const navigate = useNavigate();
 
   // Function to load profile image
@@ -24,7 +27,7 @@ const NavbarComponent: React.FC = () => {
     try {
       const storedUser = localStorage.getItem("user");
       console.log('Navbar - Loading profile, storedUser exists:', !!storedUser);
-      
+
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
         console.log('Navbar - Parsed user:', parsedUser);
@@ -34,10 +37,10 @@ const NavbarComponent: React.FC = () => {
         }
 
         // Try multiple possible field names (profileImagePath, ProfileImagePath, profilePic)
-        const imagePath = parsedUser?.profileImagePath 
-            || parsedUser?.ProfileImagePath 
-            || parsedUser?.profilePic;
-        
+        const imagePath = parsedUser?.profileImagePath
+          || parsedUser?.ProfileImagePath
+          || parsedUser?.profilePic;
+
         console.log('Navbar - Image path found:', imagePath);
 
         // Load profile image if available
@@ -96,10 +99,25 @@ const NavbarComponent: React.FC = () => {
     console.log("Selected Year Updated Globally:", year);
   };
 
-  const handleLogout = () => {
+  // const handleLogout = () => {
+  //   AuthService.logout();
+  //   navigate("/");
+  // };
+
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false);
     AuthService.logout();
     navigate("/");
   };
+
+  const handleCancelLogout = () => {
+    setShowLogoutModal(false);
+  };
+
 
   return (
     <>
@@ -164,9 +182,9 @@ const NavbarComponent: React.FC = () => {
                 src={profileImage}
                 alt="profile"
                 className="rounded-circle me-2 border border-2"
-                style={{ 
-                  width: "30px", 
-                  height: "30px", 
+                style={{
+                  width: "30px",
+                  height: "30px",
                   objectFit: "cover",
                   borderColor: "#882626ff"
                 }}
@@ -195,7 +213,8 @@ const NavbarComponent: React.FC = () => {
                 border: "none",
                 color: "#808080ff",
               }}
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
+
             >
               Logout
             </Button>
@@ -221,6 +240,12 @@ const NavbarComponent: React.FC = () => {
           <Profile />
         </Offcanvas.Body>
       </Offcanvas>
+      <KiduLogoutModal
+        show={showLogoutModal}
+        onConfirm={handleConfirmLogout}
+        onCancel={handleCancelLogout}
+      />
+
     </>
   );
 };
